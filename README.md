@@ -1,5 +1,8 @@
 # Muvi Cinemas - Local Development
 
+> **Cross-Platform:** Works on Windows, macOS, and Linux.  
+> **macOS/Linux users:** Install PowerShell Core 7+ first: `brew install powershell` (Mac) or [see install guide](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell). Then run with `pwsh ./muvi-up.ps1`
+
 ## New Developer? Start Here (3 Steps)
 
 ```powershell
