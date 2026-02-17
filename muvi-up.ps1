@@ -243,8 +243,37 @@ function Invoke-CloneRepos {
         Write-Step "[$current/$total] Cloning $($repo.Name)..."
         $prevEAP = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        $cloneOutput = git clone $repo.Url $targetDir 2>&1
-        $cloneExit = $LASTEXITCODE
+        
+        # Retry logic for transient network failures
+        $maxRetries = 3
+        $retryDelay = 5
+        $cloneExit = 1
+        $cloneOutput = $null
+        
+        for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            if ($attempt -gt 1) {
+                Write-Warn "Retry $attempt/$maxRetries for $($repo.Name) in $retryDelay seconds..."
+                Start-Sleep -Seconds $retryDelay
+                # Clean up partial clone if exists
+                if (Test-Path $targetDir) {
+                    Remove-Item $targetDir -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            
+            $cloneOutput = git clone $repo.Url $targetDir 2>&1
+            $cloneExit = $LASTEXITCODE
+            
+            if ($cloneExit -eq 0) {
+                break
+            }
+            
+            $errStr = $cloneOutput -join " "
+            # Don't retry for auth/permission errors - those won't resolve with retries
+            if ($errStr -match "Permission denied|403|401|Authentication|not found|404") {
+                break
+            }
+        }
+        
         $ErrorActionPreference = $prevEAP
 
         # Handle "clone succeeded but checkout failed" (e.g. invalid paths on Windows)
@@ -395,8 +424,35 @@ function Invoke-CloneRepos {
         Write-Step "[$webCurrent/$webTotal] Cloning $($repo.Name)..."
         $prevEAP = $ErrorActionPreference
         $ErrorActionPreference = "Continue"
-        $cloneOutput = git clone $repo.Url $targetDir 2>&1
-        $cloneExit = $LASTEXITCODE
+        
+        # Retry logic for transient network failures
+        $maxRetries = 3
+        $retryDelay = 5
+        $cloneExit = 1
+        $cloneOutput = $null
+        
+        for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+            if ($attempt -gt 1) {
+                Write-Warn "Retry $attempt/$maxRetries for $($repo.Name) in $retryDelay seconds..."
+                Start-Sleep -Seconds $retryDelay
+                if (Test-Path $targetDir) {
+                    Remove-Item $targetDir -Recurse -Force -ErrorAction SilentlyContinue
+                }
+            }
+            
+            $cloneOutput = git clone $repo.Url $targetDir 2>&1
+            $cloneExit = $LASTEXITCODE
+            
+            if ($cloneExit -eq 0) {
+                break
+            }
+            
+            $errStr = $cloneOutput -join " "
+            if ($errStr -match "Permission denied|403|401|Authentication|not found|404") {
+                break
+            }
+        }
+        
         $ErrorActionPreference = $prevEAP
 
         if ($cloneExit -eq 0) {
@@ -1439,8 +1495,29 @@ function Invoke-QuickFrontend {
             Write-Host "  Cloning $($repo.Name)..." -ForegroundColor Yellow
             $prevEAP = $ErrorActionPreference
             $ErrorActionPreference = "Continue"
-            git clone $repo.Url $targetDir 2>&1 | Out-Null
-            $cloneExit = $LASTEXITCODE
+            
+            # Retry logic for transient network failures
+            $maxRetries = 3
+            $retryDelay = 5
+            $cloneExit = 1
+            
+            for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+                if ($attempt -gt 1) {
+                    Write-Host "  Retry $attempt/$maxRetries for $($repo.Name) in $retryDelay seconds..." -ForegroundColor Yellow
+                    Start-Sleep -Seconds $retryDelay
+                    if (Test-Path $targetDir) {
+                        Remove-Item $targetDir -Recurse -Force -ErrorAction SilentlyContinue
+                    }
+                }
+                
+                git clone $repo.Url $targetDir 2>&1 | Out-Null
+                $cloneExit = $LASTEXITCODE
+                
+                if ($cloneExit -eq 0) {
+                    break
+                }
+            }
+            
             $ErrorActionPreference = $prevEAP
             if ($cloneExit -eq 0) {
                 Write-Host "  $($repo.Name) cloned" -ForegroundColor Green
