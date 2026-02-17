@@ -1,0 +1,774 @@
+###############################################################################
+# Muvi Cinemas - Full Local Development Stack
+# Usage: docker compose up -d
+# Individual: docker compose up -d gateway-service identity-service
+# Rebuild:    docker compose up -d --build payment-service
+###############################################################################
+
+services:
+
+  # ===========================================================================
+  # INFRASTRUCTURE
+  # ===========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: muvi-postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: muvi
+      POSTGRES_PASSWORD: muvi_local
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-dbs.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/create-ulid.sql:/docker-entrypoint-initdb.d/create-ulid.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muvi"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: muvi-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  verdaccio:
+    image: verdaccio/verdaccio:5
+    container_name: muvi-verdaccio
+    restart: unless-stopped
+    ports:
+      - "4873:4873"
+    volumes:
+      - ./verdaccio/config.yaml:/verdaccio/conf/config.yaml
+      - verdaccio-storage:/verdaccio/storage/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: muvi-pgadmin
+    restart: unless-stopped
+    ports:
+      - "5051:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@muvi.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./docker/pgadmin-servers.json:/pgadmin4/servers.json
+      - ./docker/pgpass:/pgadmin4/pgpass
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      cp /pgadmin4/pgpass /tmp/pgpass &&
+      chmod 600 /tmp/pgpass &&
+      /entrypoint.sh
+      "
+
+  # ===========================================================================
+  # BACKEND SERVICES
+  # ===========================================================================
+
+  identity-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-identity-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-identity
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9230", "dist/src/main"]
+    ports:
+      - "5001:5001"
+      - "9230:9230"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-identity-main/.env
+    environment:
+      # Override networking for Docker
+      NODE_ENV: local
+      SERVER_HOST: 0.0.0.0
+      IDENTITY_SERVICE_HOST: 0.0.0.0
+      IDENTITY_SERVICE_PORT: 5001
+      SERVER_HTTP_PORT: "6001"
+      # DB → Frankfurt UAT RDS
+      DB_READ_HOST: muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_USERNAME: postgres
+      DB_WRITE_USERNAME: postgres
+      DB_READ_PASSWORD: yjBjtYRhpbbwhHoNH0H7
+      DB_WRITE_PASSWORD: yjBjtYRhpbbwhHoNH0H7
+      DB_DATABASE: muvi_identity_service
+      DB_PORT: 5432
+      # Redis → point to redis container
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Other services → container names
+      MAIN_SERVICE_HOST: main-service
+      MAIN_SERVICE_PORT: 5002
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: 5005
+      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_PORT: 5003
+      # JSON-parsed vars (must be valid JSON)
+      VISTA_REJECT_UNAUTHORIZED: "false"
+      DB_AUTO_LOAD_MODELS: "true"
+      DB_SYNC: "false"
+      DB_FORCE: "false"
+      DB_LOGGING: "false"
+      DB_UNDERSCORED: "true"
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      DB_DIALECT: postgres
+      DB_POOL_MIN: "0"
+      DB_POOL_MAX: "5"
+      REDIS_TTL: "3600"
+      JWT_SALT_WORK_FACTOR: "10"
+      JWT_SECRET_KEY: local-jwt-secret-key
+      REFRESH_SECRET_KEY: local-refresh-secret-key
+      NEW_REFRESH_SECRET_KEY: local-new-refresh-secret-key
+      REFRESH_JWT_EXPIRES_IN: "604800"
+      SUPER_ADMIN_EMAIL: admin@muvi.local
+      SUPER_ADMIN_PASSWORD: Admin1234
+      CMS_BASE_URL: "https://dummy.example.com"
+      CMS_RESET_PASSWORD: /reset-password
+      CMS_NEW_USER_TEMPLATE: tmpl-new-user
+      CMS_NEW_USER_TEMPLATE_AR: tmpl-new-user-ar
+      CMS_RESET_PASSWORD_TEMPLATE: tmpl-reset-pwd
+      CMS_RESET_PASSWORD_TEMPLATE_AR: tmpl-reset-pwd-ar
+      VISTA_RESET_PASSWORD_TEMPLATE: tmpl-vista-reset
+      VISTA_RESET_PASSWORD_TEMPLATE_AR: tmpl-vista-reset-ar
+      VERIFY_EMAIL_TEMPLATE: tmpl-verify-email
+      VERIFY_EMAIL_LOGIN_CR_TEMPLATE: tmpl-verify-login
+      VERIFY_EMAIL_LOGIN_CR_TEMPLATE_AR: tmpl-verify-login-ar
+      VERIFY_EMAIL_TEMPLATE_AR: tmpl-verify-email-ar
+      SENDGRID_API_KEY: SG.local-dummy-key
+      CMS_RESET_PASSWORD_EMAIL: admin@muvi.local
+      VISTA_RESET_PASSWORD_EMAIL: admin@muvi.local
+      DEFAULT_PASSWORD: Default1234
+      UNIFONIC_APP_ID: local-unifonic-app-id
+      UNIFONIC_AUTH_TOKEN: local-unifonic-auth-token
+      UNIFONIC_ANDROID_APP_ID: local-unifonic-android-app
+      UNIFONIC_ANDROID_AUTH_TOKEN: local-unifonic-android-auth
+      UNIFONIC_CHANNEL: sms
+      UNIFONIC_URL: "https://dummy.example.com"
+      VISTA_ANDROID_TOKEN: local-vista-token
+      VISTA_HUAWEI_TOKEN: local-vista-token
+      VISTA_WEBSITE_TOKEN: local-vista-token
+      VISTA_IOS_TOKEN: local-vista-token
+      VISTA_BASE_URL: "https://dummy.example.com"
+      DATADOG_API_KEY: local-dd-api-key
+      EMAIL_SENDER_NAME: Muvi
+      VERSION: "1.0.0"
+      SENTRY_DSN: "https://key@o0.ingest.sentry.io/0"
+      FB_USER_JWT_EXPIRES_IN: "86400"
+      USER_KEY_EXPIRES_IN: "86400"
+      TAQNYAT_API_KEY: local-taqnyat-api-key
+      TAQNYAT_URL: "https://dummy.example.com"
+      TAQNYAT_ANDROID_AUTOFILL_HASH: local-taqnyat-hash
+      BRAZE_BASE_URL: "https://rest.iad-01.braze.com"
+      BRAZE_API_KEY: local-braze-key
+      JWT_EXPIRES_IN: "3600"
+      RESET_JWT_EXPIRES_IN: "900"
+      UNIFONIC_LENGTH: "4"
+      VISTA_CLUB_ID: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  main-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-main-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-main
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9231", "dist/src/main"]
+    ports:
+      - "5002:5002"
+      - "9231:9231"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-main-main/.env
+    environment:
+      NODE_ENV: local
+      MAIN_SERVICE_HOST: 0.0.0.0
+      MAIN_SERVICE_PORT: 5002
+      SERVER_HTTP_PORT: "6002"
+      SERVER_HOST: 0.0.0.0
+      DB_READ_HOST: muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_USERNAME: postgres
+      DB_WRITE_USERNAME: postgres
+      DB_READ_PASSWORD: 8Jm5b6mPB5eJitDhCgR2
+      DB_WRITE_PASSWORD: 8Jm5b6mPB5eJitDhCgR2
+      DB_DATABASE: muvi_main_service
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      IDENTITY_SERVICE_HOST: identity-service
+      IDENTITY_SERVICE_PORT: 5001
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: 5005
+      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_PORT: 5003
+      OFFER_SERVICE_HOST: offer-service
+      OFFER_SERVICE_PORT: 5006
+      FB_SERVICE_HOST: fb-service
+      FB_SERVICE_PORT: 5004
+      # Extra Redis hosts
+      BULK_REFUND_BOOKING_REDIS_HOST: redis
+      BULK_REFUND_BOOKING_REDIS_PORT: 6379
+      # JSON-parsed vars (must be valid JSON)
+      PROCESS_GENERATE_TICKET: "false"
+      VISTA_REJECT_UNAUTHORIZED: "false"
+      DB_AUTO_LOAD_MODELS: "true"
+      DB_SYNC: "false"
+      DB_FORCE: "false"
+      DB_LOGGING: "false"
+      DB_UNDERSCORED: "true"
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      DB_DIALECT: postgres
+      DB_POOL_MIN: "0"
+      DB_POOL_MAX: "5"
+      REDIS_TTL: "3600"
+      DATADOG_BATCH_COUNT: "10"
+      DATADOG_API_KEY: local-dd-api-key
+      BULK_REFUND_TEMPLATE_AR: tmpl-bulk-refund-ar
+      BULK_REFUND_TEMPLATE_EN: tmpl-bulk-refund-en
+      REFUND_PAYMENT_TEMPLATE_EN: tmpl-refund-en
+      REFUND_PAYMENT_TEMPLATE_AR: tmpl-refund-ar
+      PRIVATE_BOOKING_SUBJECT: Private Booking
+      PRIVATE_BOOKING_CATEGORY: booking
+      APPLE_WALLET_CER_FILE_NAME: pass.cer
+      APPLE_WALLET_WWDRCAG4_FILE_NAME: AppleWWDRCAG4.cer
+      APPLE_WALLET_TEAM_IDENTIFIER: TEAM123456
+      APPLE_WALLET_ORGANIZATION_NAME: Muvi Cinemas
+      APPLE_WALLET_PASS_TYPE_IDENTIFIER: pass.com.muvi
+      APPLE_WALLET_DEFAULT_IMAGE: default.png
+      TABBY_EXTENDED_TIME_IN_3DS: "300"
+      GOOGLE_API_KEY: local-google-api-key
+      WEBSITE_BASE_URL: "https://dummy.example.com"
+      HUAWEI_SAFTY_DETECT_APP_ID: local-huawei-app-id
+      HUAWEI_SAFTY_DETECT_CLIENT_SECRET: local-huawei-secret
+      CMS_SYNC_REPORT_TEMPLATE: tmpl-cms-sync
+      PRIVATE_BOOKING_TEMPLATE: tmpl-private-booking
+      CMS_SYNC_REPORT_TEMPLATE_AR: tmpl-cms-sync-ar
+      PRIVATE_BOOKING_TEMPLATE_AR: tmpl-private-booking-ar
+      BOOKING_TEMPLATE: tmpl-booking
+      BOOKING_TEMPLATE_AR: tmpl-booking-ar
+      SENDGRID_API_KEY: SG.local-dummy-key
+      CMS_SYNC_REPORT_EMAIL: admin@muvi.local
+      RE_CAPTCHA_BASE_URL: "https://www.google.com/recaptcha"
+      VISTA_CLUB_ID: local-club-id
+      VISTA_BASE_URL: "https://dummy.example.com"
+      VISTA_IOS_TOKEN: local-vista-token
+      VISTA_WEBSITE_TOKEN: local-vista-token
+      VISTA_HUAWEI_TOKEN: local-vista-token
+      VISTA_ANDROID_TOKEN: local-vista-token
+      VISTA_KIOSK_TOKEN: local-vista-token
+      SUPER_ADMIN_EMAIL: admin@muvi.local
+      S3_ACCESS_KEY_ID: local-s3-key
+      S3_SECRET_ACCESS_KEY: local-s3-secret
+      S3_BUCKET: muvi-local-bucket
+      S3_REGION: me-south-1
+      AWS_SECRET_KEY: local-aws-secret
+      FRESHDESK_BASE_URL: "https://dummy.example.com"
+      FRESHDESK_API_KEY: local-freshdesk-key
+      FRESHDESK_DEFAULT_CINEMA_NAME_AR: muvi-cinema-ar
+      FRESHDESK_DEFAULT_CITY: Riyadh
+      RE_CAPTCHA_IOS_SECRET: local-recaptcha-secret
+      RE_CAPTCHA_WEBSITE_SECRET: local-recaptcha-secret
+      RE_CAPTCHA_ANDROID_SECRET: local-recaptcha-secret
+      EMAIL_SENDER_NAME: Muvi
+      DATADOG_BATCH_INTERVAL: "5000"
+      DATADOG_DDSOURCE: nodejs
+      DATADOG_HOST: localhost
+      DATADOG_PATH: /api/v2/logs
+      DATADOG_SERVICE: main-service
+      VERSION: "1.0.0"
+      SURVEY_BOOKING_FETCH_DATE: "30"
+      SYNC_TIME_OUT_IN_SEC: "300"
+      ZATCA_SELLER_NAME: Muvi Cinemas
+      COUNT_MINUTES_AFTER_FINISH_FILM: "30"
+      CHECKOUT_EXTENDED_TIME_IN_3DS: "300"
+      COUNT_MINUTES_SINCE_START_FILM: "30"
+      COUNT_DAYS_EACH_SESSION: "7"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  payment-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-payment-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-payment
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9232", "dist/src/main"]
+    ports:
+      - "5003:5003"
+      - "9232:9232"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-payment-main/.env
+    environment:
+      NODE_ENV: local
+      PAYMENT_SERVICE_HOST: 0.0.0.0
+      PAYMENT_SERVICE_PORT: 5003
+      SERVER_HTTP_PORT: "6003"
+      SERVER_HOST: 0.0.0.0
+      DB_READ_HOST: muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_USERNAME: postgres
+      DB_WRITE_USERNAME: postgres
+      DB_READ_PASSWORD: 12mGGVdrTOO4bdV4DvU5
+      DB_WRITE_PASSWORD: 12mGGVdrTOO4bdV4DvU5
+      DB_DATABASE: muvi_payment_service
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REFUND_REDIS_HOST: redis
+      REFUND_REDIS_PORT: 6379
+      E_WALLET_REDIS_HOST: redis
+      E_WALLET_REDIS_PORT: 6379
+      GENERATE_TICKET_REDIS_HOST: redis
+      GENERATE_TICKET_REDIS_PORT: 6379
+      IDENTITY_SERVICE_HOST: identity-service
+      IDENTITY_SERVICE_PORT: 5001
+      MAIN_SERVICE_HOST: main-service
+      MAIN_SERVICE_PORT: 5002
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: 5005
+      # JSON-parsed vars (must be valid JSON)
+      DB_AUTO_LOAD_MODELS: "true"
+      DB_SYNC: "false"
+      DB_FORCE: "false"
+      DB_LOGGING: "false"
+      DB_UNDERSCORED: "true"
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      DB_DIALECT: postgres
+      DB_POOL_MIN: "0"
+      DB_POOL_MAX: "5"
+      DAYS_COUNT_WALLET_TRANSACTION_REMINDER: "7"
+      EXPIRE_TOP_UP_REQUEST: "3600"
+      VISTA_BASE_URL: "https://dummy.example.com"
+      VISTA_IOS_TOKEN: local-vista-token
+      VISTA_IOS_CLIENT_ID: local-vista-client
+      VISTA_WEBSITE_TOKEN: local-vista-token
+      VISTA_WEBSITE_CLIENT_ID: local-vista-client
+      VISTA_HUAWEI_TOKEN: local-vista-token
+      VISTA_HUAWEI_CLIENT_ID: local-vista-client
+      VISTA_ANDROID_TOKEN: local-vista-token
+      VISTA_ANDROID_CLIENT_ID: local-vista-client
+      SENDER_EMAIL: noreply@muvi.local
+      SENDGRID_API_KEY: SG.local-dummy-key
+      REFUND_PAYMENT_SUBJECT: Refund Payment
+      REFUND_PAYMENT_TEMPLATE: tmpl-refund-payment
+      REFUND_PAYMENT_TEMPLATE_AR: tmpl-refund-payment-ar
+      EMAIL_SENDER_NAME: Muvi
+      TRANSACTION_BASE_URL: "https://dummy.example.com"
+      DATADOG_API_KEY: local-dd-api-key
+      CHECKOUT_APPLE_PAY_CER: local-apple-pay-cer
+      CHECKOUT_APPLE_PAY_KEY: local-apple-pay-key
+      CHECKOUT_APPLE_PAY_MERCHANT_IDENTIFIER: merchant.com.muvi
+      HYPER_PAY_APPLE_PAY_CER: local-hp-apple-cer
+      HYPER_PAY_APPLE_PAY_INITIATIVE_CONTEXT: muvi.com
+      HYPER_PAY_APPLE_PAY_KEY: local-hp-apple-key
+      HYPER_PAY_APPLE_PAY_MERCHANT_IDENTIFIER: merchant.com.muvi
+      APPLE_PAY_DOMAIN_NAME: muvi.com
+      APPLE_PAY_VALIDATE_SESSION_URL: "https://apple-pay-gateway.apple.com/paymentservices/paymentSession"
+      CHECKOUT_FAILED_END_POINT: /payment/failed
+      CHECKOUT_PRIMARY_KEY: local-checkout-pk
+      CHECKOUT_SECRET_KEY: local-checkout-sk
+      CHECKOUT_SUCCESS_END_POINT: /payment/success
+      CHECKOUT_WEBHOOKS_API: "https://dummy.example.com/webhooks"
+      HYPER_PAY_BASE_URL: "https://dummy.example.com"
+      HYPER_PAY_CALLBACK_END_POINT: /payment/callback
+      HYPER_PAY_ENTITY_ID: local-hp-entity
+      HYPER_PAY_TOKEN: local-hp-token
+      HYPER_SECRET_KEY: local-hp-secret
+      VERSION: "1.0.0"
+      PAYFORT_ACCESS_CODE: local-payfort-access
+      PAYFORT_MERCHANT_IDENTIFIER: local-payfort-merchant
+      PAYFORT_BASE_URL: "https://dummy.example.com"
+      PAYFORT_CALLBACK_END_POINT: /payment/payfort/callback
+      PAYFORT_SHA_TYPE: SHA256
+      PAYFORT_SHA_REQUEST_PHRASE: local-payfort-req-phrase
+      PAYFORT_SHA_RESPONSE_PHRASE: local-payfort-res-phrase
+      NEARPAY_API_KEY: local-nearpay-key
+      NEARPAY_BASE_URL: "https://dummy.example.com"
+      NEARPAY_PRIVATE_KEY: local-nearpay-private-key
+      NEARPAY_CLIENT_UUID: local-nearpay-client-uuid
+      EXPORT_FINANCE_REPORT_LAMBDA_FUNCTION_NAME: local-lambda-fn
+      E_WALLET_FINANCIAL_REPORT_TEMPLATE: tmpl-ewallet-report
+      E_WALLET_FINANCIAL_REPORT_TEMPLATE_AR: tmpl-ewallet-report-ar
+      PAYFORT_APPLE_PAY_KEY: local-payfort-apple-key
+      PAYFORT_APPLE_PAY_CER: local-payfort-apple-cer
+      PAYFORT_APPLE_PAY_MERCHANT_IDENTIFIE: local-payfort-apple-merchant
+      PAYFORT_APPLE_PAY_INITIATIVE_CONTEXT: muvi.com
+      WEBHOOK_ENDPOINT: "https://dummy.example.com/webhook"
+      WEBHOOK_API_KEY: local-webhook-api-key
+      WEBHOOK_TIMEOUT: "30000"
+      WEBHOOK_RETRY_COUNT: "3"
+      TABBY_BASE_URL: "https://dummy.example.com"
+      TABBY_API_KEY: local-tabby-api-key
+      TABBY_MERCHANT_CODE: local-tabby-merchant
+      TABBY_CALLBACK_END_POINT: /payment/tabby/callback
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  fb-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-fb-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-fb
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9233", "dist/src/main"]
+    ports:
+      - "5004:5004"
+      - "9233:9233"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-fb-main/.env
+    environment:
+      NODE_ENV: local
+      FB_SERVICE_HOST: 0.0.0.0
+      FB_SERVICE_PORT: 5004
+      SERVER_HTTP_PORT: "6004"
+      SERVER_HOST: 0.0.0.0
+      DB_READ_HOST: muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_USERNAME: postgres
+      DB_WRITE_USERNAME: postgres
+      DB_READ_PASSWORD: AEZmOiL4q7DWQYm9a2g2
+      DB_WRITE_PASSWORD: AEZmOiL4q7DWQYm9a2g2
+      DB_DATABASE: muvi_fb_db
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      IDENTITY_SERVICE_HOST: identity-service
+      IDENTITY_SERVICE_PORT: 5001
+      MAIN_SERVICE_HOST: main-service
+      MAIN_SERVICE_PORT: 5002
+      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_PORT: 5003
+      # JSON-parsed vars (must be valid JSON)
+      VISTA_REJECT_UNAUTHORIZED: "false"
+      DB_AUTO_LOAD_MODELS: "true"
+      DB_SYNC: "false"
+      DB_FORCE: "false"
+      DB_LOGGING: "false"
+      DB_UNDERSCORED: "true"
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      DB_DIALECT: postgres
+      DB_POOL_MIN: "0"
+      DB_POOL_MAX: "5"
+      SENDGRID_API_KEY: SG.local-dummy-key
+      VISTA_BASE_URL: "https://dummy.example.com"
+      VISTA_IOS_TOKEN: local-vista-token
+      VISTA_WEBSITE_TOKEN: local-vista-token
+      VISTA_HUAWEI_TOKEN: local-vista-token
+      VISTA_KIOSK_TOKEN: local-vista-token
+      VISTA_ANDROID_TOKEN: local-vista-token
+      S3_ACCESS_KEY_ID: local-s3-key
+      S3_SECRET_ACCESS_KEY: local-s3-secret
+      S3_BUCKET: muvi-local-bucket
+      S3_REGION: me-south-1
+      AWS_SECRET_KEY: local-aws-secret
+      DATADOG_API_KEY: local-dd-api-key
+      DATADOG_DDSOURCE: nodejs
+      DATADOG_HOST: localhost
+      DATADOG_PATH: /api/v2/logs
+      DATADOG_SERVICE: fb-service
+      EMAIL_SENDER_NAME: Muvi
+      CMS_SYNC_REPORT_EMAIL: admin@muvi.local
+      FB_ORDER_TEMPLATE: tmpl-fb-order
+      FB_ORDER_TEMPLATE_AR: tmpl-fb-order-ar
+      SENDER_EMAIL: noreply@muvi.local
+      ZATCA_SELLER_NAME: Muvi Cinemas
+      DELIVERY_WINDOW_VALUE: "30"
+      GENERATE_NEARPAY_TOKEN_DURATION_IN_DAYS: "30"
+      CLOUDFRONT_DOMAIN: ""
+      REDIS_TTL: "3600"
+      DATADOG_BATCH_COUNT: "10"
+      DATADOG_BATCH_INTERVAL: "5000"
+      KIOSK_KEY_LENGTH: "6"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-notification-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-notification
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9234", "dist/src/main"]
+    ports:
+      - "5005:5005"
+      - "9234:9234"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-notification-main/.env
+    environment:
+      NODE_ENV: local
+      NOTIFICATION_SERVICE_HOST: 0.0.0.0
+      NOTIFICATION_SERVICE_PORT: 5005
+      SERVER_HTTP_PORT: "6005"
+      SERVER_HOST: 0.0.0.0
+      DB_READ_HOST: muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_USERNAME: postgres
+      DB_WRITE_USERNAME: postgres
+      DB_READ_PASSWORD: fHOohyG91vpi1rXSnuVM
+      DB_WRITE_PASSWORD: fHOohyG91vpi1rXSnuVM
+      DB_DATABASE: muvi_notification_service
+      DB_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CMS_REDIS_HOST: redis
+      CMS_REDIS_PORT: 6379
+      IDENTITY_SERVICE_HOST: identity-service
+      IDENTITY_SERVICE_PORT: 5001
+      MAIN_SERVICE_HOST: main-service
+      MAIN_SERVICE_PORT: 5002
+      OFFER_SERVICE_HOST: offer-service
+      OFFER_SERVICE_PORT: 5006
+      # JSON-parsed vars (must be valid JSON)
+      USE_LOGGED_IN_SEGMENT: "true"
+      DB_AUTO_LOAD_MODELS: "true"
+      DB_SYNC: "false"
+      DB_FORCE: "false"
+      DB_LOGGING: "false"
+      DB_UNDERSCORED: "true"
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      DB_DIALECT: postgres
+      DB_POOL_MIN: "0"
+      DB_POOL_MAX: "5"
+      REFUND_TEMPLATE: tmpl-refund
+      REFUND_TEMPLATE_AR: tmpl-refund-ar
+      REMINDER_TEMPLATE: tmpl-reminder
+      REMINDER_TEMPLATE_AR: tmpl-reminder-ar
+      TC_URL: "https://dummy.example.com/terms"
+      MY_WALLET_URL: "https://dummy.example.com/wallet"
+      MY_CASHBACK_URL: "https://dummy.example.com/cashback"
+      AVIUS_BASE_URL: "https://dummy.example.com"
+      AVIUS_AUTH_URL: "https://dummy.example.com/auth"
+      AVIUS_SURVEY_ID: local-survey-id
+      AVIUS_TOKEN: local-avius-token
+      NOTIFICATION_BATCH_SIZE: "100"
+      ONESIGNAL_API_KEY: local-onesignal-key
+      ONESIGNAL_APP_ID: local-onesignal-app
+      DATADOG_API_KEY: local-dd-api-key
+      DATADOG_BATCH_COUNT: "10"
+      DATADOG_BATCH_INTERVAL: "5000"
+      DATADOG_DDSOURCE: nodejs
+      DATADOG_HOST: localhost
+      DATADOG_PATH: /api/v2/logs
+      DATADOG_SERVICE: notification-service
+      VERSION: "1.0.0"
+      EMAIL_SENDER_NAME: Muvi
+      SURVEY_EMAIL_TEMPLATE: tmpl-survey
+      SURVEY_EMAIL_TEMPLATE_AR: tmpl-survey-ar
+      SENDER_EMAIL: noreply@muvi.local
+      SENDGRID_API_KEY: SG.local-dummy-key
+      BRAZE_API_KEY: local-braze-key
+      BRAZE_BASE_URL: "https://rest.iad-01.braze.com"
+      BRAZE_LOGGED_IN_SEGMENT_ID: local-braze-segment
+      BRAZE_GUEST_SEGMENT_ID: local-braze-guest-segment
+      NOTIFICATIONS_LIFESPAN_DAYS: "90"
+      NOTIFICATIONS_CLEANUP_BATCH_SIZE: "500"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  offer-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-offer
+    container_name: muvi-offer
+    restart: unless-stopped
+    ports:
+      - "5006:5006"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-offer/.env
+    environment:
+      ENV: LOCAL
+      SERVICE_NAME: offer-service
+      GRPC_HOST: 0.0.0.0
+      GRPC_PORT: 5006
+      # DB — Go service uses different var names
+      DB_READ_HOST: muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_PORT: 5432
+      DB_READ_USER: postgres
+      DB_READ_PASSWORD: 3irkuEqCBpTMPTUtNeBr
+      DB_WRITE_HOST: muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_WRITE_PORT: 5432
+      DB_WRITE_USER: postgres
+      DB_WRITE_PASSWORD: 3irkuEqCBpTMPTUtNeBr
+      DB_NAME: muvi_offer_service
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Other services
+      MAIN_HOST: main-service
+      MAIN_PORT: 5002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  gateway-service:
+    build:
+      context: ./main-backend-microservices/alpha-muvi-gateway-main
+      args:
+        NPM_TOKEN: "not-needed"
+    container_name: muvi-gateway
+    restart: unless-stopped
+    command: ["node", "--inspect=0.0.0.0:9229", "dist/src/main"]
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    env_file:
+      - ./main-backend-microservices/alpha-muvi-gateway-main/.env
+    environment:
+      NODE_ENV: local
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 3000
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # All backend services
+      IDENTITY_SERVICE_HOST: identity-service
+      IDENTITY_SERVICE_PORT: 5001
+      MAIN_SERVICE_HOST: main-service
+      MAIN_SERVICE_PORT: 5002
+      PAYMENT_SERVICE_HOST: payment-service
+      PAYMENT_SERVICE_PORT: 5003
+      FB_SERVICE_HOST: fb-service
+      FB_SERVICE_PORT: 5004
+      NOTIFICATION_SERVICE_HOST: notification-service
+      NOTIFICATION_SERVICE_PORT: 5005
+      OFFER_SERVICE_HOST: offer-service
+      OFFER_SERVICE_PORT: 5006
+      # JSON-parsed vars (must be valid JSON)
+      DATADOG_SSL: "false"
+      DATADOG_BATCH: "false"
+      SUPPRESS_NO_CONFIG_WARNING: "true"
+      # --- Local dev dummy values (pass env validation) ---
+      BASE_URLS: "https://dummy.example.com"
+      API_KEY: local-api-key
+      UNIFONIC_LENGTH: "4"
+      VERSION: "1.0.0"
+      S3_ACCESS_KEY_ID: local-s3-key
+      S3_SECRET_ACCESS_KEY: local-s3-secret
+      S3_BUCKET: muvi-local-bucket
+      S3_REGION: me-south-1
+      AWS_SECRET_KEY: local-aws-secret
+      WEBSITE_BASE_URL: "https://dummy.example.com"
+      WEBSITE_CHECKOUT_ROUTE: /checkout
+      WEBSITE_TOP_UP_ROUTE: /top-up
+      HYPERPAY_SECRET_KEY: local-hp-secret
+      TABBY_SECRET_KEY: local-tabby-secret
+      CHECKOUT_SECRET_KEY: local-checkout-secret
+      REDIS_TTL: "3600"
+      DATADOG_API_KEY: local-dd-api-key
+      DATADOG_BATCH_COUNT: "10"
+      DATADOG_BATCH_INTERVAL: "5000"
+      DATADOG_DDSOURCE: nodejs
+      DATADOG_HOST: localhost
+      DATADOG_PATH: /api/v2/logs
+      DATADOG_SERVICE: gateway-service
+      THROTTLE_LIMIT: "100"
+      THROTTLE_TTL: "60"
+      THROTTLE_ORDER_TTL: "60"
+      THROTTLE_ORDER_LIMIT: "10"
+    depends_on:
+      - identity-service
+      - main-service
+      - payment-service
+      - fb-service
+      - notification-service
+      - offer-service
+
+  # ===========================================================================
+  # FRONTEND SERVICES
+  # ===========================================================================
+
+  website:
+    image: node:18-alpine
+    container_name: muvi-website
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "yarn install 2>/dev/null || yarn install && npx next dev -p 3002 -H 0.0.0.0"
+    ports:
+      - "3002:3002"
+    volumes:
+      - ./web/alpha-muvi-website-main:/app
+      - website_node_modules:/app/node_modules
+      - ./web/alpha-muvi-website-main/.next:/app/.next
+    environment:
+      NODE_ENV: local
+      NPM_TOKEN: not-needed
+      NEXT_PUBLIC_API_URL: http://gateway-service:3000/api/v1/
+      NEXT_PUBLIC_BASE_URL: http://localhost:3002/
+    depends_on:
+      - gateway-service
+
+  cms:
+    image: node:18-alpine
+    container_name: muvi-cms
+    restart: unless-stopped
+    working_dir: /app
+    command: sh -c "yarn install 2>/dev/null || yarn install && npx vite --host 0.0.0.0 --port 5173 --open false"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./web/alpha-muvi-cms-main:/app
+      - cms_node_modules:/app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:3000/api/v1
+      NPM_TOKEN: not-needed
+      BROWSER: none
+    depends_on:
+      - gateway-service
+
+volumes:
+  pgdata:
+  verdaccio-storage:
+  pgadmin-data:
+  website_node_modules:
+  cms_node_modules:

@@ -1,0 +1,33 @@
+import { ConnectAPITokenKeyType, IVistaModuleOptions } from '../interfaces/i-vista-module-options';
+import { HttpService } from '@nestjs/axios';
+import { OrderSummary } from './interfaces/get-order-status-response.interface';
+import { IPaymentDetails } from './interfaces/payment-details.interface';
+import { VistaCreateOrderRequest } from './interfaces/vista-create-order-request';
+import { VistaCreateOrderResponse } from './interfaces/vista-create-order-response';
+import { VistaAddConcessionItemsRequest } from './interfaces/vista-add-concessions-items-request';
+import { AddConcessionsItemsResponse } from './interfaces/vista-add-concessions-items-response';
+import { VistaCompleteOrderRequest } from './interfaces/vista-complete-order-request';
+import { CompleteOrderResponse } from './interfaces/vista-complete-order-response';
+import { MarkOrderCollectedRequest } from './interfaces/vista-mark-order-collected-request';
+import { MarkOrderCollectedResponse } from './interfaces/vista-mark-order-collected.response';
+import { GetSingleBookingRequest, GetSingleBookingResponse } from './interfaces/vista-get-single-booking.interface';
+export declare class OrderService {
+    private options;
+    private httpService;
+    constructor(options: IVistaModuleOptions, httpService: HttpService);
+    private getConnectObject;
+    getOrderStatus(userSessionId: string, platform: ConnectAPITokenKeyType): Promise<OrderSummary>;
+    refundBooking(bookingId: string, cinemaId: string, platform: ConnectAPITokenKeyType, refundReason: string, paymentDetails: IPaymentDetails, ticketsSequence: number[]): Promise<void>;
+    private handelResponse;
+    initializeOrder(data: VistaCreateOrderRequest, platform: ConnectAPITokenKeyType): Promise<VistaCreateOrderResponse>;
+    addConcessions(data: VistaAddConcessionItemsRequest, platform: ConnectAPITokenKeyType): Promise<AddConcessionsItemsResponse>;
+    completeOrder(data: VistaCompleteOrderRequest, platform: ConnectAPITokenKeyType): Promise<CompleteOrderResponse>;
+    markCollected(data: MarkOrderCollectedRequest, platform: ConnectAPITokenKeyType): Promise<MarkOrderCollectedResponse>;
+    getSingleBooking(data: GetSingleBookingRequest, platform: ConnectAPITokenKeyType): Promise<GetSingleBookingResponse>;
+    private getToken;
+    private handleCreateOrderResponse;
+    private handleAddConcessionsItemsResponse;
+    private handleCompleteOrderResponse;
+    private handleMarkOrderCollectedResponse;
+    private handleGetSingleBookingResponse;
+}

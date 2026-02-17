@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — Backend Audit Report</title>
+<style>
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #0a0e1a; --bg2: #111827; --bg3: #1a2035; --bg4: #232a3e;
+    --text: #e2e8f0; --text2: #94a3b8; --text3: #64748b;
+    --accent: #818cf8; --accent2: #6366f1; --accent3: #4f46e5;
+    --green: #34d399; --red: #f87171; --yellow: #fbbf24; --blue: #60a5fa; --purple: #a78bfa;
+    --border: #1e293b; --radius: 12px;
+  }
+  body { font-family: 'Inter', -apple-system, system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+  code { background: var(--bg4); padding: 2px 7px; border-radius: 4px; font-size: 0.85em; color: var(--accent); font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+
+  /* Hero */
+  .hero { background: linear-gradient(135deg, var(--accent3) 0%, #7c3aed 50%, #1e1b4b 100%); padding: 80px 0 60px; text-align: center; }
+  .hero h1 { font-size: 3rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+  .subtitle { color: rgba(255,255,255,.75); font-size: 1.2rem; margin-bottom: 40px; }
+  .hero-stats { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+  .stat-box { background: rgba(255,255,255,.12); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.15); border-radius: var(--radius); padding: 20px 28px; min-width: 140px; }
+  .stat-num { display: block; font-size: 2.2rem; font-weight: 800; color: #fff; }
+  .stat-label { font-size: .8rem; color: rgba(255,255,255,.7); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* Architecture note */
+  .arch-note { padding: 40px 0 0; }
+  .note-card { background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(124,58,237,.1)); border: 1px solid rgba(99,102,241,.3); border-radius: var(--radius); padding: 28px 32px; }
+  .note-card h3 { color: var(--accent); margin-bottom: 8px; font-size: 1.1rem; }
+  .note-card p { color: var(--text2); line-height: 1.8; }
+
+  /* TOC */
+  .toc { padding: 50px 0 30px; }
+  .toc h2 { font-size: 1.4rem; margin-bottom: 20px; color: var(--text2); }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+  .toc-item { display: flex; align-items: center; gap: 12px; padding: 14px 20px; background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; text-decoration: none; color: var(--text); transition: all .2s; }
+  .toc-item:hover { border-color: var(--accent); background: var(--bg3); }
+  .toc-icon { font-size: 1.4rem; }
+
+  /* Sections */
+  .section { padding: 60px 0; }
+  .section-alt { background: var(--bg2); }
+  .section-title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 16px; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; background: var(--accent3); border-radius: 10px; font-size: 1.1rem; color: #fff; flex-shrink: 0; }
+  .section-desc { color: var(--text2); margin-bottom: 32px; font-size: 1.05rem; }
+  .cat-heading { font-size: 1.3rem; color: var(--accent); margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+
+  /* Integration cards */
+  .integration-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; transition: border-color .2s; }
+  .integration-card:hover { border-color: var(--accent); }
+  .card-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+  .card-icon { font-size: 2rem; }
+  .card-title-wrap h4 { font-size: 1.2rem; font-weight: 700; }
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+  .badge { padding: 2px 10px; border-radius: 20px; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+  .svc-badge { background: rgba(96,165,250,.15); color: var(--blue); border: 1px solid rgba(96,165,250,.3); }
+  .critical-badge { background: rgba(248,113,113,.15); color: var(--red); border: 1px solid rgba(248,113,113,.3); }
+  .card-purpose { color: var(--text2); margin-bottom: 16px; }
+
+  .card-details { display: grid; grid-template-columns: 1fr; gap: 6px; margin-bottom: 16px; }
+  .detail-row { display: flex; gap: 12px; font-size: .9rem; }
+  .detail-label { color: var(--text3); min-width: 80px; flex-shrink: 0; font-weight: 600; }
+  .detail-value { color: var(--text); }
+  .env-vars { display: flex; flex-wrap: wrap; gap: 4px; }
+  .env-vars code { font-size: .78rem; }
+
+  /* Endpoint tables */
+  .endpoints-table { overflow-x: auto; margin-bottom: 12px; }
+  .endpoints-table table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+  .endpoints-table th { background: var(--bg4); padding: 8px 12px; text-align: left; color: var(--text3); font-weight: 600; text-transform: uppercase; font-size: .75rem; letter-spacing: .5px; }
+  .endpoints-table td { padding: 7px 12px; border-top: 1px solid var(--border); }
+  .ep-path { font-family: 'JetBrains Mono', monospace; font-size: .83rem; color: var(--text); word-break: break-all; }
+  .method { padding: 2px 8px; border-radius: 4px; font-size: .72rem; font-weight: 700; text-transform: uppercase; }
+  .method-get { background: rgba(52,211,153,.15); color: var(--green); }
+  .method-post { background: rgba(96,165,250,.15); color: var(--blue); }
+  .method-sdk { background: rgba(167,139,250,.15); color: var(--purple); }
+
+  .file-list { display: flex; flex-direction: column; gap: 2px; }
+  .file-path { font-size: .82rem; color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+
+  /* Cron cards */
+  .cron-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .cron-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; transition: border-color .2s; }
+  .cron-card:hover { border-color: var(--yellow); }
+  .cron-header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .cron-icon { font-size: 1.5rem; }
+  .cron-header h4 { font-size: 1.05rem; }
+  .cron-purpose { color: var(--text2); font-size: .9rem; margin-bottom: 12px; }
+  .cron-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .cron-detail { display: flex; gap: 8px; font-size: .85rem; align-items: center; }
+  .cron-label { color: var(--text3); font-weight: 600; min-width: 65px; }
+
+  /* Queue cards */
+  .queue-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; transition: border-color .2s; }
+  .queue-card:hover { border-color: var(--green); }
+  .queue-header { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+  .queue-icon { font-size: 2rem; }
+  .queue-header h4 { font-size: 1.15rem; }
+  .queue-name-badge { background: var(--bg4); border: 1px solid var(--border); padding: 2px 10px; border-radius: 6px; font-family: monospace; font-size: .82rem; color: var(--green); margin-right: 6px; }
+  .queue-purpose { color: var(--text2); margin-bottom: 14px; }
+  .queue-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .queue-detail { display: flex; gap: 8px; font-size: .88rem; }
+  .queue-label { color: var(--text3); font-weight: 600; min-width: 70px; }
+
+  /* CLI cards */
+  .cli-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .cli-card:hover { border-color: var(--purple); }
+  .cli-card h4 { margin-bottom: 6px; }
+  .cli-card p { color: var(--text2); margin-bottom: 14px; font-size: .95rem; }
+  .cli-details { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .cli-detail { display: flex; gap: 8px; font-size: .88rem; }
+  .cli-label { color: var(--text3); font-weight: 600; min-width: 80px; }
+
+  /* Matrix table */
+  .matrix-table { overflow-x: auto; }
+  .matrix-table table { width: 100%; border-collapse: collapse; }
+  .matrix-table th { background: var(--bg4); padding: 12px 16px; text-align: left; color: var(--text3); font-weight: 600; text-transform: uppercase; font-size: .78rem; letter-spacing: .5px; }
+  .matrix-table td { padding: 12px 16px; border-top: 1px solid var(--border); font-size: .9rem; color: var(--text2); }
+  .matrix-table td strong { color: var(--text); }
+  .count-cell { color: var(--accent); font-weight: 700; text-align: center; }
+
+  /* Footer */
+  .footer { background: var(--bg); border-top: 1px solid var(--border); padding: 40px 0; text-align: center; }
+  .footer-stats { display: flex; gap: 32px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+  .footer-stat { color: var(--accent); font-weight: 700; font-size: 1rem; }
+  .footer-note { color: var(--text3); font-size: .85rem; }
+
+  @media (max-width: 768px) {
+    .hero h1 { font-size: 2rem; }
+    .hero-stats { gap: 10px; }
+    .stat-box { min-width: 100px; padding: 14px 16px; }
+    .stat-num { font-size: 1.6rem; }
+    .section-title { font-size: 1.5rem; }
+    .cron-grid { grid-template-columns: 1fr; }
+  }
+  
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Backend Audit Report</h1>
+    <p class="subtitle">Third-Party Integrations, Cron Jobs, Queues & Background Tasks</p>
+    <div class="hero-stats">
+      <div class="stat-box"><span class="stat-num">23</span><span class="stat-label">Third-Party Services</span></div>
+      <div class="stat-box"><span class="stat-num">15</span><span class="stat-label">Scheduled Cron Jobs</span></div>
+      <div class="stat-box"><span class="stat-num">6</span><span class="stat-label">Bull Queues</span></div>
+      <div class="stat-box"><span class="stat-num">2</span><span class="stat-label">CLI Sync Jobs</span></div>
+      <div class="stat-box"><span class="stat-num">7</span><span class="stat-label">Microservices</span></div>
+    </div>
+  </div>
+</header>
+<section class="arch-note">
+  <div class="container">
+    <div class="note-card">
+      <h3>Key Architectural Observation</h3>
+      <p>This backend uses <strong>zero @nestjs/schedule decorators</strong> (<code>@Cron</code>, <code>@Interval</code>, <code>@Timeout</code>). All recurring scheduling is handled <strong>externally</strong> via AWS EventBridge/CloudWatch calling <code>AWSAuthGuard</code>-protected HTTP endpoints, or external container orchestration (K8s CronJob / ECS Task) running CLI sync commands.</p>
+    </div>
+  </div>
+</section>
+<nav class="toc">
+  <div class="container">
+    <h2>Table of Contents</h2>
+    <div class="toc-grid">
+      <a href="#integrations" class="toc-item"><span class="toc-icon">🔌</span>Part I — Third-Party Integrations (23)</a>
+      <a href="#cron-jobs" class="toc-item"><span class="toc-icon">⏱️</span>Part II — Scheduled Cron Jobs (15)</a>
+      <a href="#queues" class="toc-item"><span class="toc-icon">📥</span>Part III — Bull Queues (6)</a>
+      <a href="#cli-sync" class="toc-item"><span class="toc-icon">🔄</span>Part IV — CLI Sync Jobs (2)</a>
+      <a href="#service-matrix" class="toc-item"><span class="toc-icon">📋</span>Part V — Service Matrix</a>
+    </div>
+  </div>
+</nav>
+<section id="integrations" class="section">
+  <div class="container">
+    <h2 class="section-title"><span class="section-num">I</span>Third-Party Integrations</h2>
+    <p class="section-desc">All external APIs, SDKs, and services called by the backend microservices. 23 unique services identified.</p>
+    <h3 class="cat-heading">Cinema Management</h3>
+    <div class="integration-card" id="int-vista">
+      <div class="card-header">
+        <span class="card-icon">🎬</span>
+        <div class="card-title-wrap">
+          <h4>Vista Entertainment</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+            <span class="badge svc-badge">fb</span>
+            <span class="badge svc-badge">offer</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Core cinema management system — syncs cinemas, films, sessions, genres, people, seat maps, ticket types. Handles order creation, seat selection, payment, booking, refunds, loyalty validation.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (OData + Ticketing + Loyalty + Booking APIs)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Token per platform (Android, iOS, Web, Huawei, Kiosk)</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>VISTA_BASE_URL</code> <code>VISTA_ANDROID_TOKEN</code> <code>VISTA_IOS_TOKEN</code> <code>VISTA_WEBSITE_TOKEN</code> <code>VISTA_HUAWEI_TOKEN</code> <code>VISTA_KIOSK_TOKEN</code> <code>VISTA_CLUB_ID</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/Cinemas</td><td>Sync cinemas</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/Films</td><td>Sync films</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/Sessions</td><td>Sync sessions/showtimes</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/FilmGenres</td><td>Sync genres</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/Persons</td><td>Sync cast/crew</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/OData.svc/Attributes</td><td>Sync experiences (IMAX, 4DX, etc.)</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/orders/</td><td>Create ticket order</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/orders/{id}/sessions/{sid}/set-tickets/</td><td>Select seats</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/RESTTicketing.svc/order/payment</td><td>Submit payment to Vista</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/RESTTicketing.svc/order/continue</td><td>Restart session</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/RESTLoyalty.svc/member/validate</td><td>Validate loyalty member</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/RESTBooking.svc/booking</td><td>Get booking details</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/RESTBooking.svc/booking/search</td><td>Search bookings</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/cinemas/{id}/sessions/{sid}/seat-plan</td><td>Get seat plan</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/cinemas/{id}/sessions/{sid}/tickets</td><td>Get ticket types</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/vouchers/{barcode}</td><td>Validate voucher (Go)</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">orderService.refundBooking()</td><td>Refund booking</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">orderService.completeOrder()</td><td>Complete order</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">addConcessions()</td><td>Add F&B to order</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">markCollected()</td><td>Mark F&B collected</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/shared/service/vista/vista.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-main-main/src/vista/services/ (6 sync services)</span>
+        <span class="file-path">📄 alpha-muvi-fb-main/src/shared/service/vista.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-offer/src/vista/vista.service.go</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Payment Gateway</h3>
+    <div class="integration-card" id="int-hyperpay">
+      <div class="card-header">
+        <span class="card-icon">💳</span>
+        <div class="card-title-wrap">
+          <h4>HyperPay</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Primary payment gateway — card tokenization, direct payments, Apple Pay, payment status checks, refunds.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Bearer Token</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>HYPER_PAY_BASE_URL</code> <code>HYPER_PAY_TOKEN</code> <code>HYPER_PAY_ENTITY_ID</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/checkouts</td><td>Initialize checkout / Apple Pay session</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/checkouts/{id}/registration</td><td>Get saved card by token</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/registrations/{id}/payments</td><td>Pay with saved card / guest card</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/payments/{id}</td><td>Check payment status</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/payments/{id}</td><td>Refund payment</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/payments</td><td>Apple Pay payment</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/hyperPay/hyperPay.service.ts (717 lines)</span>
+      </div>
+    </div>
+    <div class="integration-card" id="int-payfort">
+      <div class="card-header">
+        <span class="card-icon">💳</span>
+        <div class="card-title-wrap">
+          <h4>PayFort / Amazon Payment Services</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Alternative payment gateway — card tokenization, purchases, status checks, refunds, Apple Pay with HMAC signature verification.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS + HMAC Signature)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">HMAC SHA signature</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>PAYFORT_BASE_URL</code> <code>PAYFORT_ACCESS_CODE</code> <code>PAYFORT_MERCHANT_IDENTIFIER</code> <code>PAYFORT_SHA_TYPE</code> <code>PAYFORT_SHA_REQUEST_PHRASE</code> <code>PAYFORT_SHA_RESPONSE_PHRASE</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (CREATE_TOKEN)</td><td>Create card token</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (UPDATE_TOKEN)</td><td>Update card token</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (CHECK_STATUS)</td><td>Check payment status</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (PURCHASE)</td><td>Process payment</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (REFUND)</td><td>Refund payment</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/ (APPLE_PAY)</td><td>Apple Pay digital wallet payment</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/payfort/payfort.service.ts (410 lines)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Payment Gateway + STC Pay</h3>
+    <div class="integration-card" id="int-checkout">
+      <div class="card-header">
+        <span class="card-icon">💳</span>
+        <div class="card-title-wrap">
+          <h4>Checkout.com</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Payment gateway with STC Pay integration — card payments, Apple Pay, customer management, instrument management, STC Pay via payment contexts, webhook event retrieval.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (checkout-sdk-node)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Secret Key + Primary Key</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>CHECKOUT_SECRET_KEY</code> <code>CHECKOUT_PRIMARY_KEY</code> <code>CHECKOUT_SUCCESS_END_POINT</code> <code>CHECKOUT_FAILED_END_POINT</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.tokens.request()</td><td>Apple Pay token exchange</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.payments.request()</td><td>Process payment (card/STC Pay)</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.payments.get()</td><td>Get payment status / card info</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.payments.refund()</td><td>Refund payment</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.customers.create()</td><td>Create customer</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.customers.get()</td><td>Get customer</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.customers.delete()</td><td>Delete customer</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.instruments.create()</td><td>Add payment instrument</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.paymentContexts.request()</td><td>STC Pay session (source: "stcpay")</td></tr>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">cko.workflows.getEvent()</td><td>Retrieve webhook event</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/checkout/checkout.service.ts (510 lines)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Buy Now Pay Later</h3>
+    <div class="integration-card" id="int-tabby">
+      <div class="card-header">
+        <span class="card-icon">🛒</span>
+        <div class="card-title-wrap">
+          <h4>Tabby</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">BNPL provider — create payment sessions, capture payments, check status, refunds.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Bearer Token</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>TABBY_BASE_URL</code> <code>TABBY_API_KEY</code> <code>TABBY_MERCHANT_CODE</code> <code>TABBY_CALLBACK_END_POINT</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/checkout</td><td>Create BNPL session</td></tr>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/payments/{id}</td><td>Check payment status</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/payments/{id}/captures</td><td>Capture payment</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/payments/{id}/refunds</td><td>Refund payment</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/tabby/tabby.service.ts (182 lines)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">POS Terminal Payment</h3>
+    <div class="integration-card" id="int-nearpay">
+      <div class="card-header">
+        <span class="card-icon">📱</span>
+        <div class="card-title-wrap">
+          <h4>NearPay</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">In-cinema POS terminal payment — find terminals, generate JWT tokens for kiosk payment processing.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key + RS256 JWT</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>NEARPAY_BASE_URL</code> <code>NEARPAY_API_KEY</code> <code>NEARPAY_PRIVATE_KEY</code> <code>NEARPAY_CLIENT_UUID</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/terminals/?tid={terminalId}</td><td>Find terminal by ID</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/nearpay/nearpay.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Payment</h3>
+    <div class="integration-card" id="int-applepay">
+      <div class="card-header">
+        <span class="card-icon">🍎</span>
+        <div class="card-title-wrap">
+          <h4>Apple Pay Session Validation</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Validates Apple Pay merchant sessions with Apple servers using mutual TLS. Supports Checkout, PayFort, and HyperPay Apple Pay identifiers.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (mutual TLS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Client Certificate + Key</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>APPLE_PAY_DOMAIN_NAME</code> <code>APPLE_PAY_VALIDATE_SESSION_URL</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">{appleUrl}</td><td>Validate merchant session</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/apple-pay-service/apple-pay.service.ts (89 lines)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">SMS / OTP</h3>
+    <div class="integration-card" id="int-unifonic">
+      <div class="card-header">
+        <span class="card-icon">📲</span>
+        <div class="card-title-wrap">
+          <h4>Unifonic</h4>
+          <div class="badges">
+            <span class="badge svc-badge">identity</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Primary SMS OTP provider — sends OTP codes for phone verification during user login/registration.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Bearer Token</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>UNIFONIC_URL</code> <code>UNIFONIC_AUTH_TOKEN</code> <code>UNIFONIC_APP_ID</code> <code>UNIFONIC_CHANNEL</code> <code>UNIFONIC_LENGTH</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/verifications/start</td><td>Send OTP</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/verifications/check</td><td>Verify OTP</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-identity-main/src/shared/service/sms-gateways/unifonic.service.ts (177 lines)</span>
+      </div>
+    </div>
+    <div class="integration-card" id="int-taqnyat">
+      <div class="card-header">
+        <span class="card-icon">📲</span>
+        <div class="card-title-wrap">
+          <h4>Taqnyat</h4>
+          <div class="badges">
+            <span class="badge svc-badge">identity</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Alternative SMS OTP provider — switchable with Unifonic via factory pattern. Sends OTP from "muviCinemas" sender.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Bearer Token</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>TAQNYAT_URL</code> <code>TAQNYAT_API_KEY</code> <code>TAQNYAT_ANDROID_AUTOFILL_HASH</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/verify.php/ (send)</td><td>Send OTP via SMS</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/verify.php/ (verify)</td><td>Verify OTP with activeKey</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-identity-main/src/shared/service/sms-gateways/taqnyat.service.ts (217 lines)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Customer Engagement</h3>
+    <div class="integration-card" id="int-braze">
+      <div class="card-header">
+        <span class="card-icon">📣</span>
+        <div class="card-title-wrap">
+          <h4>Braze</h4>
+          <div class="badges">
+            <span class="badge svc-badge">identity</span>
+            <span class="badge svc-badge">notification</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Customer engagement platform — sends targeted messages, tracks user profiles with segments (logged-in vs guest).</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>BRAZE_BASE_URL</code> <code>BRAZE_API_KEY</code> <code>BRAZE_LOGGED_IN_SEGMENT_ID</code> <code>BRAZE_GUEST_SEGMENT_ID</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/messages/send</td><td>Send targeted messages</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/users/track</td><td>Update user profile / attributes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-identity-main/src/shared/braze/braze.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-notification-main/src/shared/braze/braze.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Push Notifications</h3>
+    <div class="integration-card" id="int-onesignal">
+      <div class="card-header">
+        <span class="card-icon">🔔</span>
+        <div class="card-title-wrap">
+          <h4>OneSignal</h4>
+          <div class="badges">
+            <span class="badge svc-badge">notification</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Push notification delivery to mobile apps (iOS + Android + Huawei).</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (onesignal-api-client-nest)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key + App ID</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>ONESIGNAL_API_KEY</code> <code>ONESIGNAL_APP_ID</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">createNotification()</td><td>Send push notification</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-notification-main/src/notification/notification-providers/one-signal-notification.provider.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Email</h3>
+    <div class="integration-card" id="int-sendgrid">
+      <div class="card-header">
+        <span class="card-icon">📧</span>
+        <div class="card-title-wrap">
+          <h4>SendGrid</h4>
+          <div class="badges">
+            <span class="badge svc-badge">identity</span>
+            <span class="badge svc-badge">notification</span>
+            <span class="badge svc-badge">payment</span>
+            <span class="badge svc-badge">fb</span>
+            <span class="badge svc-badge">main</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Transactional email delivery — password reset, verification, booking confirmation, refund receipts, top-up receipts, survey emails, sync reports, bulk refund reports.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (@sendgrid/mail)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>SENDGRID_API_KEY</code> <code>+ 15+ template IDs per service</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">client.send()</td><td>Send transactional email via template</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-identity-main/src/shared/service/email/sendgrid-email.service.ts (233 lines)</span>
+        <span class="file-path">📄 alpha-muvi-notification-main/src/shared/email/sendgrid-email.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-payment-main/src/shared/service/email/external-email.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-fb-main/src/shared/service/email/sendgrid-email.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-main-main/src/shared/service/email/sendgrid-email.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">File Storage</h3>
+    <div class="integration-card" id="int-aws-s3">
+      <div class="card-header">
+        <span class="card-icon">☁️</span>
+        <div class="card-title-wrap">
+          <h4>AWS S3</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+            <span class="badge svc-badge">gateway</span>
+            <span class="badge svc-badge">fb</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Object storage for uploaded images, files, Apple Wallet .pkpass files, and generated ticket images.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (aws-sdk)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Access Key + Secret</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>S3_ACCESS_KEY_ID</code> <code>S3_SECRET_ACCESS_KEY</code> <code>S3_BUCKET</code> <code>S3_REGION</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">S3.upload()</td><td>Upload file to bucket</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/shared/files/file.service.ts (102 lines)</span>
+        <span class="file-path">📄 alpha-muvi-gateway-main/src/files/file.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-fb-main/src/shared/files/files.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Configuration</h3>
+    <div class="integration-card" id="int-aws-ssm">
+      <div class="card-header">
+        <span class="card-icon">🔐</span>
+        <div class="card-title-wrap">
+          <h4>AWS SSM Parameter Store</h4>
+          <div class="badges">
+            <span class="badge svc-badge">ALL 6 NestJS services</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Loads environment configuration from AWS Parameter Store at service startup.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (@aws-sdk/client-ssm)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Access Key + Secret</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>SSM_ACCESS_KEY_ID</code> <code>SSM_SECRET_ACCESS_KEY</code> <code>SSM_REGION</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">GetParametersByPathCommand</td><td>Load config parameters</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 src/shared/load-ssm-config.ts (in each service)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Serverless</h3>
+    <div class="integration-card" id="int-aws-lambda">
+      <div class="card-header">
+        <span class="card-icon">⚡</span>
+        <div class="card-title-wrap">
+          <h4>AWS Lambda</h4>
+          <div class="badges">
+            <span class="badge svc-badge">payment</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Invokes Lambda function to export finance reports asynchronously.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (@aws-sdk/client-lambda)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">IAM / SDK credentials</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>EXPORT_FINANCE_REPORT_LAMBDA_FUNCTION_NAME</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">InvokeCommand</td><td>Trigger finance report export</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/wallet-transaction/wallet-transaction.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">CDN</h3>
+    <div class="integration-card" id="int-cloudfront">
+      <div class="card-header">
+        <span class="card-icon">🌐</span>
+        <div class="card-title-wrap">
+          <h4>AWS CloudFront</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+            <span class="badge svc-badge">gateway</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Serves uploaded assets (images, files) via CDN. S3 URLs are rewritten to CloudFront domain.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">URL rewrite</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">N/A (public CDN)</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>CLOUDFRONT_DOMAIN</code></span></div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 config/ files in main and gateway services</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Error Monitoring</h3>
+    <div class="integration-card" id="int-sentry">
+      <div class="card-header">
+        <span class="card-icon">🐛</span>
+        <div class="card-title-wrap">
+          <h4>Sentry</h4>
+          <div class="badges">
+            <span class="badge svc-badge">ALL 7 services</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Captures and reports runtime exceptions across all services for debugging.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (@sentry/node, sentry-go)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">DSN</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>SENTRY_DSN</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">Sentry.captureException()</td><td>Report error to Sentry</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 Exception filters and service methods in every service</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">APM / Monitoring</h3>
+    <div class="integration-card" id="int-datadog">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <div class="card-title-wrap">
+          <h4>Datadog</h4>
+          <div class="badges">
+            <span class="badge svc-badge">ALL 7 services</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Application Performance Monitoring — distributed tracing, structured logging, metric collection.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">Agent (dd-trace, datadog-winston, dd-trace-go)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key + Agent Host</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>DATADOG_API_KEY</code> <code>DD_SITE</code> <code>DD_SERVICE</code> <code>DD_VERSION</code> <code>DD_AGENT_HOST</code> <code>DD_TRACE_AGENT_PORT</code></span></div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 tracer.ts in each NestJS service, dd-trace-go in offer service</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Location</h3>
+    <div class="integration-card" id="int-google-maps">
+      <div class="card-header">
+        <span class="card-icon">📍</span>
+        <div class="card-title-wrap">
+          <h4>Google Maps / Geocoding</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Reverse geocoding — resolves city name from user GPS coordinates for cinema proximity.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">SDK (node-geocoder)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>GOOGLE_API_KEY</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">SDK</span></td><td class="ep-path">geocoder.reverse({ lat, lon })</td><td>Reverse geocode coordinates to city</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/city/city.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Tax Compliance</h3>
+    <div class="integration-card" id="int-zatca">
+      <div class="card-header">
+        <span class="card-icon">🏛️</span>
+        <div class="card-title-wrap">
+          <h4>ZATCA (Saudi Tax Authority)</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+            <span class="badge svc-badge">fb</span>
+            <span class="badge critical-badge">Critical</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Generates ZATCA-compliant QR codes for Saudi e-invoicing on movie tickets and F&B orders.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">Library (@axenda/zatca)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">N/A (local generation)</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>ZATCA_SELLER_NAME</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">LIB</span></td><td class="ep-path">Invoice.toBase64()</td><td>Generate ZATCA QR code</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/orders/kiosk-order.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-fb-main/src/shared/service/invoice.service.ts</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Student Verification</h3>
+    <div class="integration-card" id="int-unipal">
+      <div class="card-header">
+        <span class="card-icon">🎓</span>
+        <div class="card-title-wrap">
+          <h4>UniPal</h4>
+          <div class="badges">
+            <span class="badge svc-badge">offer</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Verifies student eligibility for discounted tickets and confirms discount transactions.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">REST (HTTPS)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">API Key Header</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>UNIPAL_BASE_URL</code> <code>UNIPAL_API_KEY</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-get">GET</span></td><td class="ep-path">/business/check-eligibility?code=&phone=</td><td>Verify student status</td></tr>
+            <tr><td><span class="method method-post">POST</span></td><td class="ep-path">/business/transactions/confirm</td><td>Confirm discount transaction</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-offer/src/unipal/unipal.service.go</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Digital Passes</h3>
+    <div class="integration-card" id="int-apple-wallet">
+      <div class="card-header">
+        <span class="card-icon">🎟️</span>
+        <div class="card-title-wrap">
+          <h4>Apple Wallet (PassKit)</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Generates Apple Wallet .pkpass files for movie tickets, uploaded to S3.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">Library (@walletpass/pass-js)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">Apple Certificates (WWDRCAG4 + signing cert)</span></div>
+        <div class="detail-row"><span class="detail-label">Env Vars</span><span class="detail-value env-vars"><code>APPLE_WALLET_PASS_TYPE_IDENTIFIER</code> <code>APPLE_WALLET_TEAM_IDENTIFIER</code> <code>APPLE_WALLET_CER_FILE_NAME</code></span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">LIB</span></td><td class="ep-path">passGenerator.createPass()</td><td>Create .pkpass file</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/orders/order.service.ts (~line 1480-1618)</span>
+      </div>
+    </div>
+    <h3 class="cat-heading">Rendering</h3>
+    <div class="integration-card" id="int-puppeteer">
+      <div class="card-header">
+        <span class="card-icon">🖼️</span>
+        <div class="card-title-wrap">
+          <h4>Puppeteer (Headless Chrome)</h4>
+          <div class="badges">
+            <span class="badge svc-badge">main</span>
+          </div>
+        </div>
+      </div>
+      <p class="card-purpose">Renders HTML templates (EJS) to images for ticket generation, then uploads to S3.</p>
+      <div class="card-details">
+        <div class="detail-row"><span class="detail-label">Protocol</span><span class="detail-value">Library (puppeteer)</span></div>
+        <div class="detail-row"><span class="detail-label">Auth</span><span class="detail-value">N/A (local rendering)</span></div>
+      </div>
+      <div class="endpoints-table">
+        <table>
+          <thead><tr><th>Method</th><th>Endpoint / Call</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method method-sdk">LIB</span></td><td class="ep-path">page.screenshot()</td><td>Render HTML to image</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/shared/files/file.service.ts</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="cron-jobs" class="section section-alt">
+  <div class="container">
+    <h2 class="section-title"><span class="section-num">II</span>Scheduled Cron Jobs</h2>
+    <p class="section-desc">All 15 recurring scheduled tasks triggered via AWS EventBridge/CloudWatch → Gateway HTTP endpoints protected by <code>AWSAuthGuard</code>.</p>
+    <h3 class="cat-heading">Vista Sync (6)</h3>
+    <div class="cron-grid">
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🏢</span>
+          <h4>Sync Cinemas from Vista</h4>
+        </div>
+        <p class="cron-purpose">Fetches all cinema data from Vista OData API and upserts into local database.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/cinemas/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-cinema.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🎬</span>
+          <h4>Sync Films from Vista</h4>
+        </div>
+        <p class="cron-purpose">Fetches all film data from Vista OData API and upserts into local database.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/films/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-film.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🗓️</span>
+          <h4>Sync Film Sessions from Vista</h4>
+        </div>
+        <p class="cron-purpose">Syncs film showtimes/sessions including availability, pricing, and cinema assignments.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/film-sessions/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-film-session.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🏷️</span>
+          <h4>Sync Genres from Vista</h4>
+        </div>
+        <p class="cron-purpose">Fetches film genres from Vista and upserts locally.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/genres/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-genre.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">👤</span>
+          <h4>Sync People (Cast/Crew) from Vista</h4>
+        </div>
+        <p class="cron-purpose">Syncs actors, directors, and crew members from Vista.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/people/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-person.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🍿</span>
+          <h4>Sync F&B Concessions from Vista</h4>
+        </div>
+        <p class="cron-purpose">Syncs food & beverage tabs, items, modifiers, packages from Vista per-cinema (with 10s/5s delays).</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/concession-tabs/cron-sync</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → fb</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/fb/controllers/cms-concession-tab.controller.ts</span></div>
+      </div>
+    </div>
+    <h3 class="cat-heading">Order Lifecycle (3)</h3>
+    <div class="cron-grid">
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">⏰</span>
+          <h4>Cancel Expired Orders</h4>
+        </div>
+        <p class="cron-purpose">Finds orders past expiry, cancels them in Vista, marks as EXPIRED in DB, triggers payment cancellation.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/orders/cron-cancel-expired</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-order.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">💰</span>
+          <h4>Cancel Expired Top-Ups</h4>
+        </div>
+        <p class="cron-purpose">Cancels pending wallet top-up requests that have passed their expireAt deadline.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/top-ups/cron-cancel-expired</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → payment</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/payment/controllers/cms-top-up.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">💸</span>
+          <h4>Process Expired Wallet Balances</h4>
+        </div>
+        <p class="cron-purpose">Processes expired wallet transactions — zeroes out expired balances.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/wallet-transactions/process-expired</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → payment</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/payment/controllers/cms-wallet-transaction.ctontroller.ts</span></div>
+      </div>
+    </div>
+    <h3 class="cat-heading">Notifications (4)</h3>
+    <div class="cron-grid">
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🔔</span>
+          <h4>Order Reminder Notifications</h4>
+        </div>
+        <p class="cron-purpose">Sends push notifications reminding users about upcoming movie bookings.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/orders/cron-reminder-order</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main → notification</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-order.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">📋</span>
+          <h4>Post-Movie Survey Push</h4>
+        </div>
+        <p class="cron-purpose">Sends post-movie survey push notifications to users after their showtime.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/orders/cron-survey-notification</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-order.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">📧</span>
+          <h4>Post-Movie Survey Email</h4>
+        </div>
+        <p class="cron-purpose">Sends post-movie survey emails to users.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/orders/cron-survey-email</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-order.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">⏳</span>
+          <h4>Wallet Expiry Reminders</h4>
+        </div>
+        <p class="cron-purpose">Sends reminder notifications for wallet balances about to expire.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/wallet-transactions/cron-reminder-expired</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → payment</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/payment/controllers/cms-wallet-transaction.ctontroller.ts</span></div>
+      </div>
+    </div>
+    <h3 class="cat-heading">Cleanup (2)</h3>
+    <div class="cron-grid">
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🗑️</span>
+          <h4>Delete Old Notifications</h4>
+        </div>
+        <p class="cron-purpose">Batch-deletes notifications older than NOTIFICATIONS_LIFESPAN_DAYS.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST notifications/cron-delete-old-notifications</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → notification</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/notification/controllers/notification.controller.ts</span></div>
+      </div>
+      <div class="cron-card">
+        <div class="cron-header">
+          <span class="cron-icon">🔖</span>
+          <h4>Remove Expired Bookmarks</h4>
+        </div>
+        <p class="cron-purpose">Removes bookmarks for films no longer showing in any cinema.</p>
+        <div class="cron-details">
+          <div class="cron-detail"><span class="cron-label">Endpoint</span><code>POST cms/films/remove-expired-bookmark</code></div>
+          <div class="cron-detail"><span class="cron-label">Route</span><span class="badge svc-badge">gateway → main</span></div>
+          <div class="cron-detail"><span class="cron-label">Trigger</span>AWS EventBridge / CloudWatch</div>
+          <div class="cron-detail"><span class="cron-label">Guard</span><code>AWSAuthGuard</code></div>
+        </div>
+        <div class="file-list"><span class="file-path">📄 alpha-muvi-gateway-main/src/main/controllers/cms-film.controller.ts</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="queues" class="section">
+  <div class="container">
+    <h2 class="section-title"><span class="section-num">III</span>Bull Queues</h2>
+    <p class="section-desc">All 6 Redis-backed Bull queues with processors for asynchronous task processing.</p>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">📱</span>
+        <div>
+          <h4>Device Token Queue</h4>
+          <span class="queue-name-badge">device-token-queue</span>
+          <span class="badge svc-badge">identity</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Batch-inserts push notification device tokens into the DB. Accumulates tokens in-memory, flushes every 10 seconds (setInterval) in batches of 300.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>setInterval(10s) + on-demand registration</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>add-device-token</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>N/A</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-identity-main/src/user/device-token/device-token.processor.ts</span>
+        <span class="file-path">📄 alpha-muvi-identity-main/src/user/device-token/device-token.service.ts</span>
+      </div>
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">💰</span>
+        <div>
+          <h4>E-Wallet Queue</h4>
+          <span class="queue-name-badge">E_WALLET_QUEUE</span>
+          <span class="badge svc-badge">payment</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Processes all wallet operations asynchronously via 4 dedicated process handlers.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>On-demand (triggered by wallet actions)</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>ADD_TOP_UP</code>, <code>REFUND</code>, <code>EARNED_BOOKING_CASHBACK</code>, <code>EARNED_CAMPAIGN_CASHBACK</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>Re-enqueue with 10 min delay on failure</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/wallet-transaction/wallet-queue/wallet.processor.ts</span>
+        <span class="file-path">📄 alpha-muvi-payment-main/src/wallet-transaction/wallet-queue/wallet-queue.service.ts</span>
+      </div>
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">🔄</span>
+        <div>
+          <h4>Refund Queue</h4>
+          <span class="queue-name-badge">refund-queue</span>
+          <span class="badge svc-badge">payment</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Processes payment refunds — checks payment status with gateway, cancels Vista order if needed, issues refund. Delay = expireAt minus now.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>On-demand (delay = time until payment expires)</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>refund</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>Fixed backoff: 10 min delay</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/payment/refund queue/refund.processor.ts</span>
+        <span class="file-path">📄 alpha-muvi-payment-main/src/payment/refund queue/refund-queue.service.ts</span>
+      </div>
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">🔗</span>
+        <div>
+          <h4>Webhook Queue</h4>
+          <span class="queue-name-badge">webhook-queue</span>
+          <span class="badge svc-badge">payment</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Processes payment webhooks — confirms booking after payment callback from gateways. Hardcoded 10-second delay before processing.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>On-demand (10s delay)</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>webhook</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>N/A</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/payment/webhook queue/webhook.processor.ts</span>
+        <span class="file-path">📄 alpha-muvi-payment-main/src/payment/webhook queue/webhook-queue.service.ts</span>
+      </div>
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">🎫</span>
+        <div>
+          <h4>Generate Ticket Queue</h4>
+          <span class="queue-name-badge">generate-ticket-queue</span>
+          <span class="badge svc-badge">payment (enqueue) → main (process)</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Generates tickets after successful payment. Cross-service: payment enqueues, main service processes. Retries up to 3 times with exponential delay; triggers manual refund after 3 failures.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>On-demand (after payment success)</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>generate-ticket</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>Up to 3 retries with exponential delay</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-payment-main/src/payment/generate ticket queue/generate-ticket-queue.service.ts</span>
+        <span class="file-path">📄 alpha-muvi-main-main/src/orders/generate ticket queue/generate-ticket.processor.ts</span>
+      </div>
+    </div>
+    <div class="queue-card">
+      <div class="queue-header">
+        <span class="queue-icon">📦</span>
+        <div>
+          <h4>Bulk Refund Queue</h4>
+          <span class="queue-name-badge">bulk-refund-queue</span>
+          <span class="badge svc-badge">main</span>
+        </div>
+      </div>
+      <p class="queue-purpose">Processes CMS-triggered bulk refund requests — cancels Vista orders and processes payment refunds for multiple bookings at once.</p>
+      <div class="queue-details">
+        <div class="queue-detail"><span class="queue-label">Trigger</span>On-demand (CMS action)</div>
+        <div class="queue-detail"><span class="queue-label">Processes</span><code>bulk-refund</code></div>
+        <div class="queue-detail"><span class="queue-label">Retry</span>N/A</div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/refund-payment-requests/bulk-refund-queue/bulk-refund-queue.processor.ts</span>
+        <span class="file-path">📄 alpha-muvi-main-main/src/refund-payment-requests/bulk-refund-queue/bulk-refund-queue.service.ts</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="cli-sync" class="section section-alt">
+  <div class="container">
+    <h2 class="section-title"><span class="section-num">IV</span>CLI Sync Jobs (nest-commander)</h2>
+    <p class="section-desc">Standalone CLI commands that can be run as containerized jobs (Docker, K8s CronJob, ECS Task) for full Vista data synchronization.</p>
+    <div class="cli-card">
+      <h4>🔄 Vista Sync CLI (Main)</h4>
+      <p>Full sync of all core Vista data. Run as external containerized job (Docker / K8s CronJob / ECS Task).</p>
+      <div class="cli-details">
+        <div class="cli-detail"><span class="cli-label">Command</span><code>vista-sync</code></div>
+        <div class="cli-detail"><span class="cli-label">Options</span><code>-a (all), -c (cinemas), -f (films), -g (genres), -s (sessions), -p (people)</code></div>
+        <div class="cli-detail"><span class="cli-label">Service</span><span class="badge svc-badge">main</span></div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-main-main/src/main-cli.ts</span>
+        <span class="file-path">📄 alpha-muvi-main-main/src/sync-job/sync-job.command.ts</span>
+      </div>
+    </div>
+    <div class="cli-card">
+      <h4>🔄 Vista Sync CLI (F&B)</h4>
+      <p>Full sync of F&B concession items from Vista per-cinema. Run as external containerized job.</p>
+      <div class="cli-details">
+        <div class="cli-detail"><span class="cli-label">Command</span><code>vista-sync</code></div>
+        <div class="cli-detail"><span class="cli-label">Options</span><code>N/A</code></div>
+        <div class="cli-detail"><span class="cli-label">Service</span><span class="badge svc-badge">fb</span></div>
+      </div>
+      <div class="file-list">
+        <span class="file-path">📄 alpha-muvi-fb-main/src/main-cli.ts</span>
+        <span class="file-path">📄 alpha-muvi-fb-main/src/sync-job/sync-job.command.ts</span>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="service-matrix" class="section">
+  <div class="container">
+    <h2 class="section-title"><span class="section-num">V</span>Service Integration Matrix</h2>
+    <p class="section-desc">Which service uses what — a cross-reference of all microservices and their third-party dependencies.</p>
+    <div class="matrix-table">
+    <table>
+      <thead><tr><th>Service</th><th>Third-Party Integrations</th><th>Count</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><strong>Gateway</strong></td>
+          <td>AWS S3, AWS CloudFront</td>
+          <td class="count-cell">2</td>
+        </tr>
+        <tr>
+          <td><strong>Main</strong></td>
+          <td>Vista Entertainment, SendGrid, AWS S3, AWS CloudFront, Google Maps / Geocoding, ZATCA (Saudi Tax Authority), Apple Wallet (PassKit), Puppeteer (Headless Chrome)</td>
+          <td class="count-cell">8</td>
+        </tr>
+        <tr>
+          <td><strong>Identity</strong></td>
+          <td>Unifonic, Taqnyat, Braze, SendGrid</td>
+          <td class="count-cell">4</td>
+        </tr>
+        <tr>
+          <td><strong>Payment</strong></td>
+          <td>HyperPay, PayFort / Amazon Payment Services, Checkout.com, Tabby, NearPay, Apple Pay Session Validation, SendGrid, AWS Lambda</td>
+          <td class="count-cell">8</td>
+        </tr>
+        <tr>
+          <td><strong>Notification</strong></td>
+          <td>Braze, OneSignal, SendGrid</td>
+          <td class="count-cell">3</td>
+        </tr>
+        <tr>
+          <td><strong>F&B</strong></td>
+          <td>Vista Entertainment, SendGrid, AWS S3, ZATCA (Saudi Tax Authority)</td>
+          <td class="count-cell">4</td>
+        </tr>
+        <tr>
+          <td><strong>Offer (Go)</strong></td>
+          <td>Vista Entertainment, UniPal</td>
+          <td class="count-cell">2</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+<footer class="footer">
+  <div class="container">
+    <div class="footer-stats">
+      <div class="footer-stat">23 External Services</div>
+      <div class="footer-stat">15 Cron Jobs</div>
+      <div class="footer-stat">6 Bull Queues</div>
+      <div class="footer-stat">2 CLI Sync Jobs</div>
+      <div class="footer-stat">66 External API Calls</div>
+    </div>
+    <p class="footer-note">Generated 2026-02-12 — Muvi Cinemas Backend Audit</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,69 @@
+{
+  "name": "@alpha.apps/react-common",
+  "version": "1.1.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/types/index.d.ts",
+  "author": "Alpha Apps <https://www.alpha-apps.ae>",
+  "license": "MIT",
+  "scripts": {
+    "lint:check": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
+    "compile": "yarn clean:dist && tsc",
+    "clean:dist": "rm -rf ./dist",
+    "clean:tar": "rm -rf ./*.tgz",
+    "clean": "yarn clean:dist && yarn clean:tar",
+    "build": "yarn clean:dist && rollup -c",
+    "build:patch": "yarn clean && rollup -c && yarn version --patch && yarn pack",
+    "build:minor": "yarn clean && rollup -c && yarn version --minor && yarn pack",
+    "build:major": "yarn clean && rollup -c && yarn version --major && yarn pack"
+  },
+  "files": [
+    "./dist"
+  ],
+  "dependencies": {
+    "@nestjsx/crud-request": "^5.0.0-alpha.3",
+    "@tanstack/react-query": "^4.18.0",
+    "axios": "^0.27.2",
+    "immer": "^9.0.15",
+    "lodash": "^4.17.21",
+    "query-string": "^7.0.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "zustand": "^3.7.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.4",
+    "@rollup/plugin-node-resolve": "^15.2.1",
+    "@rollup/plugin-terser": "^0.4.3",
+    "@rollup/plugin-typescript": "^11.1.2",
+    "@types/lodash": "^4.14.182",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.4.0",
+    "@typescript-eslint/parser": "^6.4.0",
+    "eslint": "^8.47.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.0.2",
+    "rollup": "^3.28.0",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "tslib": "^2.6.1",
+    "typescript": "^5.1.6"
+  },
+  "peerDependencies": {
+    "@nestjsx/crud-request": "^5",
+    "@tanstack/react-query": "^4",
+    "axios": "^0",
+    "immer": "^9",
+    "lodash": "^4",
+    "query-string": "^7",
+    "react": "^16 || ^17 || ^18",
+    "react-dom": "^16 || ^17 || ^18",
+    "zustand": "^3"
+  },
+  "publishConfig": {
+    "access": "restricted"
+  }
+}

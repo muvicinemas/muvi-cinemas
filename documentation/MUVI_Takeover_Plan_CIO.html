@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MUVI Cinemas - Takeover Plan (CIO)</title>
+  <style>
+    :root {
+      --ink: #1d1f21;
+      --muted: #5b646b;
+      --accent: #0f5f6b;
+      --bg: #f7f4ef;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 900px;
+      margin: 32px auto;
+      background: #fff;
+      padding: 40px 56px;
+      border: 1px solid #e6e6e6;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    }
+    h1 { font-size: 28px; margin: 0 0 8px; color: var(--accent); }
+    h2 { font-size: 18px; margin: 26px 0 8px; color: var(--accent); }
+    h3 { font-size: 15px; margin: 16px 0 6px; color: var(--accent); }
+    p { margin: 8px 0; }
+    .meta { color: var(--muted); font-size: 13px; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #e7f3f5;
+      border: 1px solid #c9e1e6;
+      color: var(--accent);
+      font-size: 12px;
+      border-radius: 999px;
+      margin-right: 6px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+    .box {
+      border: 1px solid #e5e5e5;
+      padding: 10px 12px;
+      background: #fafafa;
+    }
+    .arrow {
+      text-align: center;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1;
+    }
+    ul { margin: 6px 0 10px 18px; }
+    .week {
+      border-left: 4px solid var(--accent);
+      padding: 8px 12px;
+      margin: 10px 0;
+      background: #f8fbfb;
+    }
+    .foot {
+      margin-top: 24px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    @media print {
+      body { background: #fff; }
+      .page { margin: 0; box-shadow: none; border: 0; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>MUVI Cinemas - Takeover Plan (Summary)</h1>
+    <p class="meta">Date: February 8, 2026 | Audience: Leadership | Purpose: Transition from vendor to in-house team</p>
+
+    <h2>Executive Summary</h2>
+    <p>The system uses a modern, service-based design: a single API Gateway routes requests to dedicated back-end services. This is a solid foundation but needs structured handover, internal ownership, and operational readiness. This plan outlines an 8-week takeover to make the in-house team fully capable of safe deployments, hotfixes, and day-to-day support.</p>
+
+    <h2>Architecture Layers (Business View)</h2>
+    <div class="grid">
+      <div class="box">
+        <h3>Customer Entry Layer</h3>
+        <p>API Gateway is the front desk that receives all traffic and routes it safely.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>Service Layer (Microservices)</h3>
+        <p>Separate departments: Identity, Main, Payments, Food, Notifications.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>Internal Transport (gRPC)</h3>
+        <p>High-speed internal lane for service-to-service communication.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>Protection & Performance</h3>
+        <p>Rate limiting and Redis cache keep the system stable during spikes.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>Data Layer</h3>
+        <p>PostgreSQL databases store users, bookings, payments, and film data.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>Observability Layer</h3>
+        <p>Datadog for performance/logs and Sentry for error visibility.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>CI/CD Layer (Missing)</h3>
+        <p>Automated build and deployment pipeline is not yet owned internally.</p>
+      </div>
+      <div class="arrow">↓</div>
+      <div class="box">
+        <h3>DevOps Layer</h3>
+        <p>AWS infrastructure, security, scaling, backups, and environment management.</p>
+      </div>
+    </div>
+
+    <h2>Architecture Unfolded (What Each Layer Does)</h2>
+    <ul>
+      <li><strong>Microservices:</strong> Isolate business functions so failures do not spread and teams can work independently.</li>
+      <li><strong>gRPC:</strong> Internal communication that is faster and more consistent than typical web APIs.</li>
+      <li><strong>Rate Limiting:</strong> Controls traffic to prevent abuse and avoid service overload.</li>
+      <li><strong>Redis Cache:</strong> Speeds up frequent reads and supports short-lived data (sessions, counters).</li>
+      <li><strong>Databases:</strong> Single source of truth for money, tickets, users, and inventory.</li>
+      <li><strong>Observability:</strong> Shows real-time health, errors, and performance bottlenecks.</li>
+      <li><strong>CI/CD:</strong> Automated build and release process (currently missing, must be built).</li>
+      <li><strong>DevOps:</strong> AWS resources, security, networks, backups, and disaster recovery.</li>
+    </ul>
+
+    <h2>Key Risks in Vendor Handover</h2>
+    <ul>
+      <li>Code snapshot without full history; knowledge is in the vendor team.</li>
+      <li>Production access alone does not explain why certain decisions were made.</li>
+      <li>CI/CD pipeline ownership and release process are missing internally.</li>
+      <li>Operational readiness (runbooks, deployments, rollbacks) must be built internally.</li>
+    </ul>
+
+    <h2>8-Week Takeover Plan (Weekly Objectives)</h2>
+
+    <div class="week">
+      <span class="badge">Week 1 (Completed)</span>
+      <strong>Orientation & System Overview</strong>
+      <ul>
+        <li>Architecture walkthrough and system map in plain language.</li>
+        <li>Access confirmed: AWS, Datadog, Sentry, and codebase.</li>
+        <li>Inventory created for services, databases, and dependencies.</li>
+        <li>Baseline documentation established with ownership list.</li>
+        <li>Handover gaps identified and tracked in a single checklist.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 2</span>
+      <strong>Local Setup & Basic Validation</strong>
+      <ul>
+        <li>Local infrastructure ready: databases and Redis configured.</li>
+        <li>All core services start locally with environment variables documented.</li>
+        <li>Basic user flow validated (login and film browsing).</li>
+        <li>Local setup guide written for the team.</li>
+        <li>Known local issues and fixes logged for reference.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 3</span>
+      <strong>Core Request Flow Mapping</strong>
+      <ul>
+        <li>End-to-end flow maps for Login, Browse Films, Booking, and Payment.</li>
+        <li>Service-to-service dependencies identified (gRPC paths).</li>
+        <li>External vendors and APIs listed with ownership and status.</li>
+        <li>Flow diagrams added to documentation for CIO visibility.</li>
+        <li>Performance and risk notes captured per flow.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 4</span>
+      <strong>Critical Path & Risk Areas</strong>
+      <ul>
+        <li>Deep dive on payments, refunds, and chargeback handling.</li>
+        <li>Seat locking and concurrency risk analysis completed.</li>
+        <li>Data integrity checks and backup strategy reviewed.</li>
+        <li>Incident response playbook drafted with escalation paths.</li>
+        <li>Risk register finalized with clear owners and mitigations.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 5</span>
+      <strong>UAT Environment & CI/CD</strong>
+      <ul>
+        <li>UAT environment plan approved and aligned with production.</li>
+        <li>UAT infrastructure created with the same service layout.</li>
+        <li>Initial CI/CD pipeline created for builds and deployments.</li>
+        <li>Deployments to UAT validated end-to-end.</li>
+        <li>UAT test plan executed for core flows.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 6</span>
+      <strong>Recovery & Rollback Practice</strong>
+      <ul>
+        <li>Rollback plan documented for each service.</li>
+        <li>Simulated deployment failure and rollback in UAT.</li>
+        <li>Database restore procedure tested and timed.</li>
+        <li>Cache failure behavior validated and documented.</li>
+        <li>Emergency runbook finalized for on-call usage.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 7</span>
+      <strong>Production Readiness</strong>
+      <ul>
+        <li>UAT and Production configuration parity verified.</li>
+        <li>Monitoring thresholds and dashboards finalized in Datadog.</li>
+        <li>Alerting rules and on-call process defined.</li>
+        <li>Production change checklist finalized and approved.</li>
+        <li>Leadership review of readiness and risk posture.</li>
+      </ul>
+    </div>
+
+    <div class="week">
+      <span class="badge">Week 8</span>
+      <strong>First Independent Release</strong>
+      <ul>
+        <li>Small, low-risk change delivered through the pipeline.</li>
+        <li>UAT validation completed with documented evidence.</li>
+        <li>Production deployment completed with monitoring in place.</li>
+        <li>Post-release review conducted and lessons captured.</li>
+        <li>Final ownership sign-off and handover closure.</li>
+      </ul>
+    </div>
+
+    <h2>Appendix: Architecture Diagrams (Current Findings) - Week 1</h2>
+
+    <h3>Package Dependency Graph</h3>
+    <pre>
+               ┌──────────────────────┐
+               │   @alpha.apps/       │
+               │   muvi-proto         │  ← Types/contracts (protobuf)
+               │                      │
+               │ • .proto files       │
+               │ • Generated TS types │
+               │ • gRPC service defs  │
+               └──────────┬───────────┘
+                    │
+          ┌─────────────────────┼─────────────────────┐
+          │                     │                     │
+          ▼                     ▼                     ▼
+  ┌─────────────────────┐ ┌─────────────────────┐ ┌─────────────────────┐
+  │ @alpha.apps/        │ │ @alpha.apps/        │ │ @alpha.apps/        │
+  │ muvi-identity-sdk   │ │ muvi-payment-sdk    │ │ muvi-main-sdk       │
+  │                     │ │                     │ │                     │
+  │ gRPC client for     │ │ gRPC client for     │ │ gRPC client for     │
+  │ Identity Service    │ │ Payment Service     │ │ Main Service        │
+  │                     │ │                     │ │                     │
+  │ • NestJS Module     │ │ • NestJS Module     │ │ • NestJS Module     │
+  │ • Service class     │ │ • Service class     │ │ • Service class     │
+  │ • Connection mgmt   │ │ • Connection mgmt   │ │ • Connection mgmt   │
+  └──────────┬──────────┘ └──────────┬──────────┘ └──────────┬──────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                     │
+          ┌────────────────────┼────────────────────┐
+          │                    │                    │
+          ▼                    ▼                    ▼
+    ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+    │ alpha-muvi-     │  │ alpha-muvi-     │  │ alpha-muvi-     │
+    │ gateway-main    │  │ fb-main         │  │ payment-main    │
+    │                 │  │                 │  │                 │
+    │ Uses:           │  │ Uses:           │  │ Uses:           │
+    │ - identity-sdk  │  │ - identity-sdk  │  │ - identity-sdk  │
+    │ - payment-sdk   │  │ - payment-sdk   │  │ (to verify user)│
+    │ - main-sdk      │  │                 │  │                 │
+    │ - fb-sdk        │  │                 │  │                 │
+    └─────────────────┘  └─────────────────┘  └─────────────────┘
+    </pre>
+
+    <h3>Request Flow Overview</h3>
+    <pre>
+  ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+  │                                    INTERNET                                              │
+  │                                                                                          │
+  │    Mobile App         Website           CMS Admin         Kiosk                          │
+  │         │                │                  │                │                           │
+  └─────────┼────────────────┼──────────────────┼────────────────┼───────────────────────────┘
+        │                │                  │                │
+        └────────────────┴──────────────────┴────────────────┘
+                       │
+                       ▼
+  ┌─────────────────────────────────────────────────────────────────────────────────────────┐
+  │                              AWS CLOUD                                                   │
+  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+  │  │                         LOAD BALANCER (ALB)                                        │  │
+  │  │   - SSL Termination (HTTPS → HTTP internally)                                       │  │
+  │  │   - Health checks on /health endpoint                                               │  │
+  │  │   - Routes to healthy Gateway instances                                             │  │
+  │  │   - Sticky sessions (optional)                                                      │  │
+  │  │   - Rate limiting at edge (AWS WAF)                                                 │  │
+  │  └───────────────────────────────────────────────────────────────────────────────────┘  │
+  │                                         │                                               │
+  │                                         ▼                                               │
+  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+  │  │                     GATEWAY SERVICE (alpha-muvi-gateway-main)                      │  │
+  │  │   HTTP layer → middleware → controllers → SDKs (gRPC clients)                       │  │
+  │  └───────────────────────────────────────────────────────────────────────────────────┘  │
+  │                                         │                                               │
+  │                                         ▼                                               │
+  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+  │  │            IDENTITY / PAYMENT / MAIN / FB SERVICES (gRPC)                           │  │
+  │  └───────────────────────────────────────────────────────────────────────────────────┘  │
+  │                                         │                                               │
+  │                                         ▼                                               │
+  │  ┌───────────────────────────────────────────────────────────────────────────────────┐  │
+  │  │                    PostgreSQL Databases + Redis Cluster                             │  │
+  │  └───────────────────────────────────────────────────────────────────────────────────┘  │
+  └─────────────────────────────────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h3>Booking Lifecycle</h3>
+    <pre>
+  User taps "Book Now" on mobile app
+         │
+         ▼
+  1) Request enters system → 2) Load balancer → 3) Gateway middleware → 4) Gateway controller
+         │
+         ▼
+  5) Main service reserves seats and creates booking (pending)
+         │
+         ▼
+  6) Payment service creates payment intent
+         │
+         ▼
+  7) Response back to user with payment URL
+         │
+         ▼
+  8) Payment webhook confirms → booking confirmed → notification sent
+    </pre>
+
+    <h3>NestJS Service Internals</h3>
+    <pre>
+  main.ts → AppModule → gRPC Controller → Service Layer → Repository/Model → External
+               (business logic)    (database)      (Redis/Datadog/PostgreSQL)
+    </pre>
+
+    <h3>Communication Patterns</h3>
+    <pre>
+  Sync gRPC: Gateway → Service → Response
+  Async Messaging: Payment → Queue → Notification
+  Saga: Multi-step booking with compensating actions on failure
+    </pre>
+
+    <h3>NestJS Request Pipeline</h3>
+    <pre>
+  Request → Middleware → Guards → Interceptors → Pipes → Controller → Interceptors → Filters → Response
+    </pre>
+
+    <h3>Decorator Mechanics (Concept)</h3>
+    <pre>
+  Decorators attach metadata to routes; guards read metadata to allow/deny access.
+  Example: @Public() marks routes that skip authentication checks.
+    </pre>
+
+    <h2>System Deep-Dive Summary</h2>
+    <p class="meta">Scope: Identity, Payment, Main, and F&amp;B services, SDKs, Gateway routing, database models, and protobuf contracts.</p>
+
+    <h3>Executive Highlights</h3>
+    <ul>
+      <li>Gateway is the single public entry point; all CMS, web, mobile, and kiosk traffic flows through one API surface.</li>
+      <li>SDKs are client wrappers for gRPC calls; services implement the RPCs. Several SDKs are overbuilt relative to actual usage.</li>
+      <li>Identity service is the most complex gRPC surface (124 RPCs) and uses Sequelize with Postgres (not Prisma or TypeORM).</li>
+      <li>Website and mobile share the same endpoints; platform is distinguished by the request header.</li>
+      <li>Replication management exists as its own RPC surface in Identity and F&amp;B, which is microservice-specific overhead.</li>
+    </ul>
+
+    <h3>Gateway Routing Reality</h3>
+    <ul>
+      <li>CMS endpoints use the <strong>/api/v1/cms/*</strong> prefix.</li>
+      <li>Website, mobile, and kiosk use the same endpoints without a prefix.</li>
+      <li>Platform is detected via the <strong>x-device-platform</strong> header (ios, android, website, huawei, kiosk).</li>
+      <li>Platform-specific behavior is limited to maintenance toggles, payment callbacks, banners, version checks, and throttling.</li>
+    </ul>
+
+    <h3>Identity Service (Server) vs Identity SDK (Client)</h3>
+    <div class="box">
+      <p><strong>Identity Service (alpha-muvi-identity-main)</strong> implements RPCs and business logic.</p>
+      <p><strong>Identity SDK (@alpha.apps/muvi-identity-sdk)</strong> only calls a tiny subset of those RPCs from other services.</p>
+    </div>
+    <ul>
+      <li>Identity service exposes <strong>124 RPCs</strong> across <strong>23 gRPC services</strong>.</li>
+      <li>SDK exports effectively <strong>1 RPC</strong> in production use (settings findAll), with OTP wrapper present but not wired.</li>
+      <li>The Gateway does not use this SDK; it uses direct gRPC clients for auth and user flows.</li>
+    </ul>
+
+    <h3>SDK Utilization Summary</h3>
+    <table style="width:100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">SDK</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">RPCs Exported</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Primary Consumers</th>
+          <th style="text-align:left; border-bottom:1px solid #ddd; padding:6px;">Reality</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Identity SDK</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">1 effective RPC</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">F&amp;B only</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Overbuilt for a single settings call</td>
+        </tr>
+        <tr>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Payment SDK</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">3 POS RPCs</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">F&amp;B only</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Small but justified for kiosk payments</td>
+        </tr>
+        <tr>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Main SDK</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">27 RPCs</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Gateway + F&amp;B</td>
+          <td style="padding:6px; border-bottom:1px solid #eee;">Mostly used, 1 unused service</td>
+        </tr>
+        <tr>
+          <td style="padding:6px;">F&amp;B SDK</td>
+          <td style="padding:6px;">~85 RPCs</td>
+          <td style="padding:6px;">Gateway + Main</td>
+          <td style="padding:6px;">Only SDK clearly justified at scale</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Identity Data Model (Database Reality)</h3>
+    <ul>
+      <li>19 Sequelize models on PostgreSQL (not Prisma/TypeORM).</li>
+      <li>Key entities: User, UserRole, Permission, GuestUser, Settings, Avatar, OTP, CommunicationLanguage, etc.</li>
+      <li>City data is replicated; FK constraints are intentionally avoided to prevent replication lag errors.</li>
+      <li>Full ER diagrams are captured in internal documentation (diagrams/08-identity-database-schema.md).</li>
+    </ul>
+
+    <h3>Proto vs Database vs SDK (Important Clarification)</h3>
+    <ul>
+      <li><strong>Database</strong> is the source of truth (tables and data).</li>
+      <li><strong>Protos</strong> define network contracts (messages + RPCs).</li>
+      <li><strong>SDKs</strong> are client wrappers that call those RPCs.</li>
+    </ul>
+
+    <h3>Operational Observations</h3>
+    <ul>
+      <li>Multiple SDK copies exist (SDKs live in Proto/ and also under service repos), which risks divergence.</li>
+      <li>Many proto files are loaded by SDKs that expose only a handful of methods.</li>
+      <li>Some SDK services are orphaned (present in source but not exported or registered).</li>
+    </ul>
+
+    <h3>Pragmatic Recommendations</h3>
+    <ul>
+      <li>Define and publish an official SDK ownership and release process to reduce duplication.</li>
+      <li>Reduce proto path loading to only what each SDK actually uses to improve startup time and clarity.</li>
+      <li>Document platform rules explicitly in Gateway docs to avoid backend/front-end drift.</li>
+      <li>Create a small service catalog: each service, its RPCs, and its consumers.</li>
+    </ul>
+
+    <h2>Success Criteria</h2>
+    <ul>
+      <li>In-house team can deploy, monitor, and rollback without vendor help.</li>
+      <li>Hotfix can be delivered within 1 to 4 hours.</li>
+      <li>Operational runbooks, diagrams, and configuration inventories are complete.</li>
+      <li>UAT is aligned with Production for safe testing.</li>
+    </ul>
+
+    <h2>Leadership Decision Points</h2>
+    <ul>
+      <li>Confirm target AWS region and data residency policy.</li>
+      <li>Approve time window for establishing UAT and CI/CD changes.</li>
+      <li>Confirm post-handover support expectation from vendor (if any).</li>
+    </ul>
+
+    <p class="foot">Prepared by: Internal Transition Team | Status: Draft for CIO review</p>
+  </div>
+</body>
+</html>

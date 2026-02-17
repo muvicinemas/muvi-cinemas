@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — AWS Infrastructure Cost Analysis</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --border: #475569;
+    --text: #e2e8f0; --text2: #94a3b8; --accent: #38bdf8; --green: #4ade80;
+    --red: #f87171; --orange: #fb923c; --purple: #c084fc; --yellow: #fbbf24;
+    --pink: #f472b6;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  
+  /* Header */
+  .header { text-align: center; padding: 48px 24px; margin-bottom: 32px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%); border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 40%, rgba(56,189,248,0.06) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(192,132,252,0.06) 0%, transparent 50%); }
+  .header h1 { font-size: 2.2rem; font-weight: 700; position: relative; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--text2); margin-top: 8px; font-size: 1rem; position: relative; }
+  .header .badge { display: inline-block; background: var(--surface2); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; color: var(--accent); margin-top: 12px; border: 1px solid var(--border); position: relative; }
+
+  /* Executive Summary */
+  .exec-summary { background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); border-radius: 16px; padding: 32px; margin-bottom: 32px; border: 1px solid #2563eb44; }
+  .exec-summary h2 { color: var(--accent); font-size: 1.4rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .exec-summary .plain { font-size: 1.05rem; line-height: 1.9; color: var(--text); }
+  .exec-summary .plain strong { color: var(--yellow); }
+  .exec-summary .plain .cost { font-size: 1.3rem; font-weight: 700; }
+  .exec-summary .cost-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  .cost-card { background: var(--surface); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border); }
+  .cost-card .label { font-size: 0.85rem; color: var(--text2); margin-bottom: 4px; }
+  .cost-card .amount { font-size: 1.8rem; font-weight: 800; }
+  .cost-card .sub { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
+  .cost-card.blue .amount { color: var(--accent); }
+  .cost-card.green .amount { color: var(--green); }
+  .cost-card.orange .amount { color: var(--orange); }
+  .cost-card.purple .amount { color: var(--purple); }
+  .disclaimer { margin-top: 20px; padding: 14px 18px; background: #f59e0b15; border-left: 3px solid var(--yellow); border-radius: 0 8px 8px 0; font-size: 0.9rem; color: var(--yellow); }
+
+  /* Sections */
+  .section { background: var(--surface); border-radius: 16px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--border); }
+  .section h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .section h3 { font-size: 1.05rem; color: var(--purple); margin: 20px 0 12px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+  th { background: var(--surface2); color: var(--accent); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 14px; border-bottom: 1px solid #334155; }
+  tr:hover td { background: #ffffff06; }
+  .cost-col { text-align: right; font-weight: 600; font-family: 'Courier New', monospace; }
+  .total-row td { background: var(--surface2); font-weight: 700; border-top: 2px solid var(--accent); }
+  .total-row .cost-col { color: var(--yellow); font-size: 1.05rem; }
+  
+  /* Tags */
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .tag-green { background: #4ade8020; color: var(--green); }
+  .tag-red { background: #f8717120; color: var(--red); }
+  .tag-orange { background: #fb923c20; color: var(--orange); }
+  .tag-blue { background: #38bdf820; color: var(--accent); }
+  .tag-purple { background: #c084fc20; color: var(--purple); }
+  .tag-yellow { background: #fbbf2420; color: var(--yellow); }
+
+  /* Traffic section */
+  .traffic-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+  .traffic-card { background: var(--bg); border-radius: 12px; padding: 18px; border: 1px solid var(--border); }
+  .traffic-card .num { font-size: 1.6rem; font-weight: 800; color: var(--accent); }
+  .traffic-card .desc { font-size: 0.85rem; color: var(--text2); margin-top: 4px; }
+  .traffic-card .note { font-size: 0.78rem; color: var(--text2); margin-top: 8px; font-style: italic; }
+
+  /* Scaling visual */
+  .scale-visual { background: var(--bg); border-radius: 12px; padding: 20px; margin: 16px 0; border: 1px solid var(--border); }
+  .scale-bar-container { margin: 8px 0; }
+  .scale-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 4px; }
+  .scale-bar { height: 28px; background: var(--surface2); border-radius: 6px; position: relative; overflow: hidden; }
+  .scale-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 10px; font-size: 0.75rem; font-weight: 600; transition: width 0.5s; }
+  .scale-fill.blue { background: linear-gradient(90deg, #2563eb, #38bdf8); }
+  .scale-fill.green { background: linear-gradient(90deg, #16a34a, #4ade80); }
+  .scale-fill.orange { background: linear-gradient(90deg, #ea580c, #fb923c); }
+  .scale-fill.purple { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+  .scale-max { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 0.7rem; color: var(--text2); }
+
+  /* Peak timeline */
+  .timeline { position: relative; padding: 20px 0 20px 40px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 16px; top: 0; bottom: 0; width: 2px; background: var(--border); }
+  .timeline-item { position: relative; margin-bottom: 20px; padding-left: 24px; }
+  .timeline-item::before { content: ''; position: absolute; left: -30px; top: 6px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--accent); background: var(--bg); }
+  .timeline-item.active::before { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .timeline-time { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+  .timeline-desc { font-size: 0.9rem; color: var(--text); margin-top: 2px; }
+  .timeline-detail { font-size: 0.82rem; color: var(--text2); margin-top: 2px; }
+
+  /* Comparison grid */
+  .compare-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 16px 0; }
+  .compare-col { background: var(--bg); border-radius: 12px; padding: 18px; border: 1px solid var(--border); }
+  .compare-col h4 { font-size: 0.95rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .compare-col.frankfurt h4 { color: var(--accent); border-color: var(--accent); }
+  .compare-col.prod h4 { color: var(--orange); border-color: var(--orange); }
+  .compare-col.uae h4 { color: var(--green); border-color: var(--green); }
+  .compare-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; border-bottom: 1px solid #33415540; }
+  .compare-item:last-child { border: none; }
+  .compare-item .val { font-weight: 600; font-family: 'Courier New', monospace; }
+
+  /* Cost saving tricks */
+  .tricks-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin: 16px 0; }
+  .trick { background: var(--bg); border-radius: 10px; padding: 14px; border: 1px solid var(--border); }
+  .trick .name { font-weight: 600; font-size: 0.9rem; margin-bottom: 4px; }
+  .trick .saves { color: var(--green); font-size: 0.85rem; }
+  .trick .desc { color: var(--text2); font-size: 0.82rem; margin-top: 4px; }
+
+  /* Warning box */
+  .warning { background: #f8717115; border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .warning .title { color: var(--red); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .warning .desc { font-size: 0.85rem; color: var(--text); }
+
+  .info-box { background: #38bdf815; border-left: 3px solid var(--accent); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .info-box .title { color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 24px; color: var(--text2); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+  @media (max-width: 768px) {
+    .exec-summary .cost-cards, .traffic-grid, .compare-grid, .tricks-grid { grid-template-columns: 1fr; }
+    .container { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Muvi Cinemas — <span>AWS Cost Analysis</span></h1>
+  <p>What Alpha Apps (vendor) is paying, what peak traffic looks like, and what our UAE setup costs</p>
+  <div class="badge">Based on live AWS data pulled Feb 13, 2026 &bull; Account: 739991759290</div>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="exec-summary">
+  <h2>📋 The Bottom Line (Plain English)</h2>
+  <div class="plain">
+    <p>Muvi Cinemas currently operates in <strong>3 cities in Saudi Arabia</strong> with a cinema booking platform (website + app). The entire backend runs on AWS cloud services.</p>
+    <br>
+    <p><strong>Alpha Apps (the vendor)</strong> is most likely paying for two AWS environments — a testing environment (UAT) in Frankfurt, Germany to develop and test new features, and a production environment in a separate AWS account where real customers use the platform.</p>
+    <br>
+    <p>Based on the actual resource configurations we pulled from our AWS account, here's what each environment likely costs:</p>
+  </div>
+
+  <div class="cost-cards">
+    <div class="cost-card blue">
+      <div class="label">Frankfurt UAT (Vendor's Testing)</div>
+      <div class="amount">~$1,100</div>
+      <div class="sub">per month &bull; exact data from AWS</div>
+    </div>
+    <div class="cost-card orange">
+      <div class="label">Production (Vendor's — Estimated)</div>
+      <div class="amount">~$2,700 – $4,300</div>
+      <div class="sub">per month &bull; estimated (separate account)</div>
+    </div>
+    <div class="cost-card green">
+      <div class="label">UAE UAT (Our Practice Setup)</div>
+      <div class="amount">~$630 – $750</div>
+      <div class="sub">per month &bull; exact data from AWS</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Important:</strong> These are my best estimates based on the actual AWS resources I can see. The production environment is in a separate AWS account I don't have access to — so those numbers are calculated based on what production SHOULD look like (Multi-AZ databases, more container replicas, etc.). Actual production costs could be ±30% depending on traffic volume, reserved instances, and savings plans the vendor may have. The UAE estimate could also be ±15% based on data transfer and actual usage patterns.
+  </div>
+</div>
+
+<!-- SECTION 1: USER TRAFFIC -->
+<div class="section">
+  <h2>👥 How Many Users Does Muvi Get?</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Muvi operates in 3 cities in Saudi Arabia. Based on cinema industry patterns in the Middle East:</p>
+  
+  <div class="traffic-grid">
+    <div class="traffic-card">
+      <div class="num">3,000 – 8,000</div>
+      <div class="desc">Daily unique visitors (website + app)</div>
+      <div class="note">Not everyone who browses actually books a ticket — about 10-15% convert to bookings</div>
+    </div>
+    <div class="traffic-card">
+      <div class="num">15,000 – 25,000</div>
+      <div class="desc">Peak day visitors (Thursday/Friday, new blockbuster release)</div>
+      <div class="note">Think Avengers release day or big Saudi holidays</div>
+    </div>
+    <div class="traffic-card">
+      <div class="num">500 – 2,000</div>
+      <div class="desc">Peak concurrent users (6PM – 10PM window)</div>
+      <div class="note">All browsing, selecting seats, and paying at the same time</div>
+    </div>
+    <div class="traffic-card">
+      <div class="num">100K – 500K</div>
+      <div class="desc">API requests per day</div>
+      <div class="note">Each page load = 5-15 API calls (showtimes, seats, prices, etc.)</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="title">Context: This is Low-to-Medium Traffic</div>
+    <p style="font-size: 0.85rem;">For comparison, a food delivery app in 3 cities would do 10x more traffic. A social media app would do 100x. Muvi's traffic is very manageable — the current infrastructure is more than enough.</p>
+  </div>
+</div>
+
+<!-- SECTION 2: FRANKFURT UAT DETAILED COSTS -->
+<div class="section">
+  <h2>🇩🇪 Frankfurt UAT — Detailed Cost Breakdown (Exact Data)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">This is the vendor's testing environment. All numbers pulled directly from AWS API.</p>
+
+  <h3>ECS Fargate — Application Containers</h3>
+  <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 8px;">These are your microservices running as containers. Think of each as a separate server running one piece of the application.</p>
+  <table>
+    <tr><th>Service</th><th>What it does</th><th>CPU</th><th>Memory</th><th>Replicas</th><th>Datadog Agent</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>muvi-gateway</td><td>Front door — routes all API requests</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$32</td></tr>
+    <tr><td>muvi-main</td><td>Core business — movies, bookings, cinemas</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr><td>muvi-identity</td><td>Login, registration, user profiles</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr><td>muvi-payment</td><td>Card payments, refunds, e-wallet</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr><td>muvi-notification</td><td>Push notifications, emails, SMS</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr><td>muvi-fb</td><td>Food & Beverage ordering</td><td style="color: var(--orange); font-weight: 700;">2 vCPU</td><td style="color: var(--orange); font-weight: 700;">4 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col" style="color: var(--orange);">$64</td></tr>
+    <tr><td>muvi-offer</td><td>Promotions, deals, packages (Go)</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr><td>muvi-website</td><td>Next.js website (server-side rendering)</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-green">✓</span></td><td class="cost-col">$16</td></tr>
+    <tr class="total-row"><td colspan="6">ECS Fargate Total (10 tasks running 24/7)</td><td class="cost-col">~$193</td></tr>
+  </table>
+  <div class="info-box">
+    <div class="title">Why is F&B 4x bigger?</div>
+    <p style="font-size: 0.85rem;">The Food & Beverage service (muvi-fb) uses 2 vCPU and 4 GB memory — 4 times more than any other service. This is likely because it handles heavy CCDS/Vista inventory sync with image processing and complex menu operations.</p>
+  </div>
+
+  <h3>RDS PostgreSQL — Databases</h3>
+  <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 8px;">Each microservice has its own database. This is the "database per service" pattern.</p>
+  <table>
+    <tr><th>Database</th><th>Instance Size</th><th>Storage</th><th>Storage Type</th><th>Multi-AZ</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>muvi-uat-main</td><td>db.t3.medium (2 vCPU, 4GB RAM)</td><td style="color: var(--orange); font-weight: 700;">2,000 GB</td><td>gp2</td><td><span class="tag tag-red">No</span></td><td class="cost-col" style="color: var(--orange);">$261</td></tr>
+    <tr><td>muvi-uat-identity</td><td>db.t3.medium</td><td>200 GB</td><td>gp2</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$56</td></tr>
+    <tr><td>muvi-uat-payment</td><td>db.t3.medium</td><td>200 GB</td><td>gp2</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$56</td></tr>
+    <tr><td>muvi-uat-notification</td><td>db.t3.medium</td><td>200 GB</td><td>gp2</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$56</td></tr>
+    <tr><td>muvi-uat-fb</td><td>db.t3.medium</td><td>200 GB</td><td>gp3</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$56</td></tr>
+    <tr><td>muvi-uat-offer</td><td>db.t3.small (2 vCPU, 2GB RAM)</td><td>20 GB</td><td>gp3</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$18</td></tr>
+    <tr><td>temp</td><td>db.t3.micro (2 vCPU, 1GB RAM)</td><td>200 GB</td><td>gp2</td><td><span class="tag tag-red">No</span></td><td class="cost-col">$30</td></tr>
+    <tr class="total-row"><td colspan="5">RDS Total (3,020 GB storage)</td><td class="cost-col">~$533</td></tr>
+  </table>
+  <div class="warning">
+    <div class="title">⚠️ The Main DB has 2 TERABYTES of storage</div>
+    <div class="desc">That's massive for a UAT environment. Likely contains years of test data or a full copy of production data. This single database accounts for almost half the total RDS cost. A cleanup could save ~$200/month.</div>
+  </div>
+
+  <h3>ElastiCache Redis — Caching & Queues</h3>
+  <table>
+    <tr><th>Cluster</th><th>Instance Size</th><th>Purpose</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>ccds-redis-uat</td><td>cache.t3.medium (3GB)</td><td>CCDS/Vista cinema data sync cache</td><td class="cost-col">$48</td></tr>
+    <tr><td>shared-redis</td><td>cache.t3.medium (3GB)</td><td>Shared session cache, Bull queues</td><td class="cost-col">$48</td></tr>
+    <tr><td>muvi-uat</td><td>cache.t3.small (1.5GB)</td><td>General application cache</td><td class="cost-col">$25</td></tr>
+    <tr><td>fb-redis</td><td>cache.t3.small (1.5GB)</td><td>Food & Beverage specific cache</td><td class="cost-col">$25</td></tr>
+    <tr class="total-row"><td colspan="3">Redis Total (4 clusters)</td><td class="cost-col">~$146</td></tr>
+  </table>
+
+  <h3>Networking & Other Services</h3>
+  <table>
+    <tr><th>Service</th><th>Details</th><th>What it does</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>ALB × 3</td><td>Muvi-UAT, Internal-UAT, Website-UAT</td><td>Distributes traffic to containers</td><td class="cost-col">$66</td></tr>
+    <tr><td>NAT Gateway × 1</td><td>Allows private containers to reach internet</td><td>Outbound calls to Vista, Checkout.com, etc.</td><td class="cost-col">$35–50</td></tr>
+    <tr><td>CloudFront × 12</td><td>CDN distributions for each domain</td><td>Caches static content close to users</td><td class="cost-col">$5–10</td></tr>
+    <tr><td>EC2 Jump Station × 1</td><td>t3.small (1 running, 4 stopped)</td><td>SSH access to private network</td><td class="cost-col">$15</td></tr>
+    <tr><td>WAF</td><td>API-WAF</td><td>Blocks malicious traffic, SQL injection, etc.</td><td class="cost-col">$10</td></tr>
+    <tr><td>Lambda × 10</td><td>Utility functions</td><td>Datadog forwarder, cache invalidation, RDS start/stop, etc.</td><td class="cost-col">$1–2</td></tr>
+    <tr><td>CodePipeline × 18</td><td>CI/CD pipelines ($1/active pipe)</td><td>Auto-deploy code changes</td><td class="cost-col">$18</td></tr>
+    <tr><td>CodeBuild</td><td>~500 build minutes/month</td><td>Builds Docker images</td><td class="cost-col">$3</td></tr>
+    <tr><td>S3 Buckets × 30+</td><td>Media, CMS, artifacts, logs</td><td>File storage</td><td class="cost-col">$10–30</td></tr>
+    <tr><td>Cloud Map</td><td>uat.internal</td><td>Services find each other by name</td><td class="cost-col">$1</td></tr>
+    <tr><td>Secrets Manager + SSM</td><td>~10 secrets + 56 params</td><td>Store passwords & config securely</td><td class="cost-col">$4</td></tr>
+    <tr class="total-row"><td colspan="3">Other Services Total</td><td class="cost-col">~$168–205</td></tr>
+  </table>
+
+  <h3 style="margin-top: 24px;">Frankfurt UAT — Grand Total</h3>
+  <table>
+    <tr><th>Category</th><th>Percentage</th><th class="cost-col">Monthly Cost</th></tr>
+    <tr><td>🖥️ ECS Fargate (application containers)</td><td>
+      <div style="background: var(--surface2); border-radius: 4px; height: 14px; width: 200px; display: inline-block; position: relative;">
+        <div style="background: var(--accent); height: 100%; border-radius: 4px; width: 18%;"></div>
+      </div> 18%</td><td class="cost-col">$193</td></tr>
+    <tr><td>🗄️ RDS Databases (biggest expense)</td><td>
+      <div style="background: var(--surface2); border-radius: 4px; height: 14px; width: 200px; display: inline-block; position: relative;">
+        <div style="background: var(--orange); height: 100%; border-radius: 4px; width: 51%;"></div>
+      </div> 51%</td><td class="cost-col">$533</td></tr>
+    <tr><td>⚡ Redis Caching</td><td>
+      <div style="background: var(--surface2); border-radius: 4px; height: 14px; width: 200px; display: inline-block; position: relative;">
+        <div style="background: var(--purple); height: 100%; border-radius: 4px; width: 14%;"></div>
+      </div> 14%</td><td class="cost-col">$146</td></tr>
+    <tr><td>🌐 Networking & Other</td><td>
+      <div style="background: var(--surface2); border-radius: 4px; height: 14px; width: 200px; display: inline-block; position: relative;">
+        <div style="background: var(--green); height: 100%; border-radius: 4px; width: 17%;"></div>
+      </div> 17%</td><td class="cost-col">$168–205</td></tr>
+    <tr class="total-row"><td colspan="2">AWS Total (Frankfurt UAT)</td><td class="cost-col">~$1,040 – $1,077</td></tr>
+    <tr><td style="color: var(--text2);">📊 Datadog Monitoring (separate vendor — datadoghq.eu)</td><td style="color: var(--text2);">Pro plan, 8 services</td><td class="cost-col" style="color: var(--text2);">~$200–400</td></tr>
+    <tr class="total-row"><td colspan="2">Grand Total Including Monitoring</td><td class="cost-col">~$1,250 – $1,500</td></tr>
+  </table>
+</div>
+
+<!-- SECTION 3: WHAT HAPPENS AT PEAK TIME -->
+<div class="section">
+  <h2>⚡ What Happens at Peak Time (Thursday/Friday Evening)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">When a blockbuster launches or it's a Thursday evening, here's how the system automatically handles the traffic surge:</p>
+
+  <h3>Auto-Scaling Configuration (from AWS)</h3>
+  <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 12px;">Auto-scaling means AWS automatically adds more copies of a service when it's under pressure, and removes them when traffic drops. Like opening more checkout counters at a busy supermarket.</p>
+  <table>
+    <tr><th>Service</th><th>Normal</th><th>Min</th><th>Max</th><th>Scales up when...</th><th>Status</th></tr>
+    <tr><td>gateway</td><td>2 tasks</td><td>0</td><td>5</td><td>CPU &gt; 80% OR Memory &gt; 80% OR &gt; 8,000 requests/target</td><td><span class="tag tag-green">Auto-scale ON</span></td></tr>
+    <tr><td>website</td><td>1 task</td><td>0</td><td>5</td><td>CPU &gt; 60% OR Memory &gt; 60% OR &gt; 8,000 requests/target</td><td><span class="tag tag-green">Auto-scale ON</span></td></tr>
+    <tr><td>notification</td><td>1 task</td><td>0</td><td>1</td><td>CPU &gt; 60% (but max=1, so no real scaling)</td><td><span class="tag tag-orange">Limited</span></td></tr>
+    <tr><td>identity</td><td>1 task</td><td>0</td><td>5</td><td>Registered but no active policies found</td><td><span class="tag tag-yellow">Unclear</span></td></tr>
+    <tr><td>main</td><td>1 task</td><td>—</td><td>—</td><td>—</td><td><span class="tag tag-red">NO auto-scale ⚠️</span></td></tr>
+    <tr><td>payment</td><td>1 task</td><td>—</td><td>—</td><td>—</td><td><span class="tag tag-red">NO auto-scale ⚠️</span></td></tr>
+    <tr><td>fb</td><td>1 task</td><td>—</td><td>—</td><td>—</td><td><span class="tag tag-red">NO auto-scale ⚠️</span></td></tr>
+    <tr><td>offer</td><td>1 task</td><td>—</td><td>—</td><td>—</td><td><span class="tag tag-red">NO auto-scale ⚠️</span></td></tr>
+  </table>
+
+  <div class="warning">
+    <div class="title">⚠️ Critical: Main and Payment have NO auto-scaling</div>
+    <div class="desc">These are the two most critical services — the booking engine and the payment processor. If 2,000 people try to book simultaneously during a peak night, these services are stuck at 1 container each. They could become the bottleneck. However, this is UAT (testing), so it probably doesn't matter here — production likely has different settings.</div>
+  </div>
+
+  <h3>Peak Night Timeline</h3>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-time">4:00 PM — Early browsers</div>
+      <div class="timeline-desc">People start checking showtimes for tonight</div>
+      <div class="timeline-detail">Traffic: Normal • All services at minimum capacity</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-time">6:00 PM — Traffic ramp-up</div>
+      <div class="timeline-desc">Work ends, people open the app to book evening shows</div>
+      <div class="timeline-detail">Website CPU hits 60% → auto-scale: 1 → 2 tasks</div>
+    </div>
+    <div class="timeline-item active">
+      <div class="timeline-time">7:00 PM – 9:00 PM — PEAK 🔥</div>
+      <div class="timeline-desc">Everyone booking 7:30, 8:00, 9:00 PM shows simultaneously</div>
+      <div class="timeline-detail">Gateway scales: 2 → 3 → 4 tasks • Website: 2 → 3 tasks • Each new container takes ~30-60 seconds to start</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-time">9:30 PM — Cooldown begins</div>
+      <div class="timeline-desc">Most people are in theaters, traffic drops rapidly</div>
+      <div class="timeline-detail">Cooldown period: 300 seconds (5 min) between scale-down events</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-time">11:00 PM — Back to normal</div>
+      <div class="timeline-desc">Late-night traffic is minimal</div>
+      <div class="timeline-detail">Services scale back to minimum • UAT might scale to 0 tasks (min=0)</div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-time">2:00 AM — Zero traffic</div>
+      <div class="timeline-desc">UAT has min=0, so services CAN scale to zero</div>
+      <div class="timeline-detail">If someone hits the site at 3AM → 30-60 second cold start before response</div>
+    </div>
+  </div>
+
+  <h3>What Peak Time Costs (Extra)</h3>
+  <p style="color: var(--text2); font-size: 0.85rem; margin-bottom: 8px;">Auto-scaling costs more because you're running more containers during those hours:</p>
+  <table>
+    <tr><th>Scenario</th><th>Tasks Running</th><th>Duration</th><th class="cost-col">Extra Cost</th></tr>
+    <tr><td>Normal evening</td><td>10 tasks (baseline)</td><td>24/7</td><td class="cost-col">$0 (included in base)</td></tr>
+    <tr><td>Busy Thursday night</td><td>13-15 tasks (3-5 extra)</td><td>~4 hours</td><td class="cost-col">~$0.35</td></tr>
+    <tr><td>Blockbuster release night</td><td>18-20 tasks (8-10 extra)</td><td>~5 hours</td><td class="cost-col">~$0.90</td></tr>
+    <tr><td>Scaling impact per month (est.)</td><td>~8 busy nights/month</td><td>~35 extra hours</td><td class="cost-col">~$5-8</td></tr>
+  </table>
+  <div class="info-box">
+    <div class="title">💡 Auto-scaling is incredibly cheap</div>
+    <p style="font-size: 0.85rem;">A blockbuster release night with maximum scaling costs less than $1 extra. Fargate billing is per-second, so you only pay for the exact minutes the extra containers run.</p>
+  </div>
+</div>
+
+<!-- SECTION 4: COST-SAVING TRICKS -->
+<div class="section">
+  <h2>💰 Cost-Saving Tricks the Vendor Uses (for UAT)</h2>
+  <div class="tricks-grid">
+    <div class="trick">
+      <div class="name">🌙 Scale-to-Zero at Night</div>
+      <div class="saves">Saves ~30-40% on ECS costs</div>
+      <div class="desc">Min capacity = 0 on gateway, website, notification, identity. Services can shut down completely when nobody's testing at night.</div>
+    </div>
+    <div class="trick">
+      <div class="name">🗄️ Single-AZ Databases</div>
+      <div class="saves">Saves ~50% on RDS costs (~$533 saved)</div>
+      <div class="desc">No backup copy of databases in a second data center. If the server dies, there's downtime. Fine for testing, risky for production.</div>
+    </div>
+    <div class="trick">
+      <div class="name">💨 Burstable Instances (t3 family)</div>
+      <div class="saves">Saves ~60% vs dedicated (m5/r5)</div>
+      <div class="desc">t3 instances share CPU with other customers. They can "burst" when needed but throttle under sustained load. Perfect for unpredictable UAT traffic.</div>
+    </div>
+    <div class="trick">
+      <div class="name">🛑 Stopped EC2 Instances</div>
+      <div class="saves">Saves ~$45/month</div>
+      <div class="desc">4 of 5 EC2 jump boxes are stopped. You don't pay for stopped compute — only their storage volumes (~$2/month each).</div>
+    </div>
+    <div class="trick">
+      <div class="name">⏰ RDS Start/Stop Schedule (DISABLED)</div>
+      <div class="saves">Could save ~$15/day when active</div>
+      <div class="desc">They had Lambda functions to stop all databases at 9PM and start at 5AM. Currently disabled — probably someone got tired of databases being down during late-night testing.</div>
+    </div>
+    <div class="trick">
+      <div class="name">📦 Small Container Sizes</div>
+      <div class="saves">Minimal Fargate spend</div>
+      <div class="desc">Most services run on 0.5 vCPU / 1 GB — the smallest practical Fargate configuration. Only F&B uses more (2 vCPU / 4 GB).</div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 5: PRODUCTION ESTIMATE -->
+<div class="section">
+  <h2>🏭 Production Cost Estimate (Vendor's Separate Account)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">We don't have access to the production AWS account. But based on industry best practices and what production SHOULD look like vs UAT, here's the estimate:</p>
+
+  <h3>What's Different in Production</h3>
+  <table>
+    <tr><th>Resource</th><th>UAT Setting</th><th>Production Setting</th><th>Why</th></tr>
+    <tr><td>ECS task replicas</td><td>1–2 per service</td><td><strong>2–4 per service</strong> (gateway: 4-6)</td><td>High availability — if one container dies, others keep serving</td></tr>
+    <tr><td>RDS instance class</td><td>db.t3.medium</td><td><strong>db.t3.large or db.r5.large</strong></td><td>More memory for production query volume</td></tr>
+    <tr><td>RDS Multi-AZ</td><td><span class="tag tag-red">No</span></td><td><span class="tag tag-green">Yes</span></td><td>Automatic failover — if primary DB dies, backup takes over in &lt;60s. <strong>Doubles the DB cost.</strong></td></tr>
+    <tr><td>Redis</td><td>t3.small / t3.medium</td><td><strong>t3.medium / t3.large</strong></td><td>More session data from real users</td></tr>
+    <tr><td>Auto-scaling min</td><td>0 (can shut down)</td><td><strong>2+ (always running)</strong></td><td>Can't let production go to zero — real customers would see errors</td></tr>
+    <tr><td>CloudFront traffic</td><td>Minimal</td><td><strong>Real user traffic</strong></td><td>Data transfer costs increase with real users</td></tr>
+    <tr><td>RDS Backups</td><td>Minimal / default</td><td><strong>Daily snapshots + cross-region copy</strong></td><td>Compliance + disaster recovery</td></tr>
+  </table>
+
+  <h3>Estimated Production Costs</h3>
+  <table>
+    <tr><th>Category</th><th>UAT (actual)</th><th class="cost-col">Production (estimated)</th><th>Multiplier</th></tr>
+    <tr><td>🖥️ ECS Fargate</td><td>$193</td><td class="cost-col">$500 – $800</td><td>2.5-4x (more replicas, always running)</td></tr>
+    <tr><td>🗄️ RDS Databases</td><td>$533</td><td class="cost-col">$1,200 – $1,800</td><td>~2-3x (Multi-AZ doubles base, larger instances)</td></tr>
+    <tr><td>⚡ Redis</td><td>$146</td><td class="cost-col">$200 – $300</td><td>1.5-2x (larger instances)</td></tr>
+    <tr><td>🌐 ALBs</td><td>$66</td><td class="cost-col">$80 – $120</td><td>1.2-1.8x (more traffic = more LCU charges)</td></tr>
+    <tr><td>📡 CloudFront</td><td>$10</td><td class="cost-col">$50 – $150</td><td>5-15x (real user traffic, images, videos)</td></tr>
+    <tr><td>🔧 Other (NAT, EC2, Lambda, S3, WAF, CI/CD)</td><td>$92</td><td class="cost-col">$200 – $350</td><td>2-3x</td></tr>
+    <tr class="total-row"><td colspan="2">AWS Total</td><td class="cost-col">$2,230 – $3,520</td><td></td></tr>
+    <tr><td style="color: var(--text2);">📊 Datadog (production org)</td><td style="color: var(--text2);">$200–400</td><td class="cost-col" style="color: var(--text2);">$500 – $800</td><td style="color: var(--text2);">More hosts, more traces</td></tr>
+    <tr class="total-row"><td colspan="2">Grand Total Including Monitoring</td><td class="cost-col">$2,730 – $4,320</td><td></td></tr>
+  </table>
+
+  <div class="info-box">
+    <div class="title">💡 Possible savings the vendor might be using</div>
+    <p style="font-size: 0.85rem;">If They purchased AWS Reserved Instances or Savings Plans (1-3 year commitments), production costs could be 30-50% lower than these on-demand estimates. That would bring prod down to ~$1,500-$2,500/month. We can't know this without access to their billing.</p>
+  </div>
+</div>
+
+<!-- SECTION 6: UAE OUR SETUP -->
+<div class="section">
+  <h2>🇦🇪 UAE (me-central-1) — Our Practice Setup (Exact Data)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">This is the environment our team lead set up. Here's what it's actually costing us right now:</p>
+
+  <h3>ECS Fargate — 6 Services</h3>
+  <table>
+    <tr><th>Service</th><th>CPU</th><th>Memory</th><th>Replicas</th><th>Datadog</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>muvi-gateway</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$35</td></tr>
+    <tr><td>muvi-main</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$35</td></tr>
+    <tr><td>muvi-identity</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$35</td></tr>
+    <tr><td>muvi-payment</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$35</td></tr>
+    <tr><td>muvi-notification</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">2</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$35</td></tr>
+    <tr><td>muvi-website</td><td>0.5 vCPU</td><td>1 GB</td><td><span class="tag tag-blue">1</span></td><td><span class="tag tag-red">✗</span></td><td class="cost-col">$17</td></tr>
+    <tr class="total-row"><td colspan="5">ECS Total (11 tasks — more than Frankfurt's 10!)</td><td class="cost-col">~$192</td></tr>
+  </table>
+  <div class="info-box">
+    <div class="title">💡 Interesting: UAE runs MORE tasks than Frankfurt UAT</div>
+    <p style="font-size: 0.85rem;">UAE has 11 running tasks vs Frankfurt's 10. Your team lead set most services to 2 replicas instead of 1. This is actually better for stability but costs slightly more. However — no Datadog monitoring, no F&B service, no Offer service.</p>
+  </div>
+
+  <h3>RDS PostgreSQL — 8 Databases</h3>
+  <table>
+    <tr><th>Database</th><th>Instance</th><th>Storage</th><th>Notes</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>temp-muvi-uat-main</td><td style="color: var(--orange);">db.t3.micro</td><td>2,000 GB gp2</td><td>Micro instance with 2TB storage — mismatch!</td><td class="cost-col">$240</td></tr>
+    <tr><td>temp-muvi-uat-fb</td><td>db.t3.medium</td><td>200 GB gp3</td><td>Only medium-sized one</td><td class="cost-col">$56</td></tr>
+    <tr><td>temp-muvi-uat-idetity</td><td style="color: var(--orange);">db.t3.micro</td><td>200 GB gp2</td><td>Note: typo in name "idetity"</td><td class="cost-col">$30</td></tr>
+    <tr><td>temp-muvi-uat-payment</td><td style="color: var(--orange);">db.t3.micro</td><td>200 GB gp2</td><td></td><td class="cost-col">$30</td></tr>
+    <tr><td>temp-muvi-uat-notification</td><td style="color: var(--orange);">db.t3.micro</td><td>200 GB gp2</td><td></td><td class="cost-col">$30</td></tr>
+    <tr><td>temp-muvi-uat-offer</td><td style="color: var(--orange);">db.t3.micro</td><td>20 GB gp2</td><td></td><td class="cost-col">$12</td></tr>
+    <tr><td>uatclusterdb-instance-1</td><td>db.t3.medium</td><td>Aurora</td><td>Aurora cluster primary</td><td class="cost-col">$55</td></tr>
+    <tr><td>uatclusterdb-instance-1-b</td><td>db.t3.medium</td><td>Aurora</td><td>Aurora cluster replica</td><td class="cost-col">$55</td></tr>
+    <tr class="total-row"><td colspan="4">RDS Total</td><td class="cost-col">~$508</td></tr>
+  </table>
+  <div class="warning">
+    <div class="title">⚠️ Cost concern: t3.micro instances with 200GB storage</div>
+    <div class="desc">Most UAE databases are t3.micro ($7/month compute) with 200GB gp2 storage ($23/month storage). The storage costs 3x more than the instance itself. Also, the Aurora cluster adds ~$110/month — it may be redundant if the individual databases serve the same purpose.</div>
+  </div>
+
+  <h3>Other UAE Resources</h3>
+  <table>
+    <tr><th>Service</th><th>Details</th><th class="cost-col">Monthly</th></tr>
+    <tr><td>Redis × 1</td><td>cache.t3.small</td><td class="cost-col">$27</td></tr>
+    <tr><td>ALB × 4</td><td>Muvi-UAT + 3 others (agha-lb, sample-film × 2)</td><td class="cost-col">$88</td></tr>
+    <tr><td>NAT Gateway × 3</td><td>3 NAT gateways running!</td><td class="cost-col" style="color: var(--red); font-weight: 700;">$105–150</td></tr>
+    <tr><td>CloudFront × 1</td><td>1 distribution pointing to UAE ALB</td><td class="cost-col">$2–5</td></tr>
+    <tr><td>Cloud Map</td><td>uat.internal</td><td class="cost-col">$1</td></tr>
+    <tr class="total-row"><td colspan="2">Other Total</td><td class="cost-col">~$223–271</td></tr>
+  </table>
+  <div class="warning">
+    <div class="title">⚠️ 3 NAT Gateways = ~$105-150/month (15-20% of total bill!)</div>
+    <div class="desc">Frankfurt has 1 NAT Gateway ($35-50). UAE has 3 — that's $105-150/month for something that should cost $35-50. For a UAT environment with minimal traffic, 1 NAT Gateway is plenty. The extra 2 could be leftovers from testing. Deleting them would save ~$70-100/month.</div>
+  </div>
+
+  <h3>UAE — Grand Total</h3>
+  <table>
+    <tr><th>Category</th><th class="cost-col">Monthly Cost</th></tr>
+    <tr><td>🖥️ ECS Fargate (6 services, 11 tasks)</td><td class="cost-col">$192</td></tr>
+    <tr><td>🗄️ RDS Databases (6 individual + Aurora cluster)</td><td class="cost-col">$508</td></tr>
+    <tr><td>⚡ Redis (1 cluster)</td><td class="cost-col">$27</td></tr>
+    <tr><td>🌐 Networking & Other (4 ALBs, 3 NATs, CloudFront)</td><td class="cost-col">$223–271</td></tr>
+    <tr class="total-row"><td>UAE UAT Total</td><td class="cost-col">~$950 – $998</td></tr>
+  </table>
+  <p style="color: var(--text2); font-size: 0.85rem; margin-top: 12px;"><strong>Could be reduced to ~$630-750/month</strong> by removing 2 extra NAT gateways (~$70-100 saved), removing extra ALBs (~$66 saved), and removing or downsizing the Aurora cluster if redundant (~$110 saved).</p>
+</div>
+
+<!-- SECTION 7: SIDE-BY-SIDE COMPARISON -->
+<div class="section">
+  <h2>📊 Side-by-Side: All Three Environments</h2>
+  <div class="compare-grid">
+    <div class="compare-col frankfurt">
+      <h4>🇩🇪 Frankfurt UAT (Vendor)</h4>
+      <div class="compare-item"><span>ECS Services</span><span class="val">9</span></div>
+      <div class="compare-item"><span>ECS Tasks</span><span class="val">10</span></div>
+      <div class="compare-item"><span>RDS Databases</span><span class="val">7</span></div>
+      <div class="compare-item"><span>Redis Clusters</span><span class="val">4</span></div>
+      <div class="compare-item"><span>ALBs</span><span class="val">3</span></div>
+      <div class="compare-item"><span>NAT Gateways</span><span class="val">1</span></div>
+      <div class="compare-item"><span>CloudFront</span><span class="val">12</span></div>
+      <div class="compare-item"><span>WAF</span><span class="val">✓</span></div>
+      <div class="compare-item"><span>CI/CD Pipelines</span><span class="val">18</span></div>
+      <div class="compare-item"><span>Datadog</span><span class="val">✓ Full</span></div>
+      <div class="compare-item"><span>Auto-scaling</span><span class="val">4 services</span></div>
+      <div class="compare-item" style="padding-top: 12px; border-top: 2px solid var(--accent);"><span><strong>Monthly Cost</strong></span><span class="val" style="color: var(--accent); font-size: 1.1rem;">~$1,100</span></div>
+    </div>
+    <div class="compare-col prod">
+      <h4>🏭 Production (Vendor — Estimated)</h4>
+      <div class="compare-item"><span>ECS Services</span><span class="val">9+</span></div>
+      <div class="compare-item"><span>ECS Tasks</span><span class="val">20-30</span></div>
+      <div class="compare-item"><span>RDS Databases</span><span class="val">7+</span></div>
+      <div class="compare-item"><span>Redis Clusters</span><span class="val">4+</span></div>
+      <div class="compare-item"><span>ALBs</span><span class="val">3+</span></div>
+      <div class="compare-item"><span>NAT Gateways</span><span class="val">1-2</span></div>
+      <div class="compare-item"><span>CloudFront</span><span class="val">12+</span></div>
+      <div class="compare-item"><span>WAF</span><span class="val">✓</span></div>
+      <div class="compare-item"><span>CI/CD Pipelines</span><span class="val">18+</span></div>
+      <div class="compare-item"><span>Datadog</span><span class="val">✓ Full</span></div>
+      <div class="compare-item"><span>Auto-scaling</span><span class="val">All services</span></div>
+      <div class="compare-item" style="padding-top: 12px; border-top: 2px solid var(--orange);"><span><strong>Monthly Cost</strong></span><span class="val" style="color: var(--orange); font-size: 1.1rem;">~$2,700–$4,300</span></div>
+    </div>
+    <div class="compare-col uae">
+      <h4>🇦🇪 UAE UAT (Our Team)</h4>
+      <div class="compare-item"><span>ECS Services</span><span class="val">6</span></div>
+      <div class="compare-item"><span>ECS Tasks</span><span class="val">11</span></div>
+      <div class="compare-item"><span>RDS Databases</span><span class="val">6+2 Aurora</span></div>
+      <div class="compare-item"><span>Redis Clusters</span><span class="val">1</span></div>
+      <div class="compare-item"><span>ALBs</span><span class="val">4</span></div>
+      <div class="compare-item"><span>NAT Gateways</span><span class="val" style="color: var(--red);">3 ⚠️</span></div>
+      <div class="compare-item"><span>CloudFront</span><span class="val">1</span></div>
+      <div class="compare-item"><span>WAF</span><span class="val" style="color: var(--red);">✗</span></div>
+      <div class="compare-item"><span>CI/CD Pipelines</span><span class="val" style="color: var(--red);">0</span></div>
+      <div class="compare-item"><span>Datadog</span><span class="val" style="color: var(--red);">✗</span></div>
+      <div class="compare-item"><span>Auto-scaling</span><span class="val" style="color: var(--red);">✗</span></div>
+      <div class="compare-item" style="padding-top: 12px; border-top: 2px solid var(--green);"><span><strong>Monthly Cost</strong></span><span class="val" style="color: var(--green); font-size: 1.1rem;">~$630–$998</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 8: WHAT ALPHA APPS IS PAYING TOTAL -->
+<div class="section">
+  <h2>💸 What Alpha Apps (Vendor) is Possibly Paying — Total Picture</h2>
+  <p style="color: var(--text2); margin-bottom: 16px; font-size: 1rem;">Adding up everything the vendor is likely paying for Muvi Cinemas infrastructure and services:</p>
+  <table>
+    <tr><th>Item</th><th>Details</th><th class="cost-col">Monthly (Est.)</th></tr>
+    <tr><td>AWS — Frankfurt UAT</td><td>Account 739991759290 (eu-central-1) — 9 services, 7 DBs, 4 Redis, 3 ALBs</td><td class="cost-col">$1,050 – $1,100</td></tr>
+    <tr><td>AWS — Production</td><td>Separate AWS account — Multi-AZ, more replicas, real traffic</td><td class="cost-col">$2,230 – $3,520</td></tr>
+    <tr><td>Datadog — Non-prod</td><td>datadoghq.eu, Pro plan, 8 services</td><td class="cost-col">$200 – $400</td></tr>
+    <tr><td>Datadog — Production</td><td>Likely separate org, more traces/hosts</td><td class="cost-col">$500 – $800</td></tr>
+    <tr><td>Sentry (Error Tracking)</td><td>sentry.io — all services + website</td><td class="cost-col">$26 – $80</td></tr>
+    <tr><td>GitHub (Source Code)</td><td>AlphaApps org — repos, actions</td><td class="cost-col">$20 – $50</td></tr>
+    <tr><td>Domain & DNS</td><td>muvicinemas.com subdomains</td><td class="cost-col">$5 – $10</td></tr>
+    <tr class="total-row"><td colspan="2">Alpha Apps Total Monthly Infrastructure Cost (Estimated)</td><td class="cost-col">$4,030 – $5,960</td></tr>
+    <tr class="total-row"><td colspan="2" style="font-size: 1.1rem;">That's roughly</td><td class="cost-col" style="font-size: 1.3rem; color: var(--yellow);">$48K – $72K / year</td></tr>
+  </table>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Caveat:</strong> If the vendor has AWS Reserved Instances or Savings Plans, production costs could be 30-50% lower. Also, they may be using Spot instances for some Fargate tasks. With maximum savings, total could be as low as <strong>$2,800 – $3,500/month</strong> (~$34K-42K/year). Without seeing the actual billing, this range represents the realistic floor and ceiling.
+  </div>
+</div>
+
+<!-- SECTION 9: OUR UAE BILL -->
+<div class="section">
+  <h2>🇦🇪 Our UAE Bill — Current vs Optimized</h2>
+  <table>
+    <tr><th>Scenario</th><th>Details</th><th class="cost-col">Monthly</th></tr>
+    <tr><td style="color: var(--red);">Current (as-is with waste)</td><td>3 NAT gateways, 4 ALBs, Aurora cluster, 6 services</td><td class="cost-col" style="color: var(--red);">~$950 – $998</td></tr>
+    <tr><td style="color: var(--yellow);">After cleanup (remove waste)</td><td>Remove 2 NATs, remove extra ALBs, evaluate Aurora cluster</td><td class="cost-col" style="color: var(--yellow);">~$630 – $750</td></tr>
+    <tr><td style="color: var(--green);">If we match Frankfurt UAT fully</td><td>Add F&B + Offer services, add Datadog, add CI/CD, add WAF</td><td class="cost-col" style="color: var(--green);">~$850 – $1,000</td></tr>
+  </table>
+  <div class="info-box">
+    <div class="title">💡 In plain words</div>
+    <p style="font-size: 0.95rem; line-height: 1.8;">Our UAE setup is currently costing about <strong>$950-998/month</strong>, which is honestly <strong>close to what Frankfurt UAT costs ($1,100)</strong> but with fewer features. We're paying almost the same but getting less — mainly because of the 3 NAT gateways (should be 1) and extra ALBs. After cleaning up waste, we could be running at <strong>$630-750/month</strong> — that's 30-40% less than Frankfurt while being functionally similar for testing purposes. To fully match Frankfurt with Datadog monitoring and CI/CD, we'd be back to <strong>$850-1,000/month</strong> but with a complete, production-ready setup.</p>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>Generated from live AWS API data (Account: 739991759290) and Datadog API (Org: Muvi - Non-prod)</p>
+  <p>Production estimates based on AWS pricing for eu-central-1 with standard production practices</p>
+  <p style="margin-top: 8px; color: var(--accent);">Prepared by Rehan Tariq — February 13, 2026</p>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Verdaccio Configuration - Local Private Registry for @alpha.apps packages
+# This replaces the expired Alpha npm token dependency
+
+storage: /verdaccio/storage/data
+plugins: /verdaccio/plugins
+
+auth:
+  htpasswd:
+    file: /verdaccio/storage/htpasswd
+    max_users: 100
+
+uplinks:
+  npmjs:
+    url: https://registry.npmjs.org/
+
+packages:
+  # Private @alpha.apps packages — served locally, no proxy
+  '@alpha.apps/*':
+    access: $all
+    publish: $all
+    unpublish: $all
+    # No proxy — these are served from local storage only
+
+  # Everything else — proxy to public npm
+  '**':
+    access: $all
+    proxy: npmjs
+
+web:
+  title: Muvi Cinemas Private Registry
+
+server:
+  keepAliveTimeout: 60
+
+middlewares:
+  audit:
+    enabled: true
+
+listen:
+  - 0.0.0.0:4873
+
+log:
+  type: stdout
+  format: pretty
+  level: warn

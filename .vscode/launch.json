@@ -1,0 +1,108 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Attach: Gateway (9229)",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-gateway-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-gateway-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-gateway-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Attach: Identity (9230)",
+      "type": "node",
+      "request": "attach",
+      "port": 9230,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-identity-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-identity-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-identity-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Attach: Main (9231)",
+      "type": "node",
+      "request": "attach",
+      "port": 9231,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-main-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-main-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-main-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Attach: Payment (9232)",
+      "type": "node",
+      "request": "attach",
+      "port": 9232,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-payment-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-payment-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-payment-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Attach: FB (9233)",
+      "type": "node",
+      "request": "attach",
+      "port": 9233,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-fb-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-fb-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-fb-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "name": "Attach: Notification (9234)",
+      "type": "node",
+      "request": "attach",
+      "port": 9234,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/main-backend-microservices/alpha-muvi-notification-main",
+      "remoteRoot": "/app",
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/main-backend-microservices/alpha-muvi-notification-main/dist/**/*.js"],
+      "sourceMapPathOverrides": {
+        "/app/*": "${workspaceFolder}/main-backend-microservices/alpha-muvi-notification-main/*"
+      },
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Attach: All Services",
+      "configurations": [
+        "Attach: Gateway (9229)",
+        "Attach: Identity (9230)",
+        "Attach: Main (9231)",
+        "Attach: Payment (9232)",
+        "Attach: FB (9233)",
+        "Attach: Notification (9234)"
+      ]
+    }
+  ]
+}

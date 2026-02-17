@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — CI/CD Pipeline Setup Plan</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --border: #475569;
+    --text: #e2e8f0; --text2: #94a3b8; --accent: #38bdf8; --green: #4ade80;
+    --red: #f87171; --orange: #fb923c; --purple: #c084fc; --yellow: #fbbf24;
+    --pink: #f472b6; --teal: #2dd4bf;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 48px 24px; margin-bottom: 32px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%); border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 40%, rgba(56,189,248,0.06) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(192,132,252,0.06) 0%, transparent 50%); }
+  .header h1 { font-size: 2.2rem; font-weight: 700; position: relative; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--text2); margin-top: 8px; font-size: 1rem; position: relative; }
+  .header .badge { display: inline-block; background: var(--surface2); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; color: var(--accent); margin-top: 12px; border: 1px solid var(--border); position: relative; }
+  .header .status-badge { display: inline-block; padding: 6px 18px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-top: 16px; position: relative; }
+  .header .status-badge.paused { background: #fb923c25; color: var(--orange); border: 1px solid var(--orange); }
+
+  /* Executive Summary */
+  .exec-summary { background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); border-radius: 16px; padding: 32px; margin-bottom: 32px; border: 1px solid #2563eb44; }
+  .exec-summary h2 { color: var(--accent); font-size: 1.4rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .exec-summary .plain { font-size: 1.05rem; line-height: 1.9; color: var(--text); }
+  .exec-summary .plain strong { color: var(--yellow); }
+  .exec-summary .cost-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  .cost-card { background: var(--surface); border-radius: 12px; padding: 20px; text-align: center; border: 1px solid var(--border); }
+  .cost-card .label { font-size: 0.85rem; color: var(--text2); margin-bottom: 4px; }
+  .cost-card .amount { font-size: 1.8rem; font-weight: 800; }
+  .cost-card .sub { font-size: 0.8rem; color: var(--text2); margin-top: 4px; }
+  .cost-card.blue .amount { color: var(--accent); }
+  .cost-card.green .amount { color: var(--green); }
+  .cost-card.orange .amount { color: var(--orange); }
+  .cost-card.red .amount { color: var(--red); }
+  .cost-card.purple .amount { color: var(--purple); }
+  .cost-card.teal .amount { color: var(--teal); }
+  .disclaimer { margin-top: 20px; padding: 14px 18px; background: #f59e0b15; border-left: 3px solid var(--yellow); border-radius: 0 8px 8px 0; font-size: 0.9rem; color: var(--yellow); }
+
+  /* Sections */
+  .section { background: var(--surface); border-radius: 16px; padding: 28px; margin-bottom: 24px; border: 1px solid var(--border); }
+  .section h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .section h3 { font-size: 1.05rem; color: var(--purple); margin: 20px 0 12px; }
+  .section h4 { font-size: 0.95rem; color: var(--teal); margin: 16px 0 8px; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9rem; }
+  th { background: var(--surface2); color: var(--accent); padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  td { padding: 10px 14px; border-bottom: 1px solid #334155; }
+  tr:hover td { background: #ffffff06; }
+  .cost-col { text-align: right; font-weight: 600; font-family: 'Courier New', monospace; }
+  .total-row td { background: var(--surface2); font-weight: 700; border-top: 2px solid var(--accent); }
+  .total-row .cost-col { color: var(--yellow); font-size: 1.05rem; }
+
+  /* Tags */
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .tag-green { background: #4ade8020; color: var(--green); }
+  .tag-red { background: #f8717120; color: var(--red); }
+  .tag-orange { background: #fb923c20; color: var(--orange); }
+  .tag-blue { background: #38bdf820; color: var(--accent); }
+  .tag-purple { background: #c084fc20; color: var(--purple); }
+  .tag-yellow { background: #fbbf2420; color: var(--yellow); }
+  .tag-teal { background: #2dd4bf20; color: var(--teal); }
+
+  /* Pipeline Architecture */
+  .pipeline-flow { background: var(--bg); border-radius: 12px; padding: 24px; margin: 16px 0; border: 1px solid var(--border); overflow-x: auto; }
+  .pipeline-row { display: flex; align-items: center; gap: 0; margin: 10px 0; flex-wrap: nowrap; min-width: 700px; }
+  .pipeline-stage { background: var(--surface); border-radius: 10px; padding: 12px 16px; border: 1px solid var(--border); text-align: center; min-width: 130px; flex-shrink: 0; }
+  .pipeline-stage .stage-name { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .pipeline-stage .stage-tool { font-size: 0.9rem; font-weight: 700; }
+  .pipeline-stage .stage-detail { font-size: 0.75rem; color: var(--text2); margin-top: 4px; }
+  .pipeline-stage.source { border-color: var(--purple); }
+  .pipeline-stage.source .stage-tool { color: var(--purple); }
+  .pipeline-stage.build { border-color: var(--orange); }
+  .pipeline-stage.build .stage-tool { color: var(--orange); }
+  .pipeline-stage.deploy { border-color: var(--green); }
+  .pipeline-stage.deploy .stage-tool { color: var(--green); }
+  .pipeline-stage.trigger { border-color: var(--accent); }
+  .pipeline-stage.trigger .stage-tool { color: var(--accent); }
+  .pipeline-arrow { color: var(--border); font-size: 1.4rem; padding: 0 6px; flex-shrink: 0; }
+
+  /* Phase Cards */
+  .phase-card { background: var(--bg); border-radius: 12px; margin: 16px 0; border: 1px solid var(--border); overflow: hidden; }
+  .phase-header { padding: 16px 20px; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid var(--border); }
+  .phase-number { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem; flex-shrink: 0; }
+  .phase-number.p1 { background: #7c3aed30; color: var(--purple); border: 2px solid var(--purple); }
+  .phase-number.p2 { background: #38bdf830; color: var(--accent); border: 2px solid var(--accent); }
+  .phase-number.p3 { background: #fb923c30; color: var(--orange); border: 2px solid var(--orange); }
+  .phase-number.p4 { background: #4ade8030; color: var(--green); border: 2px solid var(--green); }
+  .phase-number.p5 { background: #f472b630; color: var(--pink); border: 2px solid var(--pink); }
+  .phase-title { font-size: 1.05rem; font-weight: 700; }
+  .phase-title .phase-eta { font-size: 0.8rem; font-weight: 400; color: var(--text2); margin-left: 8px; }
+  .phase-body { padding: 16px 20px; }
+  .phase-body p { font-size: 0.9rem; color: var(--text2); margin-bottom: 12px; }
+
+  /* Checklist */
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 8px 0 8px 32px; position: relative; font-size: 0.9rem; border-bottom: 1px solid #33415530; }
+  .checklist li:last-child { border: none; }
+  .checklist li::before { content: ''; position: absolute; left: 4px; top: 12px; width: 16px; height: 16px; border-radius: 4px; border: 2px solid var(--border); }
+  .checklist li.done::before { background: var(--green); border-color: var(--green); }
+  .checklist li.done::after { content: '✓'; position: absolute; left: 7px; top: 8px; font-size: 0.7rem; color: var(--bg); font-weight: 800; }
+  .checklist li.blocked::before { background: var(--red); border-color: var(--red); }
+  .checklist li.blocked::after { content: '✗'; position: absolute; left: 7px; top: 8px; font-size: 0.7rem; color: white; font-weight: 800; }
+  .checklist li .note { display: block; font-size: 0.8rem; color: var(--text2); margin-top: 2px; margin-left: 0; }
+  .checklist li .cli { display: block; font-family: 'Courier New', monospace; font-size: 0.8rem; color: var(--teal); background: #0f172a; padding: 4px 8px; border-radius: 4px; margin-top: 4px; }
+
+  /* Status Grid */
+  .status-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin: 16px 0; }
+  .status-card { background: var(--bg); border-radius: 12px; padding: 18px; border: 1px solid var(--border); }
+  .status-card .icon { font-size: 1.6rem; margin-bottom: 8px; }
+  .status-card .card-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+  .status-card .card-value { font-size: 1.4rem; font-weight: 800; }
+  .status-card .card-sub { font-size: 0.82rem; color: var(--text2); margin-top: 4px; }
+
+  /* Comparison */
+  .compare-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin: 16px 0; }
+  .compare-col { background: var(--bg); border-radius: 12px; padding: 18px; border: 1px solid var(--border); }
+  .compare-col h4 { font-size: 0.95rem; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+  .compare-col.vendor h4 { color: var(--accent); border-color: var(--accent); }
+  .compare-col.ours h4 { color: var(--green); border-color: var(--green); }
+  .compare-item { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; border-bottom: 1px solid #33415540; }
+  .compare-item:last-child { border: none; }
+  .compare-item .val { font-weight: 600; font-family: 'Courier New', monospace; }
+
+  /* Info/Warning boxes */
+  .info-box { background: #38bdf815; border-left: 3px solid var(--accent); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .info-box .title { color: var(--accent); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .warning { background: #f8717115; border-left: 3px solid var(--red); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .warning .title { color: var(--red); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .warning .desc { font-size: 0.85rem; color: var(--text); }
+  .success-box { background: #4ade8015; border-left: 3px solid var(--green); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .success-box .title { color: var(--green); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+  .blocker-box { background: #fb923c15; border-left: 3px solid var(--orange); padding: 14px 18px; border-radius: 0 8px 8px 0; margin: 16px 0; }
+  .blocker-box .title { color: var(--orange); font-weight: 700; font-size: 0.9rem; margin-bottom: 4px; }
+
+  /* Repo Grid */
+  .repo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 12px; margin: 16px 0; }
+  .repo-card { background: var(--bg); border-radius: 10px; padding: 14px 16px; border: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+  .repo-card .repo-icon { font-size: 1.2rem; flex-shrink: 0; }
+  .repo-card .repo-info { flex: 1; }
+  .repo-card .repo-name { font-size: 0.88rem; font-weight: 600; font-family: 'Courier New', monospace; }
+  .repo-card .repo-branch { font-size: 0.78rem; color: var(--text2); }
+  .repo-card .repo-status { flex-shrink: 0; }
+
+  /* Code blocks */
+  .code-block { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.7; overflow-x: auto; margin: 12px 0; color: var(--text); }
+  .code-block .comment { color: #6b7280; }
+  .code-block .cmd { color: var(--teal); }
+  .code-block .flag { color: var(--orange); }
+  .code-block .string { color: var(--green); }
+  .code-block .keyword { color: var(--purple); }
+
+  /* Branching Visual */
+  .branch-visual { background: var(--bg); border-radius: 12px; padding: 20px; margin: 16px 0; border: 1px solid var(--border); }
+  .branch-line { display: flex; align-items: center; gap: 0; margin: 8px 0; }
+  .branch-node { width: 110px; padding: 8px 12px; border-radius: 8px; font-size: 0.82rem; font-weight: 700; text-align: center; flex-shrink: 0; }
+  .branch-node.main-b { background: #7c3aed30; border: 2px solid var(--purple); color: var(--purple); }
+  .branch-node.uat-b { background: #fb923c30; border: 2px solid var(--orange); color: var(--orange); }
+  .branch-node.prod-b { background: #4ade8030; border: 2px solid var(--green); color: var(--green); }
+  .branch-connector { flex: 1; height: 2px; background: linear-gradient(90deg, var(--border), var(--text2), var(--border)); position: relative; min-width: 40px; }
+  .branch-connector .connector-label { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 0.7rem; color: var(--text2); white-space: nowrap; }
+
+  /* Timeline / Roadmap */
+  .roadmap { position: relative; padding: 0; margin: 16px 0; }
+  .roadmap-item { display: flex; gap: 16px; margin-bottom: 0; position: relative; }
+  .roadmap-track { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 40px; }
+  .roadmap-dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid var(--border); background: var(--bg); z-index: 1; flex-shrink: 0; }
+  .roadmap-dot.active { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 10px rgba(56,189,248,0.4); }
+  .roadmap-dot.done { border-color: var(--green); background: var(--green); }
+  .roadmap-dot.blocked { border-color: var(--orange); background: var(--orange); }
+  .roadmap-line { flex: 1; width: 2px; background: var(--border); }
+  .roadmap-content { flex: 1; padding-bottom: 24px; }
+  .roadmap-week { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+  .roadmap-title { font-size: 1rem; font-weight: 700; margin: 4px 0; }
+  .roadmap-desc { font-size: 0.85rem; color: var(--text2); }
+  .roadmap-tasks { list-style: none; padding: 0; margin-top: 8px; }
+  .roadmap-tasks li { padding: 4px 0 4px 20px; position: relative; font-size: 0.85rem; color: var(--text); }
+  .roadmap-tasks li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
+  /* Resource Cards */
+  .resource-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 16px 0; }
+  .resource-card { background: var(--bg); border-radius: 10px; padding: 16px; border: 1px solid var(--border); text-align: center; }
+  .resource-card .res-icon { font-size: 1.5rem; margin-bottom: 6px; }
+  .resource-card .res-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 4px; }
+  .resource-card .res-detail { font-size: 0.78rem; color: var(--text2); }
+  .resource-card .res-cost { font-size: 1.1rem; font-weight: 800; margin-top: 8px; color: var(--green); }
+
+  /* Monorepo Architecture */
+  .mono-structure { background: var(--bg); border-radius: 12px; padding: 20px; margin: 16px 0; border: 1px solid var(--border); font-family: 'Courier New', monospace; font-size: 0.82rem; line-height: 1.8; color: var(--text2); }
+  .mono-structure .folder { color: var(--accent); font-weight: 700; }
+  .mono-structure .file { color: var(--teal); }
+  .mono-structure .desc { color: var(--text2); font-style: italic; font-family: 'Segoe UI', sans-serif; font-size: 0.78rem; }
+
+  /* Phase Flow (horizontal steps) */
+  .phase-flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; margin: 16px 0; padding: 16px; background: var(--bg); border-radius: 12px; border: 1px solid var(--border); }
+  .phase-step { background: var(--surface); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--border); text-align: center; min-width: 100px; flex: 1; }
+  .phase-step .step-num { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .phase-step .step-title { font-size: 0.82rem; font-weight: 700; color: var(--accent); }
+  .phase-step .step-desc { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
+  .phase-step.infra { border-color: var(--purple); }
+  .phase-step.infra .step-title { color: var(--purple); }
+  .phase-step.pkg { border-color: var(--teal); }
+  .phase-step.pkg .step-title { color: var(--teal); }
+  .phase-step.patch { border-color: var(--orange); }
+  .phase-step.patch .step-title { color: var(--orange); }
+  .phase-step.bld { border-color: var(--green); }
+  .phase-step.bld .step-title { color: var(--green); }
+  .phase-step.health { border-color: var(--yellow); }
+  .phase-step.health .step-title { color: var(--yellow); }
+  .phase-arrow { color: var(--border); font-size: 1.1rem; padding: 0 4px; flex-shrink: 0; }
+
+  /* Dev Workflow (branching diagram) */
+  .workflow-diagram { background: var(--bg); border-radius: 12px; padding: 24px; margin: 16px 0; border: 1px solid var(--border); }
+  .workflow-row { display: flex; align-items: center; gap: 0; margin: 10px 0; flex-wrap: nowrap; }
+  .workflow-step { border-radius: 10px; padding: 12px 16px; border: 2px solid; text-align: center; min-width: 130px; flex-shrink: 0; background: var(--surface); }
+  .workflow-step .ws-label { font-size: 0.72rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+  .workflow-step .ws-title { font-size: 0.88rem; font-weight: 700; }
+  .workflow-step .ws-desc { font-size: 0.72rem; color: var(--text2); margin-top: 3px; }
+  .workflow-arrow { color: var(--border); font-size: 1.4rem; padding: 0 6px; flex-shrink: 0; }
+  .ws-dev { border-color: var(--purple); }
+  .ws-dev .ws-title { color: var(--purple); }
+  .ws-pr { border-color: var(--accent); }
+  .ws-pr .ws-title { color: var(--accent); }
+  .ws-review { border-color: var(--orange); }
+  .ws-review .ws-title { color: var(--orange); }
+  .ws-merge { border-color: var(--green); }
+  .ws-merge .ws-title { color: var(--green); }
+  .ws-deploy { border-color: var(--teal); }
+  .ws-deploy .ws-title { color: var(--teal); }
+
+  /* Branch type cards */
+  .branch-types { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 16px 0; }
+  .branch-type-card { background: var(--bg); border-radius: 10px; padding: 16px; border: 1px solid var(--border); }
+  .branch-type-card .bt-icon { font-size: 1.4rem; margin-bottom: 6px; }
+  .branch-type-card .bt-name { font-size: 0.92rem; font-weight: 700; margin-bottom: 4px; }
+  .branch-type-card .bt-pattern { font-family: 'Courier New', monospace; font-size: 0.82rem; padding: 4px 8px; background: var(--surface); border-radius: 6px; display: inline-block; margin-bottom: 6px; }
+  .branch-type-card .bt-desc { font-size: 0.8rem; color: var(--text2); }
+  .branch-type-card.feat { border-left: 3px solid var(--purple); }
+  .branch-type-card.feat .bt-name { color: var(--purple); }
+  .branch-type-card.hotfix { border-left: 3px solid var(--red); }
+  .branch-type-card.hotfix .bt-name { color: var(--red); }
+  .branch-type-card.bugfix { border-left: 3px solid var(--orange); }
+  .branch-type-card.bugfix .bt-name { color: var(--orange); }
+  .branch-type-card.release { border-left: 3px solid var(--green); }
+  .branch-type-card.release .bt-name { color: var(--green); }
+
+  /* Infra stack cards */
+  .infra-stack { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+  .infra-card { background: var(--bg); border-radius: 10px; padding: 16px; border: 1px solid var(--border); text-align: center; }
+  .infra-card .inf-icon { font-size: 1.6rem; margin-bottom: 6px; }
+  .infra-card .inf-name { font-size: 0.92rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .infra-card .inf-detail { font-size: 0.78rem; color: var(--text2); }
+  .infra-card .inf-url { font-size: 0.78rem; color: var(--teal); font-family: 'Courier New', monospace; margin-top: 6px; }
+
+  /* Success box */
+  .success-box { margin: 16px 0; padding: 14px 18px; background: #4ade8015; border-left: 3px solid var(--green); border-radius: 0 8px 8px 0; font-size: 0.9rem; color: var(--green); }
+  .success-box .title { font-weight: 700; margin-bottom: 4px; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 24px; color: var(--text2); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+  @media (max-width: 768px) {
+    .exec-summary .cost-cards, .status-grid, .compare-grid, .resource-grid, .repo-grid { grid-template-columns: 1fr; }
+    .container { padding: 12px; }
+    .pipeline-flow { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Muvi Cinemas — <span>CI/CD Pipeline Setup Plan</span></h1>
+  <p>Replicating Alpha Apps' CodePipeline architecture for our UAE environment (me-central-1)</p>
+  <div class="badge">Region: me-central-1 (UAE) &bull; Account: 739991759290 &bull; Updated Feb 15, 2026</div>
+  <div class="status-badge paused">⏸ Status: Paused — Blocker: GitHub CLI needs IT admin approval</div>
+</div>
+
+<!-- EXECUTIVE SUMMARY -->
+<div class="exec-summary">
+  <h2>📋 The Plan in Plain English</h2>
+  <div class="plain">
+    <p>Right now, every time we need to deploy a code change to our UAE environment, we have to <strong>manually build a Docker image</strong>, push it to ECR, update the ECS task definition, and force a new deployment — a process that takes <strong>15–30 minutes per service</strong> and is error-prone.</p>
+    <br>
+    <p>Alpha Apps (the vendor) has <strong>18 AWS CodePipeline pipelines</strong> in Frankfurt that auto-deploy whenever code is pushed to the <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">uat</code> branch. A developer pushes code → pipeline builds → new version is live in <strong>~3 minutes</strong>.</p>
+    <br>
+    <p>We need to build the <strong>exact same setup</strong> in our UAE account using <strong>AWS CodePipeline + CodeBuild</strong> — the same architecture the vendor uses for both UAT and Production.</p>
+  </div>
+
+  <div class="cost-cards">
+    <div class="cost-card red">
+      <div class="label">Vendor's Pipelines (Frankfurt)</div>
+      <div class="amount">18</div>
+      <div class="sub">CodePipeline pipelines • auto-deploy on push</div>
+    </div>
+    <div class="cost-card orange">
+      <div class="label">Our Pipelines (UAE)</div>
+      <div class="amount">0</div>
+      <div class="sub">all deploys are manual • 15-30 min each</div>
+    </div>
+    <div class="cost-card green">
+      <div class="label">Estimated CI/CD Cost</div>
+      <div class="amount">~$6-7</div>
+      <div class="sub">per month • CodePipeline + CodeBuild + S3</div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ⚠️ <strong>Decision made:</strong> We will use <strong>AWS CodePipeline + CodeBuild</strong> — the same CI/CD stack Alpha Apps uses for both Frankfurt UAT and Production. This ensures architectural consistency, makes future production handover seamless, and keeps everything within AWS (no external CI tools needed).
+  </div>
+</div>
+
+<!-- SECTION 0: MONOREPO & DEVELOPER WORKFLOW -->
+<div class="section">
+  <h2>🏠 Parent Repository & One-Command Bootstrap</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">We created a <strong style="color: var(--accent);">parent orchestrator repository</strong> (<code style="background: var(--surface2); padding: 2px 8px; border-radius: 4px;">muvi-cinemas</code>) that ties all 7 microservice repos together. Any developer can clone this single repo, run one script, and have the <strong>entire stack running locally</strong> in minutes — no manual setup, no asking around for env files or database dumps.</p>
+
+  <h3>Repository Architecture</h3>
+  <div class="mono-structure">
+    <span class="folder">muvi-cinemas/</span> <span class="desc">← Parent orchestrator repo (you are here)</span><br>
+    ├── <span class="file">muvi-up.ps1</span> <span class="desc">← All-in-one CLI (bootstrap + up/down/restart/seed/logs/publish/patch)</span><br>
+    ├── <span class="file">docker-compose.yml</span> <span class="desc">← Full stack: 11 services + infra (731 lines)</span><br>
+    ├── <span class="folder">_packages-source/</span> <span class="desc">← @alpha.apps package source (proto, shared, SDKs)</span><br>
+    ├── <span class="folder">packages/</span> <span class="desc">← muvi-shared + nestjs-common (our packages)</span><br>
+    ├── <span class="folder">verdaccio/</span> <span class="desc">← Local npm registry config</span><br>
+    ├── <span class="folder">docker/</span> <span class="desc">← init-dbs.sql, pgadmin config, ULID functions</span><br>
+    ├── <span class="folder">documentation/</span> <span class="desc">← You're reading this right now</span><br>
+    ├── <span class="folder">web/</span> <span class="desc">← CMS + Website frontends</span><br>
+    └── <span class="folder">main-backend-microservices/</span> <span class="desc">← 7 repos auto-cloned here ↓</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-gateway-main/</span> <span class="desc">← API Gateway (NestJS, HTTP → gRPC)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-main-main/</span> <span class="desc">← Main service (movies, cinemas, bookings)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-identity-main/</span> <span class="desc">← Auth & user management</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-payment-main/</span> <span class="desc">← Payments (Stripe, Tabby, MyFatoorah)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-fb-main/</span> <span class="desc">← Food & Beverage (concessions)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">alpha-muvi-notification-main/</span> <span class="desc">← SMS, Email, Push (Firebase)</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="folder">alpha-muvi-offer/</span> <span class="desc">← Offers engine (Go service)</span><br>
+  </div>
+
+  <h3><code style="background: var(--surface2); padding: 2px 8px; border-radius: 4px;">muvi-up.ps1</code> — 8-Phase Full Bootstrap</h3>
+  <p style="color: var(--text2); margin-bottom: 12px;">A new developer joins the team → clones <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">muvi-cinemas</code> → runs <code style="background: var(--surface2); padding: 2px 6px; border-radius: 4px;">.\muvi-up.ps1</code> → entire stack is running. That's it. Here's what it does under the hood:</p>
+
+  <div class="phase-flow">
+    <div class="phase-step" style="border-color: var(--accent);">
+      <div class="step-num">Phase 1</div>
+      <div class="step-title" style="color: var(--accent);">Clone Repos</div>
+      <div class="step-desc">7 repos from GitHub</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step infra">
+      <div class="step-num">Phase 2</div>
+      <div class="step-title">Destroy</div>
+      <div class="step-desc">Clean Docker state</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step infra">
+      <div class="step-num">Phase 3</div>
+      <div class="step-title">Infrastructure</div>
+      <div class="step-desc">Postgres + Redis + Verdaccio</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step pkg">
+      <div class="step-num">Phase 4</div>
+      <div class="step-title">Packages</div>
+      <div class="step-desc">Restore 7 @alpha.apps pkgs</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step patch">
+      <div class="step-num">Phase 5</div>
+      <div class="step-title">Patches</div>
+      <div class="step-desc">npmrc + lockfiles + source</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step bld">
+      <div class="step-num">Phase 6</div>
+      <div class="step-title">Build</div>
+      <div class="step-desc">6 Docker images</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step bld">
+      <div class="step-num">Phase 7</div>
+      <div class="step-title">Start</div>
+      <div class="step-desc">Revert patches & up</div>
+    </div>
+    <div class="phase-arrow">→</div>
+    <div class="phase-step health">
+      <div class="step-num">Phase 8</div>
+      <div class="step-title">Health</div>
+      <div class="step-desc">HTTP + gRPC checks</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <span class="comment"># 🚀 New developer onboarding — literally 2 commands</span><br>
+    <span class="cmd">git clone</span> <span class="string">https://github.com/muvicinemas/muvi-cinemas.git</span><br>
+    <span class="cmd">cd</span> muvi-cinemas<br>
+    <span class="cmd">.\muvi-up.ps1</span> <span class="comment"># Clones 7 repos, builds everything, health-checks → done</span><br><br>
+    <span class="comment"># Flags for flexibility</span><br>
+    <span class="cmd">.\muvi-up.ps1</span> <span class="flag">-SkipClone</span> <span class="comment"># Already have repos, just rebuild</span><br>
+    <span class="cmd">.\muvi-up.ps1</span> <span class="flag">-SkipBuild</span> <span class="comment"># Use existing images, just start</span><br>
+    <span class="cmd">.\muvi-up.ps1</span> <span class="flag">-SkipDestroy</span> <span class="comment"># Keep existing volumes (preserve DB data)</span><br>
+    <span class="cmd">.\muvi-up.ps1</span> <span class="flag">-BuildOnly</span> <span class="string">"gateway-service"</span> <span class="comment"># Rebuild only one service</span><br>
+  </div>
+
+  <h3>Local Infrastructure Stack</h3>
+  <p style="color: var(--text2); margin-bottom: 12px;">Docker Compose spins up all infrastructure automatically. No need to install Postgres, Redis, or anything else locally.</p>
+
+  <div class="infra-stack">
+    <div class="infra-card">
+      <div class="inf-icon">🐘</div>
+      <div class="inf-name">PostgreSQL 15</div>
+      <div class="inf-detail">6 databases auto-created via init-dbs.sql<br>(identity, main, payment, fb, notification, offer)</div>
+      <div class="inf-url">localhost:5432</div>
+    </div>
+    <div class="infra-card">
+      <div class="inf-icon">🔴</div>
+      <div class="inf-name">Redis 7</div>
+      <div class="inf-detail">Session store, BullMQ queues,<br>caching layer</div>
+      <div class="inf-url">localhost:6379</div>
+    </div>
+    <div class="infra-card">
+      <div class="inf-icon">📦</div>
+      <div class="inf-name">Verdaccio</div>
+      <div class="inf-detail">Private npm registry serving<br>@alpha.apps/* packages locally</div>
+      <div class="inf-url">localhost:4873</div>
+    </div>
+    <div class="infra-card">
+      <div class="inf-icon">🔧</div>
+      <div class="inf-name">PgAdmin 4</div>
+      <div class="inf-detail">Database management UI<br>Pre-configured with all 6 DBs</div>
+      <div class="inf-url">localhost:5050</div>
+    </div>
+    <div class="infra-card">
+      <div class="inf-icon">🌐</div>
+      <div class="inf-name">API Gateway</div>
+      <div class="inf-detail">HTTP entrypoint → routes to<br>all gRPC microservices</div>
+      <div class="inf-url">localhost:3000</div>
+    </div>
+    <div class="infra-card">
+      <div class="inf-icon">🐛</div>
+      <div class="inf-name">Debug Ports</div>
+      <div class="inf-detail">Node --inspect on each service<br>VS Code attach configs included</div>
+      <div class="inf-url">9229-9234</div>
+    </div>
+  </div>
+
+  <div class="success-box">
+    <div class="title">✅ Why this matters</div>
+    Before this script existed, onboarding a new developer took <strong>1-2 days</strong> of chasing credentials, figuring out vendor packages, and debugging Docker builds. Now it takes <strong>one command, ~15 minutes</strong>.
+  </div>
+</div>
+
+<!-- SECTION 0b: DEVELOPER WORKFLOW -->
+<div class="section">
+  <h2>👨‍💻 Developer Workflow — Branching, PRs & Code Review</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Every developer works on their own branch, opens a Pull Request when ready, and the team lead reviews and approves. Here is the complete flow from writing code to it going live.</p>
+
+  <h3>Developer Branching Model</h3>
+  <p style="color: var(--text2); margin-bottom: 12px;">Each developer creates their own branch from <span class="tag tag-purple">main</span> based on what they're working on:</p>
+
+  <div class="branch-types">
+    <div class="branch-type-card feat">
+      <div class="bt-icon">✨</div>
+      <div class="bt-name">Feature Branch</div>
+      <div class="bt-pattern">feature/MUVI-123-add-loyalty</div>
+      <div class="bt-desc">New features or enhancements. Branches from <strong>main</strong>, PRs back to <strong>main</strong>.</div>
+    </div>
+    <div class="branch-type-card hotfix">
+      <div class="bt-icon">🔥</div>
+      <div class="bt-name">Hotfix Branch</div>
+      <div class="bt-pattern">hotfix/fix-payment-crash</div>
+      <div class="bt-desc">Critical production bugs that need immediate fix. Fast-tracked review process.</div>
+    </div>
+    <div class="branch-type-card bugfix">
+      <div class="bt-icon">🐛</div>
+      <div class="bt-name">Bugfix Branch</div>
+      <div class="bt-pattern">bugfix/seat-selection-error</div>
+      <div class="bt-desc">Non-critical bugs found during QA or testing. Standard review cycle.</div>
+    </div>
+    <div class="branch-type-card release">
+      <div class="bt-icon">🏷️</div>
+      <div class="bt-name">Release Branch</div>
+      <div class="bt-pattern">release/v2.1.0</div>
+      <div class="bt-desc">Version-tagged releases for production deployment preparation.</div>
+    </div>
+  </div>
+
+  <h3>Complete Development Lifecycle</h3>
+  <p style="color: var(--text2); margin-bottom: 12px;">From idea to production — every change follows this path:</p>
+
+  <div class="workflow-diagram">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🔄 Development → Review → Deploy Flow</p>
+    <div class="workflow-row">
+      <div class="workflow-step ws-dev">
+        <div class="ws-label">Step 1</div>
+        <div class="ws-title">Create Branch</div>
+        <div class="ws-desc">feature/bugfix/hotfix</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-dev">
+        <div class="ws-label">Step 2</div>
+        <div class="ws-title">Code & Test</div>
+        <div class="ws-desc">Local Docker stack</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-pr">
+        <div class="ws-label">Step 3</div>
+        <div class="ws-title">Open PR</div>
+        <div class="ws-desc">PR to main branch</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-review">
+        <div class="ws-label">Step 4</div>
+        <div class="ws-title">Team Lead Review</div>
+        <div class="ws-desc">Code review & approve</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-merge">
+        <div class="ws-label">Step 5</div>
+        <div class="ws-title">Merge to Main</div>
+        <div class="ws-desc">Squash & merge</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-deploy">
+        <div class="ws-label">Step 6</div>
+        <div class="ws-title">Deploy to UAT</div>
+        <div class="ws-desc">Merge main → uat</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Step-by-Step: What a Developer Does</h3>
+  <div class="code-block">
+    <span class="comment"># 1️⃣ Start working on a new feature</span><br>
+    <span class="cmd">git checkout</span> main<br>
+    <span class="cmd">git pull</span> origin main<br>
+    <span class="cmd">git checkout</span> <span class="flag">-b</span> <span class="string">feature/MUVI-45-add-wallet-topup</span><br><br>
+    <span class="comment"># 2️⃣ Make changes, test locally with the Docker stack</span><br>
+    <span class="comment"># (edit code in your service → docker compose up -d --build gateway-service)</span><br>
+    <span class="comment"># (test via Postman at http://localhost:3000)</span><br><br>
+    <span class="comment"># 3️⃣ Commit and push your branch</span><br>
+    <span class="cmd">git add</span> .<br>
+    <span class="cmd">git commit</span> <span class="flag">-m</span> <span class="string">"feat: add wallet top-up endpoint"</span><br>
+    <span class="cmd">git push</span> <span class="flag">-u</span> origin <span class="string">feature/MUVI-45-add-wallet-topup</span><br><br>
+    <span class="comment"># 4️⃣ Open a Pull Request on GitHub</span><br>
+    <span class="comment"># → Go to GitHub → Create PR → Base: main ← Compare: feature/MUVI-45-add-wallet-topup</span><br>
+    <span class="comment"># → Add description of changes, screenshots if UI-related</span><br>
+    <span class="comment"># → Request review from team lead</span><br><br>
+    <span class="comment"># 5️⃣ Team lead reviews, requests changes or approves</span><br>
+    <span class="comment"># → If changes requested: fix → push → re-review</span><br>
+    <span class="comment"># → If approved: team lead merges (squash & merge)</span><br><br>
+    <span class="comment"># 6️⃣ Deploy to UAT (when ready to test on real environment)</span><br>
+    <span class="cmd">git checkout</span> uat<br>
+    <span class="cmd">git merge</span> main<br>
+    <span class="cmd">git push</span> origin uat<br>
+    <span class="comment"># → CodePipeline auto-triggers → builds → deploys to ECS in ~3 min 🚀</span>
+  </div>
+
+  <h3>PR Review Process</h3>
+  <table>
+    <tr><th>Step</th><th>Who</th><th>What Happens</th></tr>
+    <tr>
+      <td>1. Developer opens PR</td>
+      <td><span class="tag tag-purple">Developer</span></td>
+      <td>Creates Pull Request from <code>feature/*</code> / <code>bugfix/*</code> / <code>hotfix/*</code> → <code>main</code></td>
+    </tr>
+    <tr>
+      <td>2. PR Description</td>
+      <td><span class="tag tag-purple">Developer</span></td>
+      <td>Adds description: what changed, why, how to test, any migration notes</td>
+    </tr>
+    <tr>
+      <td>3. Request Review</td>
+      <td><span class="tag tag-purple">Developer</span></td>
+      <td>Assigns team lead as reviewer on GitHub</td>
+    </tr>
+    <tr>
+      <td>4. Code Review</td>
+      <td><span class="tag tag-orange">Team Lead</span></td>
+      <td>Reviews code quality, logic, security, naming, tests — leaves comments if needed</td>
+    </tr>
+    <tr>
+      <td>5. Changes Requested</td>
+      <td><span class="tag tag-orange">Team Lead</span></td>
+      <td>(If needed) Requests changes — developer fixes and pushes again</td>
+    </tr>
+    <tr>
+      <td>6. Approve & Merge</td>
+      <td><span class="tag tag-green">Team Lead</span></td>
+      <td>Approves PR → squash & merge into <code>main</code> → branch auto-deleted</td>
+    </tr>
+    <tr>
+      <td>7. Deploy Decision</td>
+      <td><span class="tag tag-green">Team Lead</span></td>
+      <td>When batch of features is ready → merge <code>main</code> → <code>uat</code> → auto-deploy via CodePipeline</td>
+    </tr>
+  </table>
+
+  <h3>Hotfix Fast-Track Process</h3>
+  <div class="workflow-diagram">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🔥 Hotfix — Expedited Path (critical production bugs)</p>
+    <div class="workflow-row">
+      <div class="workflow-step" style="border-color: var(--red);">
+        <div class="ws-label">Urgent</div>
+        <div class="ws-title" style="color: var(--red);">hotfix/*</div>
+        <div class="ws-desc">Branch from main</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step" style="border-color: var(--red);">
+        <div class="ws-label">Quick Fix</div>
+        <div class="ws-title" style="color: var(--red);">Fix & Test</div>
+        <div class="ws-desc">Minimal change</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-pr">
+        <div class="ws-label">Express PR</div>
+        <div class="ws-title">PR to main</div>
+        <div class="ws-desc">Priority review</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-review">
+        <div class="ws-label">Same-Day</div>
+        <div class="ws-title">Lead Approves</div>
+        <div class="ws-desc">Fast-tracked</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-merge">
+        <div class="ws-label">Merge</div>
+        <div class="ws-title">main + uat</div>
+        <div class="ws-desc">Both branches</div>
+      </div>
+      <div class="workflow-arrow">→</div>
+      <div class="workflow-step ws-deploy">
+        <div class="ws-label">Live</div>
+        <div class="ws-title">Auto Deploy</div>
+        <div class="ws-desc">~3 min to live</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="title">💡 Commit Message Convention</div>
+    <p style="font-size: 0.85rem; margin-top: 8px;">We follow <strong>Conventional Commits</strong> to keep the git history clean and meaningful:</p>
+    <div class="code-block" style="margin-top: 8px;">
+      <span class="cmd">feat:</span> <span class="string">add wallet top-up endpoint</span> <span class="comment"># New feature</span><br>
+      <span class="cmd">fix:</span> <span class="string">resolve seat lock race condition</span> <span class="comment"># Bug fix</span><br>
+      <span class="cmd">hotfix:</span> <span class="string">payment callback null check</span> <span class="comment"># Critical fix</span><br>
+      <span class="cmd">refactor:</span> <span class="string">extract booking validation</span> <span class="comment"># Code restructure</span><br>
+      <span class="cmd">docs:</span> <span class="string">update API readme</span> <span class="comment"># Documentation only</span><br>
+      <span class="cmd">chore:</span> <span class="string">bump nestjs to 10.3</span> <span class="comment"># Maintenance</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 1: CURRENT STATE -->
+<div class="section">
+  <h2>🔴 Current State — Manual Deployment Pain</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">This is what it looks like to deploy a single service change right now:</p>
+
+  <div class="pipeline-flow">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🔴 TODAY — Manual Process (~15-30 minutes per service)</p>
+    <div class="pipeline-row">
+      <div class="pipeline-stage trigger">
+        <div class="stage-name">Step 1</div>
+        <div class="stage-tool">git push</div>
+        <div class="stage-detail">Push to main branch</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build" style="border-color: var(--red);">
+        <div class="stage-name">Step 2</div>
+        <div class="stage-tool" style="color: var(--red);">Manual Build</div>
+        <div class="stage-detail">docker build locally</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build" style="border-color: var(--red);">
+        <div class="stage-name">Step 3</div>
+        <div class="stage-tool" style="color: var(--red);">Manual Push</div>
+        <div class="stage-detail">docker push to ECR</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build" style="border-color: var(--red);">
+        <div class="stage-name">Step 4</div>
+        <div class="stage-tool" style="color: var(--red);">Manual Deploy</div>
+        <div class="stage-detail">AWS Console click</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage deploy" style="border-color: var(--yellow);">
+        <div class="stage-name">Step 5</div>
+        <div class="stage-tool" style="color: var(--yellow);">Wait ~5min</div>
+        <div class="stage-detail">ECS rolling update</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-grid">
+    <div class="status-card">
+      <div class="icon">⏱️</div>
+      <div class="card-title">Deploy Time</div>
+      <div class="card-value" style="color: var(--red);">15-30 min</div>
+      <div class="card-sub">Per service, manual process</div>
+    </div>
+    <div class="status-card">
+      <div class="icon">🔁</div>
+      <div class="card-title">For All 8 Services</div>
+      <div class="card-value" style="color: var(--red);">2-4 hours</div>
+      <div class="card-sub">If deploying everything at once</div>
+    </div>
+    <div class="status-card">
+      <div class="icon">🐛</div>
+      <div class="card-title">Error Risk</div>
+      <div class="card-value" style="color: var(--orange);">High</div>
+      <div class="card-sub">Wrong image tag, wrong service, copy-paste mistakes</div>
+    </div>
+    <div class="status-card">
+      <div class="icon">📋</div>
+      <div class="card-title">Steps Required</div>
+      <div class="card-value" style="color: var(--orange);">12+</div>
+      <div class="card-sub">Login ECR → Build → Tag → Push → Update task def → Force deploy</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <span class="comment"># 🔴 Current manual deploy for ONE service (gateway example)</span><br>
+    <span class="cmd">aws ecr get-login-password</span> <span class="flag">--region</span> me-central-1 | <span class="cmd">docker login</span> <span class="flag">--username</span> AWS <span class="flag">--password-stdin</span> <span class="string">739991759290.dkr.ecr.me-central-1.amazonaws.com</span><br>
+    <span class="cmd">docker build</span> <span class="flag">-t</span> muvi-gateway-uat <span class="string">.</span><br>
+    <span class="cmd">docker tag</span> muvi-gateway-uat:latest <span class="string">739991759290.dkr.ecr.me-central-1.amazonaws.com/muvi-gateway-uat:latest</span><br>
+    <span class="cmd">docker push</span> <span class="string">739991759290.dkr.ecr.me-central-1.amazonaws.com/muvi-gateway-uat:latest</span><br>
+    <span class="cmd">aws ecs update-service</span> <span class="flag">--cluster</span> Muvi-Cluster <span class="flag">--service</span> muvi-gateway-service-mfnabtxa <span class="flag">--force-new-deployment</span> <span class="flag">--region</span> me-central-1<br>
+    <span class="comment"># Then wait 3-5 minutes for rolling update...</span><br>
+    <span class="comment"># Now repeat for the next 7 services... 😩</span>
+  </div>
+</div>
+
+<!-- SECTION 2: VENDOR'S ARCHITECTURE -->
+<div class="section">
+  <h2>🏗️ Alpha Apps' Pipeline Architecture (What We're Replicating)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">This is exactly how the vendor's CI/CD works in Frankfurt. We will build the same thing in UAE.</p>
+
+  <div class="pipeline-flow">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🟢 VENDOR — Automated Pipeline (~3 minutes end-to-end)</p>
+    <div class="pipeline-row">
+      <div class="pipeline-stage trigger">
+        <div class="stage-name">Trigger</div>
+        <div class="stage-tool">git push</div>
+        <div class="stage-detail">Push to <code>uat</code> branch</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage source">
+        <div class="stage-name">Source</div>
+        <div class="stage-tool">CodeStar</div>
+        <div class="stage-detail">GitHub → AWS connection</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build">
+        <div class="stage-name">Build</div>
+        <div class="stage-tool">CodeBuild</div>
+        <div class="stage-detail">Docker build + push ECR</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage deploy">
+        <div class="stage-name">Deploy</div>
+        <div class="stage-tool">ECS Deploy</div>
+        <div class="stage-detail">Rolling update on cluster</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>How Each Stage Works</h3>
+  <table>
+    <tr><th>Stage</th><th>AWS Service</th><th>What Happens</th><th>Time</th></tr>
+    <tr>
+      <td><span class="tag tag-blue">Trigger</span></td>
+      <td>CodeStar Connection</td>
+      <td>Developer pushes to <code style="background: var(--surface2); padding: 1px 6px; border-radius: 3px;">uat</code> branch on GitHub → AWS detects change via CodeStar webhook</td>
+      <td>Instant</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-purple">Source</span></td>
+      <td>CodePipeline Source Action</td>
+      <td>Downloads source code from GitHub via CodeStar connection into S3 artifact bucket</td>
+      <td>~10s</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-orange">Build</span></td>
+      <td>CodeBuild (<code style="background: var(--surface2); padding: 1px 6px; border-radius: 3px;">Muvi-Build</code>)</td>
+      <td>Runs <code style="background: var(--surface2); padding: 1px 6px; border-radius: 3px;">buildspec.yml</code>: <br>1. Login to ECR <br>2. <code>docker build -t $IMAGE_REPO:$TAG .</code> <br>3. <code>docker push</code> to ECR <br>4. Write <code>imagedefinitions.json</code> artifact</td>
+      <td>~2-3 min</td>
+    </tr>
+    <tr>
+      <td><span class="tag tag-green">Deploy</span></td>
+      <td>CodePipeline ECS Action</td>
+      <td>Reads <code>imagedefinitions.json</code> → Updates ECS task definition with new image → Triggers rolling deployment</td>
+      <td>~30s trigger, ~2-3 min healthy</td>
+    </tr>
+  </table>
+
+  <h3>Vendor's buildspec.yml (Reconstructed)</h3>
+  <div class="code-block">
+    <span class="keyword">version:</span> 0.2<br><br>
+    <span class="keyword">phases:</span><br>
+    &nbsp;&nbsp;<span class="keyword">pre_build:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">commands:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">echo</span> <span class="string">Logging in to Amazon ECR...</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">aws ecr get-login-password</span> <span class="flag">--region</span> $AWS_DEFAULT_REGION | <span class="cmd">docker login</span> <span class="flag">--username</span> AWS <span class="flag">--password-stdin</span> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- IMAGE_TAG=${COMMIT_HASH:=latest}<br><br>
+    &nbsp;&nbsp;<span class="keyword">build:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">commands:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">echo</span> <span class="string">Building Docker image...</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">docker build</span> <span class="flag">-t</span> $IMAGE_REPO_NAME:$IMAGE_TAG .<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">docker tag</span> $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG<br><br>
+    &nbsp;&nbsp;<span class="keyword">post_build:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">commands:</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">echo</span> <span class="string">Pushing to ECR...</span><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">docker push</span> $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="cmd">printf</span> <span class="string">'[{"name":"%s","imageUri":"%s"}]'</span> $CONTAINER_NAME $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json<br><br>
+    <span class="keyword">artifacts:</span><br>
+    &nbsp;&nbsp;<span class="keyword">files:</span> imagedefinitions.json
+  </div>
+
+  <h3>Vendor's 18 Pipelines in Frankfurt</h3>
+  <table>
+    <tr><th>Pipeline</th><th>Source Repo</th><th>Branch</th><th>ECR Repo</th><th>ECS Service</th><th class="cost-col">$/mo</th></tr>
+    <tr><td>muvi-gateway</td><td>AlphaApps/muvi-gateway</td><td>uat</td><td>muvi-gateway</td><td>muvi-gateway</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-main</td><td>AlphaApps/muvi-main</td><td>uat</td><td>muvi-main</td><td>muvi-main</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-identity</td><td>AlphaApps/muvi-identity-service</td><td>uat</td><td>muvi-identity</td><td>muvi-identity</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-payment</td><td>AlphaApps/muvi-payment-service</td><td>uat</td><td>muvi-payment</td><td>muvi-payment</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-fb</td><td>AlphaApps/muvi-fb-service</td><td>uat</td><td>muvi-fb</td><td>muvi-fb</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-notification</td><td>AlphaApps/muvi-notification-service</td><td>uat</td><td>muvi-notification</td><td>muvi-notification</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-offer</td><td>AlphaApps/muvi-offer-service</td><td>uat</td><td>muvi-offer</td><td>muvi-offer</td><td class="cost-col">$1</td></tr>
+    <tr><td>muvi-website</td><td>AlphaApps/muvi-website</td><td>uat</td><td>muvi-website</td><td>muvi-website</td><td class="cost-col">$1</td></tr>
+    <tr><td colspan="5" style="color: var(--text2); font-size: 0.85rem;">+ ~10 more pipelines (CMS Dashboard → S3, Lambda deployers, utility pipelines)</td><td class="cost-col" style="color: var(--text2);">~$10</td></tr>
+    <tr class="total-row"><td colspan="5">CodePipeline Total (~18 active)</td><td class="cost-col">~$18</td></tr>
+  </table>
+</div>
+
+<!-- SECTION 3: TARGET STATE -->
+<div class="section">
+  <h2>🎯 Target State — What We're Building</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Our UAE pipelines will mirror the vendor's architecture exactly. Same flow: GitHub push → CodePipeline → CodeBuild → ECS Deploy.</p>
+
+  <div class="pipeline-flow">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🟢 TARGET — Our UAE Automated Pipeline (~3 minutes end-to-end)</p>
+    <div class="pipeline-row">
+      <div class="pipeline-stage trigger">
+        <div class="stage-name">Trigger</div>
+        <div class="stage-tool">git push</div>
+        <div class="stage-detail">Push to <code>uat</code> branch<br>muvicinemas org</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage source">
+        <div class="stage-name">Source</div>
+        <div class="stage-tool">CodeStar</div>
+        <div class="stage-detail">muvicinemas GitHub<br>→ AWS me-central-1</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build">
+        <div class="stage-name">Build</div>
+        <div class="stage-tool">CodeBuild</div>
+        <div class="stage-detail">buildspec.yml<br>Docker → ECR UAE</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage deploy">
+        <div class="stage-name">Deploy</div>
+        <div class="stage-tool">ECS Deploy</div>
+        <div class="stage-detail">Muvi-Cluster<br>Rolling update</div>
+      </div>
+    </div>
+  </div>
+
+  <h3>Pipelines We Need to Create</h3>
+  <table>
+    <tr><th>Pipeline</th><th>Source Repo (muvicinemas)</th><th>Branch</th><th>ECR Repo (UAE)</th><th>ECS Service (UAE)</th><th>Status</th></tr>
+    <tr>
+      <td>gateway</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-gateway-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-gateway-uat</td>
+      <td>muvi-gateway-service-*</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr>
+      <td>main</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-main-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-main-uat</td>
+      <td>muvi-main-uat</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr>
+      <td>identity</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-identity-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-identity-uat</td>
+      <td>muvi-identity-uat</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr>
+      <td>payment</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-payment-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-payment-uat</td>
+      <td>muvi-payment-uat</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr>
+      <td>notification</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-notification-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-notification-uat</td>
+      <td>muvi-notification-uat</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr>
+      <td>website</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-website-main</code></td>
+      <td><code>uat</code></td>
+      <td>muvi-website-uat</td>
+      <td>muvi-website-uat</td>
+      <td><span class="tag tag-yellow">ECR ✓ ECS ✓ Pipeline ✗</span></td>
+    </tr>
+    <tr style="background: #f8717108;">
+      <td>fb</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-fb-main</code></td>
+      <td><code>uat</code></td>
+      <td style="color: var(--red);">MISSING</td>
+      <td style="color: var(--red);">MISSING</td>
+      <td><span class="tag tag-red">ECR ✗ ECS ✗ Pipeline ✗</span></td>
+    </tr>
+    <tr style="background: #f8717108;">
+      <td>offer</td>
+      <td><code style="font-size: 0.82rem;">alpha-muvi-offer</code></td>
+      <td><code>uat</code></td>
+      <td style="color: var(--red);">MISSING</td>
+      <td style="color: var(--red);">MISSING</td>
+      <td><span class="tag tag-red">ECR ✗ ECS ✗ Pipeline ✗</span></td>
+    </tr>
+  </table>
+
+  <div class="warning">
+    <div class="title">⚠️ F&B and Offer have no ECR repos or ECS services in UAE</div>
+    <div class="desc">Before we can create pipelines for these two services, we need to first create their ECR repos and ECS task definitions/services in me-central-1. F&B requires 2 vCPU / 4 GB (4x other services) and uses NestJS 9.4.0. Offer is a Go service with its own Dockerfile.</div>
+  </div>
+</div>
+
+<!-- SECTION 4: BRANCHING STRATEGY -->
+<div class="section">
+  <h2>🌿 Branching Strategy</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">We'll adopt the same branching model as the vendor — it's proven, simple, and required for CodePipeline triggers to work.</p>
+
+  <h3>Vendor's Branch Model (Adopted)</h3>
+  <div class="branch-visual">
+    <div class="branch-line">
+      <div class="branch-node main-b">main</div>
+      <div class="branch-connector"><div class="connector-label">PR merge / push</div></div>
+      <div class="branch-node uat-b">uat</div>
+      <div class="branch-connector"><div class="connector-label">PR merge / push</div></div>
+      <div class="branch-node prod-b">prod</div>
+    </div>
+    <div style="display: flex; gap: 0; margin-top: 12px;">
+      <div style="width: 110px; text-align: center; font-size: 0.75rem; color: var(--text2); flex-shrink: 0;">Development<br>Day-to-day work</div>
+      <div style="flex: 1; min-width: 40px;"></div>
+      <div style="width: 110px; text-align: center; font-size: 0.75rem; color: var(--text2); flex-shrink: 0;">Testing<br>Auto-deploys to UAT</div>
+      <div style="flex: 1; min-width: 40px;"></div>
+      <div style="width: 110px; text-align: center; font-size: 0.75rem; color: var(--text2); flex-shrink: 0;">Production<br>Auto-deploys to Prod</div>
+    </div>
+  </div>
+
+  <h3>Deployment Flow</h3>
+  <table>
+    <tr><th>Action</th><th>Branch</th><th>What Happens</th></tr>
+    <tr>
+      <td>Developer makes changes</td>
+      <td><span class="tag tag-purple">main</span> or feature branch</td>
+      <td>No pipeline triggered — just code changes</td>
+    </tr>
+    <tr>
+      <td>Ready to test on UAT</td>
+      <td>Merge/push to <span class="tag tag-orange">uat</span></td>
+      <td>CodePipeline auto-triggers → builds → deploys to UAE ECS</td>
+    </tr>
+    <tr>
+      <td>Ready for production</td>
+      <td>Merge/push to <span class="tag tag-green">prod</span></td>
+      <td>Production CodePipeline triggers (future — when we take over prod)</td>
+    </tr>
+  </table>
+
+  <h3>Current Branch Status Per Repo</h3>
+  <div class="repo-grid">
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-gateway-main</div>
+        <div class="repo-branch">Default: <strong>main</strong> • Also: v20250930, v20251229</div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-main-main</div>
+        <div class="repo-branch">Default: <strong>main</strong></div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-identity-main</div>
+        <div class="repo-branch">Default: <strong>main</strong></div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-payment-main</div>
+        <div class="repo-branch">Default: <strong>main</strong></div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-fb-main</div>
+        <div class="repo-branch">Default: <strong>main</strong></div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-notification-main</div>
+        <div class="repo-branch">Default: <strong>main</strong></div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+    <div class="repo-card">
+      <div class="repo-icon">📦</div>
+      <div class="repo-info">
+        <div class="repo-name">alpha-muvi-offer</div>
+        <div class="repo-branch">Default: <strong style="color: var(--orange);">master</strong> (not main!) • Also: v20251229, v20260114</div>
+      </div>
+      <div class="repo-status"><span class="tag tag-orange">needs uat branch</span></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="title">💡 Creating uat branches is a one-line command per repo</div>
+    <p style="font-size: 0.85rem; font-family: 'Courier New', monospace; margin-top: 8px;">git checkout main && git checkout -b uat && git push -u origin uat</p>
+    <p style="font-size: 0.82rem; color: var(--text2); margin-top: 8px;">For the offer repo, replace <code>main</code> with <code>master</code>.</p>
+  </div>
+</div>
+
+<!-- SECTION 5: IMPLEMENTATION PHASES -->
+<div class="section">
+  <h2>🚀 Implementation Plan — 5 Phases</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Step-by-step plan to replicate the vendor's pipeline architecture in our UAE account.</p>
+
+  <!-- Phase 1 -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-number p1">1</div>
+      <div class="phase-title">Prerequisites & Access Setup <span class="phase-eta">~1 day</span></div>
+      <span class="tag tag-orange" style="margin-left: auto;">BLOCKED</span>
+    </div>
+    <div class="phase-body">
+      <p>Get the tools and access we need before we can create any AWS resources.</p>
+      <ul class="checklist">
+        <li class="blocked">Install GitHub CLI: <code style="background: #0f172a; padding: 1px 6px; border-radius: 3px; font-size: 0.82rem;">winget install GitHub.cli</code>
+          <span class="note">⛔ Needs IT admin approval — main blocker for entire CI/CD plan</span>
+        </li>
+        <li>Run <code style="background: #0f172a; padding: 1px 6px; border-radius: 3px; font-size: 0.82rem;">gh auth login</code> to authenticate with GitHub
+          <span class="note">Interactive OAuth login — one-time setup</span>
+        </li>
+        <li>Verify org permissions
+          <span class="cli">gh api orgs/muvicinemas/memberships/rehan.tariq</span>
+        </li>
+        <li>Check branch protection rules
+          <span class="cli">gh api repos/muvicinemas/alpha-muvi-gateway-main/branches/main/protection</span>
+        </li>
+        <li>Set Git global config
+          <span class="cli">git config --global user.name "Rehan Tariq" && git config --global user.email "rehan@muvicinemas.com"</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Phase 2 -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-number p2">2</div>
+      <div class="phase-title">Extract Vendor Config from Frankfurt <span class="phase-eta">~2-3 hours</span></div>
+      <span class="tag tag-blue" style="margin-left: auto;">READY</span>
+    </div>
+    <div class="phase-body">
+      <p>Pull the exact configuration from Frankfurt so we can replicate it. This gives us the proven buildspec, IAM policies, and pipeline structure.</p>
+      <ul class="checklist">
+        <li>Pull CodeBuild project config
+          <span class="cli">aws codebuild batch-get-projects --names Muvi-Build --region eu-central-1</span>
+          <span class="note">Gets: build image, compute type, environment variables, IAM role ARN</span>
+        </li>
+        <li>Pull all CodePipeline structures
+          <span class="cli">aws codepipeline list-pipelines --region eu-central-1</span>
+          <span class="cli">aws codepipeline get-pipeline --name muvi-gateway-pipeline --region eu-central-1</span>
+          <span class="note">Gets: stage definitions, action configs, artifact names, role ARNs</span>
+        </li>
+        <li>Pull IAM role policies
+          <span class="cli">aws iam get-role-policy --role-name CodeBuildServiceRole --policy-name CodeBuildPolicy</span>
+          <span class="note">We'll create identical roles in me-central-1 with our account ID</span>
+        </li>
+        <li>Extract buildspec.yml from any service repo
+          <span class="note">Likely in repo root — this is the build instructions CodeBuild follows</span>
+        </li>
+      </ul>
+      <div class="info-box">
+        <div class="title">💡 Why extract from Frankfurt?</div>
+        <p style="font-size: 0.85rem;">We could guess at the config, but pulling it directly from the working Frankfurt setup guarantees we get the exact same IAM permissions, build image, and environment variables the vendor tested with. No guesswork.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 3 -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-number p3">3</div>
+      <div class="phase-title">Create AWS Resources in UAE <span class="phase-eta">~3-4 hours</span></div>
+      <span class="tag tag-blue" style="margin-left: auto;">AFTER PHASE 2</span>
+    </div>
+    <div class="phase-body">
+      <p>Create all the foundational AWS resources our pipelines need. These are one-time setups.</p>
+
+      <h4>3A. S3 Artifact Bucket</h4>
+      <div class="code-block">
+        <span class="cmd">aws s3 mb</span> <span class="string">s3://muvi-codepipeline-artifacts-uae</span> <span class="flag">--region</span> me-central-1
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text2);">CodePipeline stores source code and build artifacts here between stages.</p>
+
+      <h4>3B. IAM Roles (3 roles needed)</h4>
+      <table>
+        <tr><th>Role</th><th>Purpose</th><th>Key Permissions</th></tr>
+        <tr>
+          <td><code style="font-size: 0.82rem;">MuviCodeBuildRole</code></td>
+          <td>CodeBuild assumes this during builds</td>
+          <td>ECR push/pull, S3 read/write artifacts, CloudWatch logs</td>
+        </tr>
+        <tr>
+          <td><code style="font-size: 0.82rem;">MuviCodePipelineRole</code></td>
+          <td>CodePipeline orchestration</td>
+          <td>S3 artifacts, CodeBuild start, ECS deploy, CodeStar connection</td>
+        </tr>
+        <tr>
+          <td><code style="font-size: 0.82rem;">MuviCodeStarRole</code></td>
+          <td>GitHub ↔ AWS connection</td>
+          <td>CodeStar connection use</td>
+        </tr>
+      </table>
+
+      <h4>3C. CodeStar Connection to GitHub</h4>
+      <div class="blocker-box">
+        <div class="title">⚠️ Manual Step Required — Cannot be automated via CLI</div>
+        <p style="font-size: 0.85rem;">The CodeStar connection to the <code>muvicinemas</code> GitHub org requires a <strong>manual OAuth click</strong> in the AWS Console. Someone with GitHub admin + AWS console access must:</p>
+        <p style="font-size: 0.85rem; margin-top: 8px;">1. Go to AWS Console → Developer Tools → Connections → Create connection</p>
+        <p style="font-size: 0.85rem;">2. Select GitHub → Click "Install a new app" → Authorize muvicinemas org</p>
+        <p style="font-size: 0.85rem;">3. Complete the OAuth flow → Connection status becomes "Available"</p>
+      </div>
+
+      <h4>3D. Create Missing ECR Repos (F&B + Offer)</h4>
+      <div class="code-block">
+        <span class="cmd">aws ecr create-repository</span> <span class="flag">--repository-name</span> <span class="string">muvi-fb-uat</span> <span class="flag">--region</span> me-central-1<br>
+        <span class="cmd">aws ecr create-repository</span> <span class="flag">--repository-name</span> <span class="string">muvi-offer-uat</span> <span class="flag">--region</span> me-central-1
+      </div>
+
+      <h4>3E. Create Missing ECS Services (F&B + Offer)</h4>
+      <table>
+        <tr><th>Service</th><th>CPU</th><th>Memory</th><th>Port mapping</th><th>Notes</th></tr>
+        <tr>
+          <td>muvi-fb-uat</td>
+          <td style="color: var(--orange); font-weight: 700;">2 vCPU</td>
+          <td style="color: var(--orange); font-weight: 700;">4 GB</td>
+          <td>gRPC 5004, HTTP 6004</td>
+          <td>4x resources — same as Frankfurt. NestJS 9.4.0</td>
+        </tr>
+        <tr>
+          <td>muvi-offer-uat</td>
+          <td>0.5 vCPU</td>
+          <td>1 GB</td>
+          <td>gRPC 5006</td>
+          <td>Go service — different Dockerfile pattern</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Phase 4 -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-number p4">4</div>
+      <div class="phase-title">Test with Gateway (Proof of Concept) <span class="phase-eta">~2-3 hours</span></div>
+      <span class="tag tag-blue" style="margin-left: auto;">AFTER PHASE 3</span>
+    </div>
+    <div class="phase-body">
+      <p>Build one complete pipeline end-to-end. Gateway is the best test candidate — it has no database, so a failed deploy doesn't break data.</p>
+
+      <ul class="checklist">
+        <li>Create CodeBuild project in me-central-1
+          <span class="note">Name: <code>Muvi-Build-UAT</code> — shared across all pipelines (same as Frankfurt)</span>
+          <span class="note">Image: <code>aws/codebuild/amazonlinux2-x86_64-standard:4.0</code></span>
+          <span class="note">Compute: <code>BUILD_GENERAL1_SMALL</code> (3 GB, 2 vCPU)</span>
+          <span class="note">Privileged: <code>true</code> (needed for docker build inside container)</span>
+        </li>
+        <li>Create CodePipeline for gateway
+          <span class="note">Source: CodeStar → muvicinemas/alpha-muvi-gateway-main, branch: uat</span>
+          <span class="note">Build: Muvi-Build-UAT, env vars: IMAGE_REPO_NAME=muvi-gateway-uat, CONTAINER_NAME=muvi-gateway</span>
+          <span class="note">Deploy: ECS, cluster: Muvi-Cluster, service: muvi-gateway-service-mfnabtxa</span>
+        </li>
+        <li>Create <code>uat</code> branch on gateway repo
+          <span class="cli">cd alpha-muvi-gateway-main && git checkout main && git checkout -b uat && git push -u origin uat</span>
+        </li>
+        <li>Add <code>buildspec.yml</code> to gateway repo root if not present
+          <span class="note">Use the vendor's buildspec (see Section 2 above)</span>
+        </li>
+        <li>Push a test commit → watch pipeline execute
+          <span class="cli">echo "# CI/CD test" >> README.md && git add . && git commit -m "test: trigger pipeline" && git push origin uat</span>
+        </li>
+        <li>Verify: New Docker image in ECR → New ECS task running → Gateway responds to /heartbeat</li>
+      </ul>
+
+      <div class="success-box">
+        <div class="title">✅ Success Criteria</div>
+        <p style="font-size: 0.85rem;">Push to uat branch → Pipeline turns green → New container deployed → <code>GET /api/v1/heartbeat</code> returns 200 with the new VERSION.</p>
+        <p style="font-size: 0.82rem; color: var(--text2); margin-top: 4px;">Estimated cost of one test pipeline run: <strong>~$0.02</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase 5 -->
+  <div class="phase-card">
+    <div class="phase-header">
+      <div class="phase-number p5">5</div>
+      <div class="phase-title">Replicate for All Services <span class="phase-eta">~1-2 days</span></div>
+      <span class="tag tag-blue" style="margin-left: auto;">AFTER PHASE 4</span>
+    </div>
+    <div class="phase-body">
+      <p>Once gateway pipeline works, replicate the exact same pattern for all other services. It's mostly copy-paste with different env vars.</p>
+
+      <table>
+        <tr><th>#</th><th>Pipeline</th><th>CodeBuild Env Vars</th><th>ECS Service Target</th><th>Special Notes</th></tr>
+        <tr>
+          <td>1</td>
+          <td>main</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-main-uat</code></td>
+          <td>muvi-main-uat</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>identity</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-identity-uat</code></td>
+          <td>muvi-identity-uat</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>payment</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-payment-uat</code></td>
+          <td>muvi-payment-uat</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>notification</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-notification-uat</code></td>
+          <td>muvi-notification-uat</td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>website</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-website-uat</code></td>
+          <td>muvi-website-uat</td>
+          <td>—</td>
+        </tr>
+        <tr style="background: #fb923c08;">
+          <td>6</td>
+          <td>fb</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-fb-uat</code></td>
+          <td>muvi-fb-uat</td>
+          <td style="color: var(--orange);">Create ECR + ECS first (Phase 3D/E)</td>
+        </tr>
+        <tr style="background: #fb923c08;">
+          <td>7</td>
+          <td>offer</td>
+          <td>IMAGE_REPO_NAME=<code>muvi-offer-uat</code></td>
+          <td>muvi-offer-uat</td>
+          <td style="color: var(--orange);">Go service — verify Dockerfile. Create ECR + ECS first</td>
+        </tr>
+      </table>
+
+      <p style="font-size: 0.9rem; margin-top: 16px;">For each service, repeat:</p>
+      <ul class="checklist">
+        <li>Create <code>uat</code> branch from main/master</li>
+        <li>Ensure <code>buildspec.yml</code> exists in repo root</li>
+        <li>Create CodePipeline with correct env vars and ECS target</li>
+        <li>Push test commit to uat → verify auto-deploy works</li>
+        <li>Set up branch protection rules (require PR review before merge to uat)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 6: AWS RESOURCES NEEDED -->
+<div class="section">
+  <h2>💰 AWS Resources & Cost Breakdown</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Everything we need to create and what it'll cost per month.</p>
+
+  <div class="resource-grid">
+    <div class="resource-card">
+      <div class="res-icon">🔗</div>
+      <div class="res-name">CodeStar Connection</div>
+      <div class="res-detail">GitHub → AWS OAuth</div>
+      <div class="res-cost">$0</div>
+    </div>
+    <div class="resource-card">
+      <div class="res-icon">🏗️</div>
+      <div class="res-name">CodeBuild Project</div>
+      <div class="res-detail">1 shared project, ~240 build min/mo</div>
+      <div class="res-cost">~$0.70</div>
+    </div>
+    <div class="resource-card">
+      <div class="res-icon">🔄</div>
+      <div class="res-name">CodePipeline × 8</div>
+      <div class="res-detail">$1/active pipeline/month</div>
+      <div class="res-cost">~$5</div>
+    </div>
+    <div class="resource-card">
+      <div class="res-icon">📦</div>
+      <div class="res-name">S3 Artifact Bucket</div>
+      <div class="res-detail">~5 GB artifacts</div>
+      <div class="res-cost">~$0.12</div>
+    </div>
+    <div class="resource-card">
+      <div class="res-icon">📋</div>
+      <div class="res-name">CloudWatch Logs</div>
+      <div class="res-detail">Build logs</div>
+      <div class="res-cost">~$0.40</div>
+    </div>
+    <div class="resource-card">
+      <div class="res-icon">🐳</div>
+      <div class="res-name">ECR Storage</div>
+      <div class="res-detail">~10 GB Docker images</div>
+      <div class="res-cost">~$0.50</div>
+    </div>
+  </div>
+
+  <table>
+    <tr><th>Component</th><th>Quantity</th><th>Unit Price</th><th class="cost-col">Monthly Cost</th></tr>
+    <tr><td>CodeStar Connection</td><td>1</td><td>Free</td><td class="cost-col">$0.00</td></tr>
+    <tr><td>CodePipeline</td><td>8 active pipelines</td><td>$1 per active pipeline</td><td class="cost-col">$5.00</td></tr>
+    <tr><td>CodeBuild</td><td>~240 build minutes (30/service × 8)</td><td>$0.005/min (general1.small, Linux)</td><td class="cost-col">$0.70</td></tr>
+    <tr><td>S3 Artifact Storage</td><td>~5 GB</td><td>$0.025/GB</td><td class="cost-col">$0.12</td></tr>
+    <tr><td>CloudWatch Logs</td><td>~1 GB ingested</td><td>$0.50/GB</td><td class="cost-col">$0.40</td></tr>
+    <tr><td>ECR Storage</td><td>~10 GB images</td><td>$0.10/GB</td><td class="cost-col">$0.50</td></tr>
+    <tr><td>IAM Roles</td><td>3</td><td>Free</td><td class="cost-col">$0.00</td></tr>
+    <tr class="total-row"><td colspan="3">Total CI/CD Cost Per Month</td><td class="cost-col">~$6.72</td></tr>
+  </table>
+
+  <div class="info-box">
+    <div class="title">💡 CI/CD is incredibly cheap</div>
+    <p style="font-size: 0.85rem;">The entire automated deployment infrastructure costs less than <strong>$7/month</strong>. That's less than a single coffee in Riyadh. Compare that to the 2-4 hours of manual work per full deployment cycle — even 1 engineer's time for one manual deploy session costs more than a year of CI/CD.</p>
+  </div>
+</div>
+
+<!-- SECTION 7: COMPARISON -->
+<div class="section">
+  <h2>📊 Frankfurt vs UAE CI/CD Comparison</h2>
+
+  <div class="compare-grid">
+    <div class="compare-col vendor">
+      <h4>🇩🇪 Frankfurt (Vendor — Alpha Apps)</h4>
+      <div class="compare-item"><span>Pipelines</span><span class="val">18</span></div>
+      <div class="compare-item"><span>CI/CD Tool</span><span class="val">CodePipeline</span></div>
+      <div class="compare-item"><span>Build Tool</span><span class="val">CodeBuild</span></div>
+      <div class="compare-item"><span>Source Connection</span><span class="val">CodeStar → GitHub</span></div>
+      <div class="compare-item"><span>Trigger Branch</span><span class="val">uat</span></div>
+      <div class="compare-item"><span>Build Project</span><span class="val">Muvi-Build (shared)</span></div>
+      <div class="compare-item"><span>Deploy Target</span><span class="val">ECS Fargate</span></div>
+      <div class="compare-item"><span>Deploy Time</span><span class="val" style="color: var(--green);">~3 min</span></div>
+      <div class="compare-item"><span>Deploy Method</span><span class="val">Automated</span></div>
+      <div class="compare-item"><span>GitHub Org</span><span class="val">AlphaApps</span></div>
+      <div class="compare-item"><span>Build Artifacts</span><span class="val">S3 bucket</span></div>
+      <div class="compare-item" style="padding-top: 12px; border-top: 2px solid var(--accent);"><span><strong>Monthly Cost</strong></span><span class="val" style="color: var(--accent); font-size: 1.1rem;">~$21</span></div>
+    </div>
+    <div class="compare-col ours">
+      <h4>🇦🇪 UAE — Our Target (Same Architecture)</h4>
+      <div class="compare-item"><span>Pipelines</span><span class="val">8 (initially)</span></div>
+      <div class="compare-item"><span>CI/CD Tool</span><span class="val">CodePipeline</span></div>
+      <div class="compare-item"><span>Build Tool</span><span class="val">CodeBuild</span></div>
+      <div class="compare-item"><span>Source Connection</span><span class="val">CodeStar → GitHub</span></div>
+      <div class="compare-item"><span>Trigger Branch</span><span class="val">uat</span></div>
+      <div class="compare-item"><span>Build Project</span><span class="val">Muvi-Build-UAT (shared)</span></div>
+      <div class="compare-item"><span>Deploy Target</span><span class="val">ECS Fargate</span></div>
+      <div class="compare-item"><span>Deploy Time</span><span class="val" style="color: var(--green);">~3 min (target)</span></div>
+      <div class="compare-item"><span>Deploy Method</span><span class="val">Automated</span></div>
+      <div class="compare-item"><span>GitHub Org</span><span class="val">muvicinemas</span></div>
+      <div class="compare-item"><span>Build Artifacts</span><span class="val">S3 bucket</span></div>
+      <div class="compare-item" style="padding-top: 12px; border-top: 2px solid var(--green);"><span><strong>Monthly Cost</strong></span><span class="val" style="color: var(--green); font-size: 1.1rem;">~$7</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 8: BEFORE & AFTER -->
+<div class="section">
+  <h2>⚡ Before vs After — The Full Picture</h2>
+
+  <table>
+    <tr><th>Metric</th><th style="text-align:center;">🔴 Before (Now)</th><th style="text-align:center;">🟢 After (Target)</th><th style="text-align:center;">Improvement</th></tr>
+    <tr>
+      <td>Deploy 1 service</td>
+      <td style="text-align:center; color: var(--red); font-weight: 600;">15-30 min (manual)</td>
+      <td style="text-align:center; color: var(--green); font-weight: 600;">~3 min (auto)</td>
+      <td style="text-align:center; font-weight: 600;">5-10x faster</td>
+    </tr>
+    <tr>
+      <td>Deploy all 8 services</td>
+      <td style="text-align:center; color: var(--red); font-weight: 600;">2-4 hours</td>
+      <td style="text-align:center; color: var(--green); font-weight: 600;">~3 min (parallel)</td>
+      <td style="text-align:center; font-weight: 600;">40-80x faster</td>
+    </tr>
+    <tr>
+      <td>Human effort</td>
+      <td style="text-align:center; color: var(--red);">12+ manual steps per service</td>
+      <td style="text-align:center; color: var(--green);">1 step: git push</td>
+      <td style="text-align:center;">12x less effort</td>
+    </tr>
+    <tr>
+      <td>Error risk</td>
+      <td style="text-align:center; color: var(--red);">High — wrong tags, wrong service, typos</td>
+      <td style="text-align:center; color: var(--green);">Near zero — automated</td>
+      <td style="text-align:center;">Eliminated</td>
+    </tr>
+    <tr>
+      <td>Rollback speed</td>
+      <td style="text-align:center; color: var(--red);">15-30 min (rebuild old version)</td>
+      <td style="text-align:center; color: var(--green);">~2 min (ECS auto-rollback)</td>
+      <td style="text-align:center;">10x faster</td>
+    </tr>
+    <tr>
+      <td>Monthly cost</td>
+      <td style="text-align:center;">$0 (but engineer hours!)</td>
+      <td style="text-align:center; color: var(--green);">~$7/month</td>
+      <td style="text-align:center;">$7 saves hours of work</td>
+    </tr>
+    <tr>
+      <td>Audit trail</td>
+      <td style="text-align:center; color: var(--red);">None — who deployed what?</td>
+      <td style="text-align:center; color: var(--green);">Full — git commit → pipeline ID → ECS task</td>
+      <td style="text-align:center;">Complete traceability</td>
+    </tr>
+    <tr>
+      <td>Architecture parity with vendor</td>
+      <td style="text-align:center; color: var(--red);">0%</td>
+      <td style="text-align:center; color: var(--green);">100%</td>
+      <td style="text-align:center;">Full match</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECTION 9: ROADMAP -->
+<div class="section">
+  <h2>📅 Execution Roadmap</h2>
+  <p style="color: var(--text2); margin-bottom: 20px;">Realistic timeline assuming the GitHub CLI blocker gets resolved.</p>
+
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot blocked"></div>
+        <div class="roadmap-line"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 0 — Blocker Resolution</div>
+        <div class="roadmap-title">Get GitHub CLI Approved & Installed</div>
+        <div class="roadmap-desc">IT admin installs GitHub CLI → Authenticate → Verify org access</div>
+        <ul class="roadmap-tasks">
+          <li>Submit IT ticket for GitHub CLI installation</li>
+          <li>Alternative: Use personal machine with VPN for initial setup only</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot"></div>
+        <div class="roadmap-line"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 1 — Phase 2</div>
+        <div class="roadmap-title">Extract Frankfurt Pipeline Config</div>
+        <div class="roadmap-desc">Pull all CodeBuild, CodePipeline, and IAM configs from eu-central-1</div>
+        <ul class="roadmap-tasks">
+          <li>Export CodeBuild project settings</li>
+          <li>Export all 18 pipeline definitions</li>
+          <li>Copy IAM role policies → adapt for me-central-1</li>
+          <li>Extract buildspec.yml files from repos</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot"></div>
+        <div class="roadmap-line"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 2 — Phase 3</div>
+        <div class="roadmap-title">Create AWS Resources in UAE</div>
+        <div class="roadmap-desc">S3 bucket, IAM roles, CodeStar connection, missing ECR/ECS</div>
+        <ul class="roadmap-tasks">
+          <li>Create S3 artifact bucket</li>
+          <li>Create 3 IAM roles with correct policies</li>
+          <li>Create CodeStar connection (manual OAuth step!)</li>
+          <li>Create F&B + Offer ECR repos</li>
+          <li>Create F&B + Offer ECS task definitions and services</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot"></div>
+        <div class="roadmap-line"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 3 — Phase 4</div>
+        <div class="roadmap-title">Gateway Pipeline — Proof of Concept</div>
+        <div class="roadmap-desc">Build and test the first complete pipeline end-to-end</div>
+        <ul class="roadmap-tasks">
+          <li>Create CodeBuild project (Muvi-Build-UAT)</li>
+          <li>Create uat branch on gateway repo</li>
+          <li>Create CodePipeline for gateway</li>
+          <li>Push test commit → verify full deploy cycle</li>
+          <li>Troubleshoot any permission or config issues</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot"></div>
+        <div class="roadmap-line"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 4-5 — Phase 5</div>
+        <div class="roadmap-title">Replicate All 7 Remaining Pipelines</div>
+        <div class="roadmap-desc">Create pipelines for: main, identity, payment, notification, website, fb, offer</div>
+        <ul class="roadmap-tasks">
+          <li>Create uat branches on all 7 repos</li>
+          <li>Create 7 CodePipelines (mostly copy-paste from gateway with diff env vars)</li>
+          <li>Test each pipeline with a commit push</li>
+          <li>Set up branch protection rules on all repos</li>
+          <li>Document the complete setup for team reference</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="roadmap-item">
+      <div class="roadmap-track">
+        <div class="roadmap-dot"></div>
+      </div>
+      <div class="roadmap-content">
+        <div class="roadmap-week">Day 6 — Complete ✅</div>
+        <div class="roadmap-title">All 8 Pipelines Live</div>
+        <div class="roadmap-desc">Push code → auto-deploy, just like the vendor.</div>
+        <ul class="roadmap-tasks">
+          <li>Full CI/CD parity with Frankfurt architecture</li>
+          <li>8 pipelines, 8 uat branches, automated deploys</li>
+          <li>Team demo and handover</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="success-box">
+    <div class="title">✅ Total estimated time: ~5-6 working days (once blocker is resolved)</div>
+    <p style="font-size: 0.85rem;">Day 1: Extract config • Day 2: Create AWS resources • Day 3: Test gateway pipeline • Day 4-5: Replicate all services • Day 6: Polish & handover</p>
+  </div>
+</div>
+
+<!-- SECTION 10: BLOCKERS & DECISIONS -->
+<div class="section">
+  <h2>🚧 Blockers & Decisions Needed</h2>
+
+  <h3>Current Blockers</h3>
+  <table>
+    <tr><th>Blocker</th><th>Impact</th><th>Owner</th><th>Status</th></tr>
+    <tr>
+      <td><strong>GitHub CLI installation</strong></td>
+      <td>Blocks Phase 1 — can't verify org permissions or manage branches via CLI</td>
+      <td>IT Admin</td>
+      <td><span class="tag tag-red">BLOCKED</span></td>
+    </tr>
+    <tr>
+      <td><strong>CodeStar OAuth — manual click</strong></td>
+      <td>Blocks Phase 3C — someone must complete GitHub OAuth in AWS Console</td>
+      <td>Rehan Tariq (admin access needed)</td>
+      <td><span class="tag tag-orange">WAITING</span></td>
+    </tr>
+    <tr>
+      <td><strong>Git global config not set</strong></td>
+      <td>Commits won't have proper author info</td>
+      <td>Rehan Tariq</td>
+      <td><span class="tag tag-yellow">EASY FIX</span></td>
+    </tr>
+  </table>
+
+  <h3>Decisions Needed from Team Lead</h3>
+  <table>
+    <tr><th>Decision</th><th>Options</th><th>Recommendation</th></tr>
+    <tr>
+      <td><strong>Branch protection on uat?</strong></td>
+      <td>Require PR review before merge to uat, or allow direct push</td>
+      <td style="color: var(--green);">Require PR — matches production safety practices</td>
+    </tr>
+    <tr>
+      <td><strong>F&B ECS sizing</strong></td>
+      <td>Match Frankfurt (2 vCPU / 4 GB) or start smaller</td>
+      <td style="color: var(--green);">Match Frankfurt — proven to work, only ~$48/mo more</td>
+    </tr>
+    <tr>
+      <td><strong>Offer repo default branch</strong></td>
+      <td>Keep <code>master</code> or rename to <code>main</code></td>
+      <td style="color: var(--yellow);">Keep master for now — renaming may break local setups</td>
+    </tr>
+    <tr>
+      <td><strong>Build notifications</strong></td>
+      <td>SNS email alert on pipeline failure, or check manually</td>
+      <td style="color: var(--green);">Enable SNS — know immediately when a deploy fails</td>
+    </tr>
+  </table>
+</div>
+
+<!-- SECTION 11: FUTURE - PRODUCTION PIPELINE -->
+<div class="section">
+  <h2>🔮 Future — Production Pipeline (After Takeover)</h2>
+  <p style="color: var(--text2); margin-bottom: 16px;">Once we take over production, extending the CI/CD to prod is straightforward with the same architecture:</p>
+
+  <div class="pipeline-flow">
+    <p style="color: var(--text2); font-size: 0.82rem; margin-bottom: 12px; font-weight: 600;">🔮 FUTURE — Full Pipeline (UAT + Production)</p>
+    <div class="pipeline-row">
+      <div class="pipeline-stage trigger">
+        <div class="stage-name">Dev</div>
+        <div class="stage-tool">main branch</div>
+        <div class="stage-detail">Development work</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage build" style="border-color: var(--orange);">
+        <div class="stage-name">UAT Pipeline</div>
+        <div class="stage-tool" style="color: var(--orange);">push to uat</div>
+        <div class="stage-detail">Auto-deploy to UAT ECS</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage" style="border-color: var(--yellow); border-style: dashed;">
+        <div class="stage-name">QA Testing</div>
+        <div class="stage-tool" style="color: var(--yellow);">Manual Gate</div>
+        <div class="stage-detail">Test on UAT env</div>
+      </div>
+      <div class="pipeline-arrow">→</div>
+      <div class="pipeline-stage deploy" style="border-color: var(--green);">
+        <div class="stage-name">Prod Pipeline</div>
+        <div class="stage-tool">push to prod</div>
+        <div class="stage-detail">Auto-deploy to Prod ECS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <div class="title">💡 The hard part is building the first pipeline (UAT)</div>
+    <p style="font-size: 0.85rem;">Once UAT is working, adding a production pipeline is just: <strong>(1)</strong> create a <code>prod</code> branch, <strong>(2)</strong> clone the CodePipeline pointing to the prod branch and prod ECS cluster. Same buildspec, same CodeBuild project, different deploy target. ~30 minutes per service.</p>
+  </div>
+
+  <h3>Production Enhancements (Beyond Vendor's Setup)</h3>
+  <table>
+    <tr><th>Enhancement</th><th>Purpose</th><th>Effort</th></tr>
+    <tr>
+      <td>Manual Approval Gate</td>
+      <td>Add an approval step before prod deploy — someone must click "Approve" in AWS Console</td>
+      <td>~5 min per pipeline (built into CodePipeline)</td>
+    </tr>
+    <tr>
+      <td>Blue/Green Deployment</td>
+      <td>Deploy new version alongside old, shift traffic gradually, instant rollback</td>
+      <td>Requires CodeDeploy integration — ~2-3 hours setup</td>
+    </tr>
+    <tr>
+      <td>SNS Failure Alerts</td>
+      <td>Email/SMS alert when any pipeline stage fails</td>
+      <td>~30 min — CloudWatch Event Rule → SNS Topic</td>
+    </tr>
+    <tr>
+      <td>Build Caching</td>
+      <td>Cache Docker layers and node_modules between builds — faster builds</td>
+      <td>Add cache section to buildspec.yml — ~15 min</td>
+    </tr>
+  </table>
+</div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>CI/CD architecture based on Alpha Apps' Frankfurt CodePipeline setup (eu-central-1)</p>
+  <p>Target: AWS CodePipeline + CodeBuild + ECS Fargate in me-central-1 (UAE)</p>
+  <p style="margin-top: 8px; color: var(--accent);">Prepared by Rehan Tariq — February 15, 2026</p>
+</div>
+
+</div>
+</body>
+</html>

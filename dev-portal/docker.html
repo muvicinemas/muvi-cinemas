@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Manager - Muvi Cinemas</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Portal</a>
+        
+        <header class="docker-header">
+            <div>
+                <h1>🐳 Docker Manager</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">Manage Muvi Cinemas containers</p>
+            </div>
+            <div class="docker-actions">
+                <button class="btn btn-secondary" onclick="refreshContainers()">
+                    🔄 Refresh
+                </button>
+                <button class="btn btn-success" onclick="startAllContainers()">
+                    ▶️ Start All
+                </button>
+                <button class="btn btn-danger" onclick="stopAllContainers()">
+                    ⏹️ Stop All
+                </button>
+            </div>
+        </header>
+
+        <section class="section">
+            <h2 class="section-title">Running Containers</h2>
+            <div id="containers-loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading containers...</p>
+            </div>
+            <div id="containers-empty" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">📦</div>
+                <h3>No Muvi containers running</h3>
+                <p>Run <code>.\muvi-up.ps1 up</code> to start all services</p>
+            </div>
+            <table id="containers-table" class="container-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Container</th>
+                        <th>Image</th>
+                        <th>Status</th>
+                        <th>Ports</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="containers-body">
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Docker Images</h2>
+            <div id="images-loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading images...</p>
+            </div>
+            <table id="images-table" class="container-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Repository</th>
+                        <th>Tag</th>
+                        <th>Size</th>
+                        <th>Created</th>
+                    </tr>
+                </thead>
+                <tbody id="images-body">
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">Quick Actions</h2>
+            <div class="cards-grid">
+                <div class="card card-tools" onclick="rebuildService('gateway-service')">
+                    <div class="card-icon">🔨</div>
+                    <div class="card-content">
+                        <h3>Rebuild Gateway</h3>
+                        <p>Rebuild and restart Gateway service</p>
+                    </div>
+                </div>
+                <div class="card card-tools" onclick="rebuildService('main-service')">
+                    <div class="card-icon">🔨</div>
+                    <div class="card-content">
+                        <h3>Rebuild Main</h3>
+                        <p>Rebuild and restart Main service</p>
+                    </div>
+                </div>
+                <div class="card card-tools" onclick="viewLogs()">
+                    <div class="card-icon">📋</div>
+                    <div class="card-content">
+                        <h3>View All Logs</h3>
+                        <p>Open terminal with live logs</p>
+                    </div>
+                </div>
+                <div class="card card-tools" onclick="pruneDocker()">
+                    <div class="card-icon">🧹</div>
+                    <div class="card-content">
+                        <h3>Prune Unused</h3>
+                        <p>Remove unused images and volumes</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section commands-section">
+            <h2 class="section-title">Terminal Commands</h2>
+            <div class="commands-grid">
+                <div class="command-card" onclick="copyCmd('docker compose -f docker-compose.yml up -d')">
+                    <code>docker compose up -d</code>
+                    <span class="command-desc">Start all</span>
+                </div>
+                <div class="command-card" onclick="copyCmd('docker compose -f docker-compose.yml down')">
+                    <code>docker compose down</code>
+                    <span class="command-desc">Stop all</span>
+                </div>
+                <div class="command-card" onclick="copyCmd('docker compose -f docker-compose.yml logs -f')">
+                    <code>docker compose logs -f</code>
+                    <span class="command-desc">Follow logs</span>
+                </div>
+                <div class="command-card" onclick="copyCmd('docker compose -f docker-compose.yml ps')">
+                    <code>docker compose ps</code>
+                    <span class="command-desc">List containers</span>
+                </div>
+                <div class="command-card" onclick="copyCmd('docker system prune -a')">
+                    <code>docker system prune -a</code>
+                    <span class="command-desc">Clean up</span>
+                </div>
+                <div class="command-card" onclick="copyCmd('docker stats')">
+                    <code>docker stats</code>
+                    <span class="command-desc">Resource usage</span>
+                </div>
+            </div>
+            <div class="copy-toast" id="copyToast">Copied to clipboard!</div>
+        </section>
+    </div>
+
+    <script src="js/docker.js"></script>
+</body>
+</html>

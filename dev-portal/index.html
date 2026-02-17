@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muvi Cinemas - Developer Portal</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">🎬</div>
+                <div class="logo-text">
+                    <h1>Muvi Cinemas</h1>
+                    <span class="tagline">Developer Portal</span>
+                </div>
+            </div>
+            <div class="status-indicator" id="status">
+                <span class="status-dot"></span>
+                <span class="status-text">Checking services...</span>
+            </div>
+        </header>
+
+        <section class="section">
+            <h2 class="section-title">🚀 Quick Links</h2>
+            <div class="cards-grid">
+                <a href="http://localhost:3002" target="_blank" class="card card-primary">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-content">
+                        <h3>Website</h3>
+                        <p>Customer-facing Next.js site</p>
+                        <span class="card-url">localhost:3002</span>
+                    </div>
+                    <div class="card-status" data-check="http://localhost:3002"></div>
+                </a>
+
+                <a href="http://localhost:5173" target="_blank" class="card card-primary">
+                    <div class="card-icon">⚙️</div>
+                    <div class="card-content">
+                        <h3>CMS</h3>
+                        <p>Admin panel (Vite + React)</p>
+                        <span class="card-url">localhost:5173</span>
+                    </div>
+                    <div class="card-status" data-check="http://localhost:5173"></div>
+                </a>
+
+                <a href="http://localhost:3000/api/v1" target="_blank" class="card card-primary">
+                    <div class="card-icon">🔌</div>
+                    <div class="card-content">
+                        <h3>Gateway API</h3>
+                        <p>REST API endpoints</p>
+                        <span class="card-url">localhost:3000/api/v1</span>
+                    </div>
+                    <div class="card-status" data-check="http://localhost:3000/heartbeat"></div>
+                </a>
+
+                <a href="http://localhost:5051" target="_blank" class="card card-primary">
+                    <div class="card-icon">🗃️</div>
+                    <div class="card-content">
+                        <h3>PgAdmin</h3>
+                        <p>Database management</p>
+                        <span class="card-url">localhost:5051</span>
+                    </div>
+                    <div class="card-status" data-check="http://localhost:5051"></div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📚 Documentation</h2>
+            <div class="cards-grid">
+                <a href="../documentation/api.html" target="_blank" class="card card-docs">
+                    <div class="card-icon">📖</div>
+                    <div class="card-content">
+                        <h3>API Reference</h3>
+                        <p>481 endpoints with examples</p>
+                        <span class="card-badge">24 chapters</span>
+                    </div>
+                </a>
+
+                <a href="../documentation/api-storybook.html" target="_blank" class="card card-docs">
+                    <div class="card-icon">📘</div>
+                    <div class="card-content">
+                        <h3>API Storybook</h3>
+                        <p>Interactive API examples</p>
+                        <span class="card-badge">Try it live</span>
+                    </div>
+                </a>
+
+                <a href="../documentation/backend-audit.html" target="_blank" class="card card-docs">
+                    <div class="card-icon">🔍</div>
+                    <div class="card-content">
+                        <h3>Backend Audit</h3>
+                        <p>Architecture & code analysis</p>
+                        <span class="card-badge">6 services</span>
+                    </div>
+                </a>
+
+                <a href="../documentation/MUVI_SYSTEM_DOCUMENTATION.md" target="_blank" class="card card-docs">
+                    <div class="card-icon">📝</div>
+                    <div class="card-content">
+                        <h3>System Documentation</h3>
+                        <p>Complete system overview</p>
+                        <span class="card-badge">Markdown</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🛠️ Developer Tools</h2>
+            <div class="cards-grid">
+                <a href="docker.html" class="card card-tools">
+                    <div class="card-icon">🐳</div>
+                    <div class="card-content">
+                        <h3>Docker Manager</h3>
+                        <p>View, start, stop containers</p>
+                        <span class="card-badge">Live status</span>
+                    </div>
+                </a>
+
+                <a href="http://localhost:4873" target="_blank" class="card card-tools">
+                    <div class="card-icon">📦</div>
+                    <div class="card-content">
+                        <h3>Verdaccio</h3>
+                        <p>Local npm registry</p>
+                        <span class="card-url">localhost:4873</span>
+                    </div>
+                    <div class="card-status" data-check="http://localhost:4873"></div>
+                </a>
+
+                <a href="#" class="card card-tools" onclick="openVSCode(); return false;">
+                    <div class="card-icon">💻</div>
+                    <div class="card-content">
+                        <h3>VS Code Debugger</h3>
+                        <p>Attach to all services</p>
+                        <span class="card-badge">Ctrl+Shift+D</span>
+                    </div>
+                </a>
+
+                <a href="../documentation/cicd-setup-plan.html" target="_blank" class="card card-tools">
+                    <div class="card-icon">🔄</div>
+                    <div class="card-content">
+                        <h3>CI/CD Setup</h3>
+                        <p>Deployment pipeline guide</p>
+                        <span class="card-badge">AWS</span>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔧 Backend Services</h2>
+            <div class="services-grid">
+                <div class="service-card" data-container="muvi-gateway">
+                    <div class="service-header">
+                        <span class="service-name">Gateway</span>
+                        <span class="service-port">:3000</span>
+                    </div>
+                    <div class="service-debug">Debug: 9229</div>
+                    <div class="service-status" data-container="muvi-gateway"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-identity">
+                    <div class="service-header">
+                        <span class="service-name">Identity</span>
+                        <span class="service-port">:5001</span>
+                    </div>
+                    <div class="service-debug">Debug: 9230</div>
+                    <div class="service-status" data-container="muvi-identity"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-main">
+                    <div class="service-header">
+                        <span class="service-name">Main</span>
+                        <span class="service-port">:5002</span>
+                    </div>
+                    <div class="service-debug">Debug: 9231</div>
+                    <div class="service-status" data-container="muvi-main"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-payment">
+                    <div class="service-header">
+                        <span class="service-name">Payment</span>
+                        <span class="service-port">:5003</span>
+                    </div>
+                    <div class="service-debug">Debug: 9232</div>
+                    <div class="service-status" data-container="muvi-payment"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-fb">
+                    <div class="service-header">
+                        <span class="service-name">FB</span>
+                        <span class="service-port">:5004</span>
+                    </div>
+                    <div class="service-debug">Debug: 9233</div>
+                    <div class="service-status" data-container="muvi-fb"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-notification">
+                    <div class="service-header">
+                        <span class="service-name">Notification</span>
+                        <span class="service-port">:5005</span>
+                    </div>
+                    <div class="service-debug">Debug: 9234</div>
+                    <div class="service-status" data-container="muvi-notification"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-offer">
+                    <div class="service-header">
+                        <span class="service-name">Offer</span>
+                        <span class="service-port">:5006</span>
+                    </div>
+                    <div class="service-debug">Go service</div>
+                    <div class="service-status" data-container="muvi-offer"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🌐 Frontend Apps</h2>
+            <div class="services-grid">
+                <div class="service-card" data-container="muvi-website">
+                    <div class="service-header">
+                        <span class="service-name">Website</span>
+                        <span class="service-port">:3002</span>
+                    </div>
+                    <div class="service-debug">Next.js</div>
+                    <div class="service-status" data-container="muvi-website"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-cms">
+                    <div class="service-header">
+                        <span class="service-name">CMS</span>
+                        <span class="service-port">:5173</span>
+                    </div>
+                    <div class="service-debug">Vite</div>
+                    <div class="service-status" data-container="muvi-cms"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🗄️ Infrastructure</h2>
+            <div class="services-grid">
+                <div class="service-card" data-container="muvi-postgres">
+                    <div class="service-header">
+                        <span class="service-name">PostgreSQL</span>
+                        <span class="service-port">:5432</span>
+                    </div>
+                    <div class="service-debug">Database</div>
+                    <div class="service-status" data-container="muvi-postgres"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-redis">
+                    <div class="service-header">
+                        <span class="service-name">Redis</span>
+                        <span class="service-port">:6379</span>
+                    </div>
+                    <div class="service-debug">Cache</div>
+                    <div class="service-status" data-container="muvi-redis"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🛠️ Dev Tools</h2>
+            <div class="services-grid">
+                <div class="service-card" data-container="muvi-verdaccio">
+                    <div class="service-header">
+                        <span class="service-name">Verdaccio</span>
+                        <span class="service-port">:4873</span>
+                    </div>
+                    <div class="service-debug">NPM Registry</div>
+                    <div class="service-status" data-container="muvi-verdaccio"></div>
+                </div>
+
+                <div class="service-card" data-container="muvi-pgadmin">
+                    <div class="service-header">
+                        <span class="service-name">pgAdmin</span>
+                        <span class="service-port">:5051</span>
+                    </div>
+                    <div class="service-debug">DB Admin</div>
+                    <div class="service-status" data-container="muvi-pgadmin"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section commands-section">
+            <h2 class="section-title">⚡ Quick Commands</h2>
+            <div class="commands-grid">
+                <div class="command-card" onclick="copyCommand('up')">
+                    <code>.\muvi-up.ps1 up</code>
+                    <span class="command-desc">Start all</span>
+                </div>
+                <div class="command-card" onclick="copyCommand('down')">
+                    <code>.\muvi-up.ps1 down</code>
+                    <span class="command-desc">Stop all</span>
+                </div>
+                <div class="command-card" onclick="copyCommand('restart')">
+                    <code>.\muvi-up.ps1 restart</code>
+                    <span class="command-desc">Restart</span>
+                </div>
+                <div class="command-card" onclick="copyCommand('logs')">
+                    <code>.\muvi-up.ps1 logs</code>
+                    <span class="command-desc">View logs</span>
+                </div>
+                <div class="command-card" onclick="copyCommand('seed')">
+                    <code>.\muvi-up.ps1 seed</code>
+                    <span class="command-desc">Seed DBs</span>
+                </div>
+                <div class="command-card" onclick="copyCommand('ide')">
+                    <code>.\muvi-up.ps1 ide</code>
+                    <span class="command-desc">Sync debug files</span>
+                </div>
+            </div>
+            <div class="copy-toast" id="copyToast">Copied to clipboard!</div>
+        </section>
+
+        <footer class="footer">
+            <p>Muvi Cinemas Developer Portal • Built with ❤️ for developers</p>
+            <p class="footer-hint">Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>D</kbd> in VS Code to start debugging</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

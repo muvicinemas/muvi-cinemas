@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Muvi Cinemas — API Storybook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Sora", system-ui, sans-serif; background: #0B0F1A; color: #c8cdd8; line-height: 1.7; }
+code, pre { font-family: "IBM Plex Mono", monospace; }
+.page { max-width: 860px; margin: 0 auto; padding: 40px 24px 120px; }
+.hero { text-align: center; padding: 80px 0 60px; }
+.hero-badge { display: inline-block; background: rgba(14,165,233,0.12); color: #38bdf8; font-size: 12px; font-weight: 600; padding: 4px 14px; border-radius: 20px; border: 1px solid rgba(14,165,233,0.2); margin-bottom: 20px; letter-spacing: 0.5px; }
+.hero-title { font-size: 56px; font-weight: 700; color: #fff; letter-spacing: -1px; }
+.hero-subtitle { font-size: 18px; color: #64748b; margin-top: 16px; line-height: 1.8; }
+.hero-meta { display: flex; gap: 12px; justify-content: center; margin-top: 28px; flex-wrap: wrap; }
+.hero-chip { font-size: 13px; color: #94a3b8; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 6px 16px; }
+.toc { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 32px; margin: 40px 0 60px; }
+.toc-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 20px; }
+.toc-section { font-size: 13px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 8px; }
+.toc-link { display: block; font-size: 14px; color: #94a3b8; text-decoration: none; padding: 4px 0; transition: color 0.15s; }
+.toc-link:hover { color: #38bdf8; }
+.part-header { text-align: center; padding: 60px 0 40px; }
+.part-label { display: block; font-size: 13px; font-weight: 600; color: #38bdf8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.part-title { display: block; font-size: 32px; font-weight: 700; color: #fff; }
+.chapter { padding: 50px 0 20px; }
+.chapter-marker { margin-bottom: 8px; }
+.chapter-num { font-size: 12px; font-weight: 600; color: #38bdf8; text-transform: uppercase; letter-spacing: 1px; background: rgba(14,165,233,0.1); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(14,165,233,0.2); }
+.chapter-title { font-size: 28px; font-weight: 700; color: #fff; margin-top: 12px; }
+.chapter-icon { font-size: 28px; }
+.chapter-subtitle { font-size: 15px; color: #64748b; margin-top: 6px; }
+.sub-heading { font-size: 18px; font-weight: 600; color: #e2e8f0; margin: 28px 0 12px; padding-left: 14px; border-left: 3px solid #38bdf8; }
+.narrative { padding: 16px 0; font-size: 15px; color: #94a3b8; line-height: 1.8; }
+.narrative p { margin-bottom: 12px; }
+.narrative em { color: #cbd5e1; font-style: italic; }
+.narrative strong { color: #e2e8f0; }
+.narrative code { background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 13px; color: #38bdf8; }
+.flow-diagram { display: flex; align-items: center; gap: 0; padding: 20px 0; overflow-x: auto; flex-wrap: wrap; }
+.flow-box { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 16px; font-size: 13px; color: #cbd5e1; white-space: nowrap; }
+.flow-highlight { background: rgba(14,165,233,0.1); border-color: rgba(14,165,233,0.3); color: #38bdf8; font-weight: 600; }
+.flow-arrow { color: #475569; font-size: 18px; padding: 0 6px; }
+.api-step { position: relative; padding: 0 0 0 32px; margin: 20px 0; }
+.step-connector { position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, rgba(14,165,233,0.3), rgba(14,165,233,0.05)); }
+.step-dot { position: absolute; left: 3px; top: 8px; width: 12px; height: 12px; border-radius: 50%; background: #0ea5e9; border: 2px solid #0B0F1A; }
+.step-content { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px 24px; }
+.step-title { font-size: 15px; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.step-title code { font-size: 14px; color: #e2e8f0; }
+.step-when { font-size: 12px; color: #64748b; margin-top: 4px; font-style: italic; }
+.step-desc { font-size: 14px; color: #94a3b8; margin-top: 10px; line-height: 1.7; }
+.step-desc code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: #38bdf8; }
+.step-label { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; margin-top: 14px; }
+.hdr-table { font-size: 12px; border-collapse: collapse; }
+.hdr-table td { padding: 3px 12px 3px 0; color: #94a3b8; }
+.hdr-table td:first-child { color: #38bdf8; font-family: 'IBM Plex Mono', monospace; }
+.json-block { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.04); border-radius: 8px; padding: 14px 18px; font-size: 12px; line-height: 1.6; color: #a5f3a3; overflow-x: auto; white-space: pre; }
+.method-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 10px; border-radius: 6px; }
+.method-emerald { background: rgba(16,185,129,0.15); color: #34d399; }
+.method-sky { background: rgba(14,165,233,0.15); color: #38bdf8; }
+.method-amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+.method-violet { background: rgba(139,92,246,0.15); color: #a78bfa; }
+.method-rose { background: rgba(244,63,94,0.15); color: #fb7185; }
+.tip-box { background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.15); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #94a3b8; margin: 16px 0; display: flex; align-items: flex-start; gap: 10px; }
+.warning-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.15); border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #94a3b8; margin: 16px 0; display: flex; align-items: flex-start; gap: 10px; }
+.tip-icon { font-size: 18px; flex-shrink: 0; }
+.tip-box code, .warning-box code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: #38bdf8; }
+.section-divider { display: flex; align-items: center; justify-content: center; padding: 40px 0; gap: 12px; }
+.divider-line { height: 1px; width: 80px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.08), transparent); }
+.divider-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+.obs-card { background: linear-gradient(135deg, rgba(14,165,233,0.06), rgba(139,92,246,0.06)); border: 1px solid rgba(14,165,233,0.15); border-radius: 16px; padding: 32px; margin: 40px 0 20px; }
+.obs-title { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 20px; }
+.obs-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px; }
+.obs-table th { text-align: left; padding: 10px 16px; color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.obs-table td { padding: 10px 16px; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.04); }
+.obs-total td { color: #38bdf8; font-weight: 700; border-bottom: none; border-top: 1px solid rgba(14,165,233,0.2); }
+.obs-dim { color: #64748b; font-size: 12px; }
+.obs-note { font-size: 13px; color: #64748b; line-height: 1.7; margin-top: 12px; }
+.obs-note code { background: rgba(255,255,255,0.06); padding: 1px 5px; border-radius: 3px; font-size: 12px; color: #38bdf8; }
+.obs-note em { color: #94a3b8; }
+.epilogue { text-align: center; padding: 60px 0; }
+.epilogue-counter { font-size: 48px; font-weight: 700; color: #38bdf8; margin-bottom: 12px; }
+.epilogue-title { font-size: 32px; font-weight: 700; color: #fff; margin-bottom: 16px; }
+.epilogue-text { font-size: 15px; color: #64748b; max-width: 600px; margin: 0 auto 12px; line-height: 1.8; }
+.epilogue-text a { color: #38bdf8; text-decoration: underline; }
+.epilogue-stats { display: flex; justify-content: center; gap: 32px; margin: 32px 0; flex-wrap: wrap; }
+.epilogue-stat { text-align: center; }
+.epilogue-stat-num { display: block; font-size: 36px; font-weight: 700; color: #38bdf8; }
+.epilogue-stat-label { display: block; font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+@media (max-width: 640px) { .hero-title { font-size: 36px; } .chapter-title { font-size: 22px; } .flow-diagram { gap: 4px; } .flow-box { font-size: 11px; padding: 6px 10px; } .flow-arrow { font-size: 14px; padding: 0 3px; } .sub-heading { font-size: 16px; } }
+</style>
+</head>
+<body>
+<div class="page">
+<div class="hero">
+<div class="hero-badge">The Complete API Storybook</div>
+<h1 class="hero-title">Muvi Cinemas</h1>
+<p class="hero-subtitle">A first-day walkthrough for new developers.<br/>From login to booking, every API call explained like a story.</p>
+<div class="hero-meta">
+<div class="hero-chip">CMS &mdash; ~130 endpoints</div>
+<div class="hero-chip">Website &mdash; ~142 endpoints</div>
+<div class="hero-chip">Every single one documented</div>
+</div>
+</div>
+<div class="obs-card">
+<div class="obs-title">&#128202; Coverage Observations</div>
+<table class="obs-table">
+<thead><tr><th>Source</th><th>Endpoints</th><th>Covered</th></tr></thead>
+<tbody>
+<tr><td>CMS <span class="obs-dim">(logic/services/ &mdash; 36 dirs)</span></td><td>~130</td><td>~151 steps (Ch 1&ndash;12)</td></tr>
+<tr><td>Website <span class="obs-dim">(logic/services/ &mdash; 27 dirs)</span></td><td>112</td><td>~133 steps (Ch 13&ndash;24)</td></tr>
+<tr><td>Website <span class="obs-dim">(features/ &mdash; wallet, cashback, stc-pay, login-and-signup)</span></td><td>30</td><td>included above</td></tr>
+<tr class="obs-total"><td>Total</td><td>~272</td><td>284 steps</td></tr>
+</tbody></table>
+<p class="obs-note">The step count is slightly higher than 272 because a few endpoints appear in different contexts (e.g., <code>orders/:id</code> is used in both <em>Booking</em> and <em>My Bookings</em>, and infinite-query variants are documented as separate steps).</p>
+</div>
+<nav class="toc">
+<div class="toc-title">Table of Contents</div>
+<div class="toc-section">Part I &mdash; CMS (Admin Panel) &mdash; ~130 Endpoints</div>
+<a href="#ch-1" class="toc-link">Chapter 1 &mdash; Authentication &amp; Profile (7 endpoints)</a>
+<a href="#ch-2" class="toc-link">Chapter 2 &mdash; Dashboard, Settings &amp; Global Config (4 endpoints)</a>
+<a href="#ch-3" class="toc-link">Chapter 3 &mdash; Movies, Genres, Ratings &amp; Casting (28 endpoints)</a>
+<a href="#ch-4" class="toc-link">Chapter 4 &mdash; Cinemas, Cities &amp; Experiences (22 endpoints)</a>
+<a href="#ch-5" class="toc-link">Chapter 5 &mdash; Showtimes &amp; Sessions (2 endpoints)</a>
+<a href="#ch-6" class="toc-link">Chapter 6 &mdash; Banners, Offers &amp; Offer Rules (16 endpoints)</a>
+<a href="#ch-7" class="toc-link">Chapter 7 &mdash; Users, Roles &amp; Permissions (10 endpoints)</a>
+<a href="#ch-8" class="toc-link">Chapter 8 &mdash; Customers, Orders &amp; Refunds (10 endpoints)</a>
+<a href="#ch-9" class="toc-link">Chapter 9 &mdash; Food &amp; Beverages, Bank Accounts (9 endpoints)</a>
+<a href="#ch-10" class="toc-link">Chapter 10 &mdash; Notifications &amp; Push Templates (8 endpoints)</a>
+<a href="#ch-11" class="toc-link">Chapter 11 &mdash; SEO, Dynamic Pages, Onboarding (12 endpoints)</a>
+<a href="#ch-12" class="toc-link">Chapter 12 &mdash; Logs, Files, Kiosks &amp; Misc (14 endpoints)</a>
+<div class="toc-section">Part II &mdash; Website (Customer) &mdash; ~142 Endpoints</div>
+<a href="#ch-13" class="toc-link">Chapter 13 &mdash; Website Boots: Settings, Cities, Banners (6 endpoints)</a>
+<a href="#ch-14" class="toc-link">Chapter 14 &mdash; Sign Up, Login &amp; OTP (22 endpoints)</a>
+<a href="#ch-15" class="toc-link">Chapter 15 &mdash; Browsing Movies (12 endpoints)</a>
+<a href="#ch-16" class="toc-link">Chapter 16 &mdash; Movie Finder &amp; Search (11 endpoints)</a>
+<a href="#ch-17" class="toc-link">Chapter 17 &mdash; Cinemas &amp; Experiences (6 endpoints)</a>
+<a href="#ch-18" class="toc-link">Chapter 18 &mdash; Booking a Ticket (14 endpoints)</a>
+<a href="#ch-19" class="toc-link">Chapter 19 &mdash; Payment &amp; Credit Cards (12 endpoints)</a>
+<a href="#ch-20" class="toc-link">Chapter 20 &mdash; My Bookings &amp; Cancellations (10 endpoints)</a>
+<a href="#ch-21" class="toc-link">Chapter 21 &mdash; Wallet &amp; Top-ups (8 endpoints)</a>
+<a href="#ch-22" class="toc-link">Chapter 22 &mdash; Cashback (4 endpoints)</a>
+<a href="#ch-23" class="toc-link">Chapter 23 &mdash; Offers &amp; Vouchers (10 endpoints)</a>
+<a href="#ch-24" class="toc-link">Chapter 24 &mdash; Profile, Notifications &amp; Everything Else (27 endpoints)</a>
+</nav>
+<div class="part-header"><span class="part-label">Part I</span><span class="part-title">CMS &mdash; The Admin Panel</span></div>
+<div class="narrative"><p>Welcome to your first day at Muvi Cinemas! &#127909;</p><p>Your team lead sits down with you and says: <em>&ldquo;Let me walk you through everything. We&rsquo;ll start with the CMS &mdash; that&rsquo;s the admin panel where our ops team manages movies, cinemas, offers, and everything else. Then we&rsquo;ll go through the customer-facing website.&rdquo;</em></p><p>The CMS is a <strong>React + Vite</strong> SPA. It uses <strong>Zustand</strong> for auth state, <strong>React Query</strong> with <strong>Axios</strong> for API calls, and <strong>@nestjsx/crud-request</strong> for query building. Base URL: <code>http://localhost:3000/api/v1</code>.</p></div>
+<section class="chapter" id="ch-1"><div class="chapter-marker"><span class="chapter-num">Chapter 1</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128274;</span> Authentication &amp; Profile</h2><p class="chapter-subtitle">Login, password reset, token verification &mdash; 7 endpoints.</p></section>
+<div class="flow-diagram"><div class="flow-box">User opens CMS</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Login page renders</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">Enters email + password</div><div class="flow-arrow">&rarr;</div><div class="flow-box">POST cms/auth/login</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Store token + permissions</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Redirect to /app</div></div>
+<div class="api-step" id="step-1"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/auth/login</code></div><div class="step-when">Admin clicks &ldquo;Sign In&rdquo;</div><div class="step-desc">Authenticates the CMS user. Returns JWT token, refresh token, the user object, and the full list of permissions. The CMS stores the token in <code>localStorage</code> via zustand and sets it as a default Axios header.</div><div class="step-headers"><div class="step-label">Headers</div><table class="hdr-table"><tr><td>Content-Type</td><td>application/json</td></tr><tr><td>x-device-platform</td><td>web</td></tr></table></div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;email&quot;: &quot;admin@muvicinemas.com&quot;,
+  &quot;password&quot;: &quot;Str0ngP@ssword!&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;user&quot;: {
+    &quot;id&quot;: &quot;01HZYX...&quot;,
+    &quot;email&quot;: &quot;admin@muvicinemas.com&quot;,
+    &quot;firstName&quot;: &quot;Muvi&quot;,
+    &quot;lastName&quot;: &quot;Admin&quot;,
+    &quot;role&quot;: {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Super Admin&quot;
+    }
+  },
+  &quot;token&quot;: &quot;eyJhbGciOiJSUzI1NiIs...&quot;,
+  &quot;refreshToken&quot;: &quot;eyJhbGciOiJSUzI1NiIs...&quot;,
+  &quot;permissions&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;resource&quot;: &quot;CMS_USER&quot;,
+      &quot;action&quot;: &quot;READ&quot;
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;resource&quot;: &quot;FILMS&quot;,
+      &quot;action&quot;: &quot;UPDATE&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-2"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/auth/me</code></div><div class="step-when">On every app mount / page refresh</div><div class="step-desc">Fetches the current logged-in admin&rsquo;s profile and permissions. Used to determine sidebar visibility, route access, and display user info.</div><div class="step-headers"><div class="step-label">Headers</div><table class="hdr-table"><tr><td>Authorization</td><td>Bearer eyJhbG...</td></tr></table></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01HZYX...&quot;,
+  &quot;email&quot;: &quot;admin@muvicinemas.com&quot;,
+  &quot;firstName&quot;: &quot;Muvi&quot;,
+  &quot;lastName&quot;: &quot;Admin&quot;,
+  &quot;role&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Super Admin&quot;
+  },
+  &quot;permissions&quot;: [
+    &quot;CMS_USER:READ&quot;,
+    &quot;FILMS:READ&quot;,
+    &quot;FILMS:UPDATE&quot;
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-3"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/auth/forget-password</code></div><div class="step-when">Admin clicks &ldquo;Forgot Password?&rdquo;</div><div class="step-desc">Sends a password reset email to the given email address. Email contains a one-time token link.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;email&quot;: &quot;admin@muvicinemas.com&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;Reset email sent&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-4"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/auth/check-token</code></div><div class="step-when">Admin opens the reset link from email</div><div class="step-desc">Verifies the reset token from the email URL is still valid and not expired.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;token&quot;: &quot;reset_token_from_email&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;valid&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-5"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/auth/reset-password</code></div><div class="step-when">Admin submits a new password</div><div class="step-desc">Sets a new password using the verified reset token.</div><div class="step-headers"><div class="step-label">Headers</div><table class="hdr-table"><tr><td>Authorization</td><td>Bearer &lt;reset-token&gt;</td></tr></table></div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;password&quot;: &quot;NewStr0ngP@ssword!&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;Password updated&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-6"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/auth/change-password</code></div><div class="step-when">Admin changes password from profile</div><div class="step-desc">Changes the current admin&rsquo;s password. Requires the old password for verification.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;oldPassword&quot;: &quot;current&quot;,
+  &quot;newPassword&quot;: &quot;newOne!&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;Password changed&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-7"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/auth/profile</code></div><div class="step-when">Admin updates their profile</div><div class="step-desc">Updates the admin&rsquo;s own profile info: name, email, avatar.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;firstName&quot;: &quot;Muvi&quot;,
+  &quot;lastName&quot;: &quot;Admin&quot;,
+  &quot;email&quot;: &quot;admin@muvicinemas.com&quot;
+}</pre></div></div></div>
+<div class="tip-box"><span class="tip-icon">&#128161;</span> After login, the token is attached to every subsequent request via an Axios interceptor: <code>Authorization: Bearer eyJhbG...</code></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-2"><div class="chapter-marker"><span class="chapter-num">Chapter 2</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128200;</span> Dashboard, Settings &amp; Global Config</h2><p class="chapter-subtitle">What loads when the admin lands on /app &mdash; 4 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;After login, the app redirects to <code>/app</code>. The first thing it does is check: who am I? What can I see? It also loads global settings.&rdquo;</p></div>
+<div class="api-step" id="step-8"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/settings</code></div><div class="step-when">Dashboard layout mounts</div><div class="step-desc">Loads global platform settings: checkout timeouts, maintenance mode flags, app version requirements. Used across the CMS for form defaults.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;checkoutExtendedTimeIn3ds&quot;: 120,
+  &quot;countMinutesAfterFinishFilm&quot;: 30,
+  &quot;countMinutesSinceStartFilm&quot;: 15,
+  &quot;maintenanceMode&quot;: false
+}</pre></div></div></div>
+<div class="api-step" id="step-9"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/settings</code></div><div class="step-when">Admin updates global settings</div><div class="step-desc">Updates global platform settings. Only Super Admins have access to this.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;maintenanceMode&quot;: false,
+  &quot;checkoutExtendedTimeIn3ds&quot;: 120
+}</pre></div></div></div>
+<div class="api-step" id="step-10"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/transactions</code></div><div class="step-when">Transactions page loads</div><div class="step-desc">Lists all financial transactions: ticket purchases, refunds, wallet top-ups. Paginated with date range filters.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01T...&quot;,
+      &quot;type&quot;: &quot;PURCHASE&quot;,
+      &quot;amount&quot;: 150,
+      &quot;currency&quot;: &quot;SAR&quot;,
+      &quot;date&quot;: &quot;2026-01-15T14:22:00Z&quot;
+    }
+  ],
+  &quot;count&quot;: 2450
+}</pre></div></div></div>
+<div class="api-step" id="step-11"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cards/mada-card-bins</code></div><div class="step-when">Mada BIN management page loads</div><div class="step-desc">Fetches the list of all Mada card BIN numbers. Mada is the Saudi debit card network and requires special processing.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;bin&quot;: &quot;588845&quot;
+  },
+  {
+    &quot;bin&quot;: &quot;440795&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-12"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/cards/mada-card-bins</code></div><div class="step-when">Admin updates Mada BINs</div><div class="step-desc">Updates the full Mada BIN list. When new BINs are issued by SAMA (Saudi Central Bank), they&rsquo;re added here.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;bins&quot;: [
+    &quot;588845&quot;,
+    &quot;440795&quot;,
+    &quot;446404&quot;
+  ]
+}</pre></div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-3"><div class="chapter-marker"><span class="chapter-num">Chapter 3</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127910;</span> Movies, Genres, Ratings &amp; Casting</h2><p class="chapter-subtitle">The content engine &mdash; films, people, categories &mdash; 28 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Muvi uses <strong>Vista</strong> as the cinema management backend. Movies, cinemas, and showtimes originate from Vista and are synced into our system. Let me show you...&rdquo;</p></div>
+<div class="flow-diagram"><div class="flow-box">Vista System</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">POST cms/films/sync</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Muvi DB</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET cms/films</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Movies List Page</div></div>
+<h3 class="sub-heading">Movies (11 endpoints)</h3>
+<div class="api-step" id="step-13"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/films</code></div><div class="step-when">Movies list page loads</div><div class="step-desc">Fetches the paginated list of all movies. Uses <code>@nestjsx/crud-request</code> query builder for pagination, sorting, and filters. The table shows title, rating, publish status, and actions.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01ABC...&quot;,
+      &quot;title&quot;: &quot;Mission Impossible 8&quot;,
+      &quot;rating&quot;: {
+        &quot;name&quot;: &quot;PG-13&quot;
+      },
+      &quot;isPublished&quot;: true
+    }
+  ],
+  &quot;count&quot;: 42,
+  &quot;total&quot;: 42,
+  &quot;page&quot;: 1,
+  &quot;pageCount&quot;: 3
+}</pre></div></div></div>
+<div class="api-step" id="step-14"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/films/:id</code></div><div class="step-when">Admin clicks Edit on a movie</div><div class="step-desc">Loads full movie detail for the edit form. Includes title (EN/AR), description, trailer, poster, genres, cast, duration, etc.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01ABC...&quot;,
+  &quot;title&quot;: {
+    &quot;en&quot;: &quot;Mission Impossible 8&quot;,
+    &quot;ar&quot;: &quot;المهمة المستحيلة 8&quot;
+  },
+  &quot;trailer&quot;: &quot;https://youtube.com/watch?v=...&quot;,
+  &quot;poster&quot;: &quot;https://cdn.../mi8.jpg&quot;,
+  &quot;genres&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Action&quot;
+    }
+  ],
+  &quot;people&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Tom Cruise&quot;,
+      &quot;type&quot;: &quot;ACTOR&quot;
+    }
+  ],
+  &quot;rating&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;PG-13&quot;
+  },
+  &quot;duration&quot;: 165,
+  &quot;isPublished&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-15"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/films/:id</code></div><div class="step-when">Admin saves movie changes</div><div class="step-desc">Updates the movie with new data: Arabic translations, poster, genres, etc.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;title&quot;: {
+    &quot;en&quot;: &quot;Mission Impossible 8&quot;,
+    &quot;ar&quot;: &quot;المهمة المستحيلة ٨&quot;
+  },
+  &quot;isPublished&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-16"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/films/sync</code></div><div class="step-when">Admin clicks Sync Movies</div><div class="step-desc">Triggers synchronization of all films from the Vista system into Muvi database. New movies created, existing ones updated.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;Sync started&quot;,
+  &quot;count&quot;: 42
+}</pre></div></div></div>
+<div class="api-step" id="step-17"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/films/:movieId/:customUrl</code></div><div class="step-when">Admin toggles Publish switch</div><div class="step-desc">Publishes or unpublishes a movie. <code>:customUrl</code> = <code>publish</code> or <code>unpublish</code>.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;isPublished&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-18"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/bookmarks</code></div><div class="step-when">Movie form loads (bookmark dropdown)</div><div class="step-desc">Fetches all bookmark categories. Movies are categorized under &ldquo;Now Showing&rdquo;, &ldquo;Coming Soon&rdquo;, &ldquo;Advance Booking&rdquo;.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Now Showing&quot;
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;Coming Soon&quot;
+  },
+  {
+    &quot;id&quot;: 3,
+    &quot;name&quot;: &quot;Advance Booking&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-19"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/films/:movieId/meta-data</code></div><div class="step-when">Admin edits movie SEO</div><div class="step-desc">Updates SEO metadata for a specific movie: meta title, meta description, OG image for search engine optimization.</div></div></div>
+<div class="api-step" id="step-20"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/films/:movieId/force-on-top</code></div><div class="step-when">Admin forces movie to top</div><div class="step-desc">Pins a movie to the top of the listing, overriding the default sort order.</div></div></div>
+<div class="api-step" id="step-21"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/films/:movieId/remove-force-on-top</code></div><div class="step-when">Admin removes force-on-top</div><div class="step-desc">Removes the pinned status, returning the movie to its natural sort position.</div></div></div>
+<div class="api-step" id="step-22"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/films/watched</code></div><div class="step-when">Notification targeting (watched movies filter)</div><div class="step-desc">Lists movies that have been watched by users. Used when creating push notifications targeted at people who watched a specific movie.</div></div></div>
+<div class="api-step" id="step-23"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/orders/most-visited</code></div><div class="step-when">Notification targeting (most visited cinemas)</div><div class="step-desc">Returns cinemas sorted by visit count. Used when creating push notifications targeted at frequent visitors of specific cinemas.</div></div></div>
+<h3 class="sub-heading">Genres (6 endpoints)</h3>
+<div class="api-step" id="step-24"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/genres</code></div><div class="step-when">Genres list page loads</div><div class="step-desc">All movie genres: Action, Comedy, Drama, etc. Each can be published/unpublished.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Action&quot;,
+      &quot;isPublished&quot;: true
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;Drama&quot;,
+      &quot;isPublished&quot;: true
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-25"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/genres/:id</code></div><div class="step-when">Admin edits a genre</div><div class="step-desc">Single genre detail for the edit form.</div></div></div>
+<div class="api-step" id="step-26"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/genres</code></div><div class="step-when">Admin creates a genre</div><div class="step-desc">Creates a new genre with name (EN/AR).</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;Thriller&quot;,
+    &quot;ar&quot;: &quot;إثارة&quot;
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-27"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/genres/:id</code></div><div class="step-when">Admin updates a genre</div><div class="step-desc">Updates genre name or translations.</div></div></div>
+<div class="api-step" id="step-28"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/genres/sync</code></div><div class="step-when">Admin syncs genres from Vista</div><div class="step-desc">Syncs genre list from Vista into Muvi.</div></div></div>
+<div class="api-step" id="step-29"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/genres/:genreId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes a genre</div><div class="step-desc">Toggles the publish status of a genre.</div></div></div>
+<h3 class="sub-heading">Ratings (3 endpoints)</h3>
+<div class="api-step" id="step-30"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/rates</code></div><div class="step-when">Ratings list page loads</div><div class="step-desc">All content ratings: G, PG, PG-13, R, etc. with their descriptions.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;G&quot;,
+      &quot;description&quot;: &quot;General Audience&quot;
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;PG-13&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-31"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/rates/:id</code></div><div class="step-when">Admin edits a rating</div><div class="step-desc">Single rating detail.</div></div></div>
+<div class="api-step" id="step-32"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/rates/:id</code></div><div class="step-when">Admin updates a rating</div><div class="step-desc">Updates rating name, description, or icon.</div></div></div>
+<h3 class="sub-heading">Casting / People (6 endpoints)</h3>
+<div class="api-step" id="step-33"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/people</code></div><div class="step-when">Casting list page loads</div><div class="step-desc">All actors, directors, writers, etc. Used when assigning cast to movies.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Tom Cruise&quot;,
+      &quot;type&quot;: &quot;ACTOR&quot;,
+      &quot;photo&quot;: &quot;https://cdn.../tc.jpg&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-34"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/people/:id</code></div><div class="step-when">Admin edits a cast member</div><div class="step-desc">Full cast member detail.</div></div></div>
+<div class="api-step" id="step-35"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/people</code></div><div class="step-when">Admin creates a cast member</div><div class="step-desc">Creates a new person entry.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: &quot;Tom Cruise&quot;,
+  &quot;type&quot;: &quot;ACTOR&quot;,
+  &quot;photo&quot;: &quot;https://cdn.../tc.jpg&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-36"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/people/:id</code></div><div class="step-when">Admin updates a cast member</div><div class="step-desc">Updates person details.</div></div></div>
+<div class="api-step" id="step-37"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/people/sync</code></div><div class="step-when">Admin syncs cast from Vista</div><div class="step-desc">Syncs people/cast data from Vista.</div></div></div>
+<div class="api-step" id="step-38"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/people/:castId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes a cast member</div><div class="step-desc">Toggles publish status.</div></div></div>
+<h3 class="sub-heading">Specialties (4 endpoints)</h3>
+<div class="api-step" id="step-39"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/specialties</code></div><div class="step-when">Specialties list loads</div><div class="step-desc">Movie specialties/features like &ldquo;Subtitled&rdquo;, &ldquo;Dubbed&rdquo;, &ldquo;Original Language&rdquo;.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Subtitled&quot;
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;Dubbed&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-40"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/specialties/:id</code></div><div class="step-when">Admin edits a specialty</div><div class="step-desc">Single specialty detail.</div></div></div>
+<div class="api-step" id="step-41"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/specialties</code></div><div class="step-when">Admin creates a specialty</div><div class="step-desc">Creates a new specialty.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;ATMOS Sound&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-42"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/specialties/:id</code></div><div class="step-when">Admin updates a specialty</div><div class="step-desc">Updates specialty details.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-4"><div class="chapter-marker"><span class="chapter-num">Chapter 4</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127983;</span> Cinemas, Cities &amp; Experiences</h2><p class="chapter-subtitle">Locations, city management, and cinema experiences &mdash; 22 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Cinemas are organized by city. An admin manages cities, then within each city, manages cinemas and their ordering. Experiences (IMAX, VIP, 4DX) are managed separately.&rdquo;</p></div>
+<h3 class="sub-heading">Cinemas (8 endpoints)</h3>
+<div class="api-step" id="step-43"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cinemas</code></div><div class="step-when">Cinemas list page loads</div><div class="step-desc">All cinemas with city, address, screens, experiences, publish status. Paginated.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01C...&quot;,
+      &quot;name&quot;: {
+        &quot;en&quot;: &quot;Muvi Mall of Arabia&quot;,
+        &quot;ar&quot;: &quot;...&quot;
+      },
+      &quot;city&quot;: {
+        &quot;name&quot;: &quot;Jeddah&quot;
+      },
+      &quot;screens&quot;: 12,
+      &quot;isPublished&quot;: true
+    }
+  ],
+  &quot;count&quot;: 28
+}</pre></div></div></div>
+<div class="api-step" id="step-44"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cinemas/:id</code></div><div class="step-when">Admin edits a cinema</div><div class="step-desc">Full cinema detail: name (EN/AR), description, address, lat/lng, images, experiences, SEO metadata.</div></div></div>
+<div class="api-step" id="step-45"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/cinemas/:id</code></div><div class="step-when">Admin saves cinema changes</div><div class="step-desc">Updates cinema details, images, descriptions.</div></div></div>
+<div class="api-step" id="step-46"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/cinemas/sync</code></div><div class="step-when">Admin syncs cinemas from Vista</div><div class="step-desc">Syncs all cinema locations from Vista. Creates new cinemas, updates existing ones.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;Cinemas synced&quot;,
+  &quot;count&quot;: 28
+}</pre></div></div></div>
+<div class="api-step" id="step-47"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/cinemas/:cinemaId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes a cinema</div><div class="step-desc">Toggles the publish status.</div></div></div>
+<div class="api-step" id="step-48"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/cinemas/:cinemaId/meta-data</code></div><div class="step-when">Admin edits cinema SEO</div><div class="step-desc">Updates SEO metadata for a cinema page.</div></div></div>
+<div class="api-step" id="step-49"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/cinemas/:cinemaId/kiosk-data</code></div><div class="step-when">Admin configures kiosk settings for a cinema</div><div class="step-desc">Updates kiosk-specific configuration for a cinema (which kiosk hardware is assigned, display settings).</div></div></div>
+<div class="api-step" id="step-50"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/collectors</code></div><div class="step-when">Cinema form loads</div><div class="step-desc">Fetches Vista collector IDs used to map cinemas to Vista&rsquo;s own cinema identifiers.</div></div></div>
+<h3 class="sub-heading">Cities (4 endpoints)</h3>
+<div class="api-step" id="step-51"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cities</code></div><div class="step-when">Cities list page loads</div><div class="step-desc">All operating cities. Each has names in EN/AR and a count of cinemas.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01X...&quot;,
+      &quot;name&quot;: {
+        &quot;en&quot;: &quot;Riyadh&quot;,
+        &quot;ar&quot;: &quot;الرياض&quot;
+      },
+      &quot;isPublished&quot;: true,
+      &quot;cinemasCount&quot;: 8
+    }
+  ],
+  &quot;count&quot;: 12
+}</pre></div></div></div>
+<div class="api-step" id="step-52"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cities/:id</code></div><div class="step-when">Admin edits a city</div><div class="step-desc">Single city detail.</div></div></div>
+<div class="api-step" id="step-53"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/cities</code></div><div class="step-when">Admin creates a city</div><div class="step-desc">Creates a new city.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;Dammam&quot;,
+    &quot;ar&quot;: &quot;الدمام&quot;
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-54"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/cities/:id</code></div><div class="step-when">Admin updates a city</div><div class="step-desc">Updates city name or translations.</div></div></div>
+<h3 class="sub-heading">City-Cinema Ordering (2 endpoints)</h3>
+<div class="api-step" id="step-55"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cities/:cityId/cinemas</code></div><div class="step-when">Reorder cinemas in a city</div><div class="step-desc">Lists cinemas in a specific city for drag-and-drop reordering. The order determines how cinemas appear on the website.</div></div></div>
+<div class="api-step" id="step-56"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/cities/:cityId/cinemas/:cinemaId</code></div><div class="step-when">Admin saves cinema reorder</div><div class="step-desc">Updates the display order of a cinema within its city.</div></div></div>
+<h3 class="sub-heading">City-Movie Ordering (2 endpoints)</h3>
+<div class="api-step" id="step-57"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/cities/:cityId/films</code></div><div class="step-when">Reorder movies in a city</div><div class="step-desc">Lists movies available in a specific city for reordering.</div></div></div>
+<div class="api-step" id="step-58"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/cities/:cityId/films/:filmId</code></div><div class="step-when">Admin saves movie reorder</div><div class="step-desc">Updates display order of a movie within a city.</div></div></div>
+<h3 class="sub-heading">Experiences (6 endpoints)</h3>
+<div class="api-step" id="step-59"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/experiences</code></div><div class="step-when">Experiences list loads</div><div class="step-desc">All cinema experiences: Standard, IMAX, VIP, 4DX, ScreenX, etc.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;IMAX&quot;
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;VIP&quot;
+    },
+    {
+      &quot;id&quot;: 3,
+      &quot;name&quot;: &quot;4DX&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-60"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/experiences/:id</code></div><div class="step-when">Admin edits an experience</div><div class="step-desc">Single experience detail.</div></div></div>
+<div class="api-step" id="step-61"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/experiences</code></div><div class="step-when">Admin creates an experience</div><div class="step-desc">Creates a new experience type.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;MX4D&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;icon&quot;: &quot;https://cdn.../mx4d.png&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-62"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/experiences/:id</code></div><div class="step-when">Admin updates an experience</div><div class="step-desc">Updates experience details.</div></div></div>
+<div class="api-step" id="step-63"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/experiences/cinema-filters</code></div><div class="step-when">Experience filter by cinema</div><div class="step-desc">Returns experiences grouped by cinema. Used in filter dropdowns.</div></div></div>
+<div class="api-step" id="step-64"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/experiences/:experienceId/meta-data</code></div><div class="step-when">Admin edits experience SEO</div><div class="step-desc">Updates SEO metadata for an experience page.</div></div></div>
+<div class="api-step" id="step-65"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/experiences/:experienceId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes an experience</div><div class="step-desc">Toggles the publish status of an experience.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-5"><div class="chapter-marker"><span class="chapter-num">Chapter 5</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128197;</span> Showtimes &amp; Sessions</h2><p class="chapter-subtitle">How movie sessions are synced and displayed &mdash; 2 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Showtimes (sessions) are synced from Vista. Each showtime links a movie to a cinema screen at a specific date and time.&rdquo;</p></div>
+<div class="api-step" id="step-66"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/sessions</code></div><div class="step-when">Showtimes list page loads</div><div class="step-desc">Paginated list of all sessions. Filters: by movie, cinema, date range, experience. Shows movie title, cinema, screen, time, available seats.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01S...&quot;,
+      &quot;film&quot;: {
+        &quot;title&quot;: &quot;MI8&quot;
+      },
+      &quot;cinema&quot;: {
+        &quot;name&quot;: &quot;Mall of Arabia&quot;
+      },
+      &quot;screenName&quot;: &quot;Screen 3&quot;,
+      &quot;startTime&quot;: &quot;2026-01-15T19:30:00Z&quot;,
+      &quot;experience&quot;: &quot;IMAX&quot;,
+      &quot;seatsAvailable&quot;: 142
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-67"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/sessions/sync</code></div><div class="step-when">Admin clicks Sync Showtimes</div><div class="step-desc">Fetches latest showtime schedule from Vista. Runs automatically on schedule but can be triggered manually.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-6"><div class="chapter-marker"><span class="chapter-num">Chapter 6</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127873;</span> Banners, Offers &amp; Offer Rules</h2><p class="chapter-subtitle">Promotional content management &mdash; 16 endpoints.</p></section>
+<h3 class="sub-heading">Home Banners (5 endpoints)</h3>
+<div class="api-step" id="step-68"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/banners</code></div><div class="step-when">Banners list page loads</div><div class="step-desc">All homepage banners. Each has desktop + mobile images, link, and display order.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;title&quot;: &quot;Summer Special&quot;,
+      &quot;image&quot;: &quot;https://cdn.../b1.jpg&quot;,
+      &quot;order&quot;: 1,
+      &quot;isPublished&quot;: true
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-69"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/banners/:id</code></div><div class="step-when">Admin edits a banner</div><div class="step-desc">Single banner detail for the edit form.</div></div></div>
+<div class="api-step" id="step-70"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/banners</code></div><div class="step-when">Admin creates a banner</div><div class="step-desc">Creates a new banner with title, images, link, publish status.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;title&quot;: {
+    &quot;en&quot;: &quot;Summer Deal&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;image&quot;: &quot;https://cdn.../new.jpg&quot;,
+  &quot;mobileImage&quot;: &quot;https://cdn.../new-m.jpg&quot;,
+  &quot;link&quot;: &quot;/offers/summer&quot;,
+  &quot;isPublished&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-71"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/banners/:id</code></div><div class="step-when">Admin updates a banner</div><div class="step-desc">Updates banner details.</div></div></div>
+<div class="api-step" id="step-72"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/banners/:id/reorder</code></div><div class="step-when">Admin reorders banners</div><div class="step-desc">Updates the display order of a banner in the carousel.</div></div></div>
+<div class="api-step" id="step-73"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/banners/:id</code></div><div class="step-when">Admin deletes a banner</div><div class="step-desc">Removes a banner from the carousel.</div></div></div>
+<h3 class="sub-heading">Offers (8 endpoints)</h3>
+<div class="api-step" id="step-74"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offers</code></div><div class="step-when">Offers list page loads</div><div class="step-desc">All promotional offers. Each can target specific movies, cinemas, dates, and user segments.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01O...&quot;,
+      &quot;title&quot;: &quot;Buy 2 Get 1 Free&quot;,
+      &quot;isPublished&quot;: true,
+      &quot;startDate&quot;: &quot;2026-01-01&quot;,
+      &quot;endDate&quot;: &quot;2026-03-31&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-75"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offers/:id</code></div><div class="step-when">Admin edits an offer</div><div class="step-desc">Full offer detail including rules, images, targeting.</div></div></div>
+<div class="api-step" id="step-76"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/offers</code></div><div class="step-when">Admin creates an offer</div><div class="step-desc">Full offer creation: title, description, images, rules, discount type, dates, publish status.</div></div></div>
+<div class="api-step" id="step-77"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/offers/:id</code></div><div class="step-when">Admin updates an offer</div><div class="step-desc">Updates offer details.</div></div></div>
+<div class="api-step" id="step-78"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/offers/:offerId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes an offer</div><div class="step-desc">Toggles publish status.</div></div></div>
+<div class="api-step" id="step-79"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/offers/:offerId/meta-data</code></div><div class="step-when">Admin edits offer SEO</div><div class="step-desc">Updates SEO metadata for an offer page.</div></div></div>
+<div class="api-step" id="step-80"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/offers/:id/reorder</code></div><div class="step-when">Admin reorders offers</div><div class="step-desc">Updates the display order of offers.</div></div></div>
+<div class="api-step" id="step-81"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offer-logs</code></div><div class="step-when">Admin views offer usage history</div><div class="step-desc">Shows who used which offer, when, and how much discount was applied.</div></div></div>
+<div class="api-step" id="step-82"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offers/search</code></div><div class="step-when">Notification targeting (offers search)</div><div class="step-desc">Searches offers by name. Used when creating push notifications targeted at offer participants.</div></div></div>
+<h3 class="sub-heading">Offer Rules (6 endpoints)</h3>
+<div class="api-step" id="step-83"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offer-rules</code></div><div class="step-when">Offer rules list loads</div><div class="step-desc">All offer rules (reusable conditions like: min 2 tickets, specific cinema, specific day of week).</div></div></div>
+<div class="api-step" id="step-84"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/offer-rules/:id</code></div><div class="step-when">Admin edits an offer rule</div><div class="step-desc">Single offer rule detail.</div></div></div>
+<div class="api-step" id="step-85"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/offer-rules</code></div><div class="step-when">Admin creates an offer rule</div><div class="step-desc">Creates a reusable offer rule.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: &quot;Weekend Only&quot;,
+  &quot;conditions&quot;: {
+    &quot;dayOfWeek&quot;: [
+      &quot;FRI&quot;,
+      &quot;SAT&quot;
+    ]
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-86"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/offer-rules/:id</code></div><div class="step-when">Admin updates an offer rule</div><div class="step-desc">Updates rule conditions.</div></div></div>
+<div class="api-step" id="step-87"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/offer-rules/:id</code></div><div class="step-when">Admin deletes an offer rule</div><div class="step-desc">Removes an offer rule.</div></div></div>
+<div class="api-step" id="step-88"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/offer-rules/:offerRuleId/:customUrl</code></div><div class="step-when">Admin publishes/unpublishes a rule</div><div class="step-desc">Toggles the publish status of an offer rule.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-7"><div class="chapter-marker"><span class="chapter-num">Chapter 7</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128101;</span> Users, Roles &amp; Permissions</h2><p class="chapter-subtitle">RBAC for the CMS &mdash; 10 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Not every CMS user can see everything. We have roles &mdash; Super Admin, Cinema Manager, Content Editor. Each role has specific permissions.&rdquo;</p></div>
+<div class="flow-diagram"><div class="flow-box">Permissions</div><div class="flow-arrow">&rarr;</div><div class="flow-box">→ attached to Roles</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">→ assigned to Users</div><div class="flow-arrow">&rarr;</div><div class="flow-box">→ checked on each route</div></div>
+<h3 class="sub-heading">Roles (5 endpoints)</h3>
+<div class="api-step" id="step-89"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/roles</code></div><div class="step-when">Roles list page loads</div><div class="step-desc">All roles with names and permission counts.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;name&quot;: &quot;Super Admin&quot;,
+      &quot;permissionsCount&quot;: 48
+    },
+    {
+      &quot;id&quot;: 2,
+      &quot;name&quot;: &quot;Cinema Manager&quot;,
+      &quot;permissionsCount&quot;: 12
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-90"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/roles/:id</code></div><div class="step-when">Admin edits a role</div><div class="step-desc">Single role detail with attached permissions.</div></div></div>
+<div class="api-step" id="step-91"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/roles</code></div><div class="step-when">Admin creates a role</div><div class="step-desc">Creates a role with selected permissions.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: &quot;Content Editor&quot;,
+  &quot;permissions&quot;: [
+    3,
+    4,
+    7,
+    8
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-92"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/roles/:id</code></div><div class="step-when">Admin updates a role</div><div class="step-desc">Updates role name and permissions.</div></div></div>
+<div class="api-step" id="step-93"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/permissions</code></div><div class="step-when">Role form loads</div><div class="step-desc">All available permissions. Each is a resource + action pair: <code>FILMS:READ</code>, <code>FILMS:UPDATE</code>, <code>ORDERS:READ</code>.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;resource&quot;: &quot;CMS_USER&quot;,
+    &quot;action&quot;: &quot;READ&quot;
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;resource&quot;: &quot;FILMS&quot;,
+    &quot;action&quot;: &quot;UPDATE&quot;
+  }
+]</pre></div></div></div>
+<h3 class="sub-heading">CMS Users (4 endpoints)</h3>
+<div class="api-step" id="step-94"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/users/cms</code></div><div class="step-when">CMS Users list page loads</div><div class="step-desc">Lists all admin/CMS users (not customers). Shows name, email, role, last login.</div></div></div>
+<div class="api-step" id="step-95"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/users/:id</code></div><div class="step-when">Admin views a CMS user</div><div class="step-desc">Single CMS user detail.</div></div></div>
+<div class="api-step" id="step-96"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/users</code></div><div class="step-when">Admin invites a new CMS user</div><div class="step-desc">Creates a CMS user account and sends an invitation email.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;email&quot;: &quot;newadmin@muvicinemas.com&quot;,
+  &quot;firstName&quot;: &quot;Ali&quot;,
+  &quot;lastName&quot;: &quot;Manager&quot;,
+  &quot;roleId&quot;: 2
+}</pre></div></div></div>
+<div class="api-step" id="step-97"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/users/:id</code></div><div class="step-when">Admin updates a CMS user</div><div class="step-desc">Updates user details or role assignment.</div></div></div>
+<div class="api-step" id="step-98"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/contact-us</code></div><div class="step-when">Complaints page loads</div><div class="step-desc">Lists all contact-us form submissions from the website. Shows name, email, subject, message, and date.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-8"><div class="chapter-marker"><span class="chapter-num">Chapter 8</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127915;</span> Customers, Orders &amp; Refunds</h2><p class="chapter-subtitle">Managing end-users and their bookings &mdash; 10 endpoints.</p></section>
+<h3 class="sub-heading">Customers (6 endpoints)</h3>
+<div class="api-step" id="step-99"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/users/customers</code></div><div class="step-when">Logged-in Customers page</div><div class="step-desc">Lists all registered end-users. Shows name, email, phone, total bookings, wallet balance.</div></div></div>
+<div class="api-step" id="step-100"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/users/customers/:id</code></div><div class="step-when">Admin views a customer</div><div class="step-desc">Full customer profile.</div></div></div>
+<div class="api-step" id="step-101"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/users/customers/:id</code></div><div class="step-when">Admin updates a customer</div><div class="step-desc">Updates customer details from the admin side.</div></div></div>
+<div class="api-step" id="step-102"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/users/customers/:id/phone-number</code></div><div class="step-when">Admin updates customer phone</div><div class="step-desc">Updates or corrects a customer&rsquo;s phone number.</div></div></div>
+<div class="api-step" id="step-103"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/users/customers/:id/email</code></div><div class="step-when">Admin updates customer email</div><div class="step-desc">Updates or corrects a customer&rsquo;s email address.</div></div></div>
+<div class="api-step" id="step-104"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/guest-users</code></div><div class="step-when">Guest Customers page loads</div><div class="step-desc">Lists guest checkout users who booked tickets without creating an account.</div></div></div>
+<h3 class="sub-heading">Orders & Refunds (4 endpoints)</h3>
+<div class="api-step" id="step-105"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/orders</code></div><div class="step-when">Booked Tickets list loads</div><div class="step-desc">All ticket orders. Filters: upcoming vs history, cinema, movie, date range.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01ORD...&quot;,
+      &quot;film&quot;: &quot;MI8&quot;,
+      &quot;cinema&quot;: &quot;Mall of Arabia&quot;,
+      &quot;totalAmount&quot;: 150,
+      &quot;currency&quot;: &quot;SAR&quot;,
+      &quot;status&quot;: &quot;CONFIRMED&quot;,
+      &quot;seats&quot;: [
+        &quot;A1&quot;,
+        &quot;A2&quot;,
+        &quot;A3&quot;
+      ]
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-106"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/orders/:id</code></div><div class="step-when">Admin views order detail</div><div class="step-desc">Full order detail including seats, payment info, food orders.</div></div></div>
+<div class="api-step" id="step-107"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/orders/:orderId/resend-order-email</code></div><div class="step-when">Admin clicks Resend Email</div><div class="step-desc">Re-sends the booking confirmation email to the customer.</div></div></div>
+<div class="api-step" id="step-108"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/refund-payment-requests</code></div><div class="step-when">Admin initiates a refund</div><div class="step-desc">Creates a refund request for selected tickets in an order.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;orderId&quot;: &quot;01ORD...&quot;,
+  &quot;ticketIds&quot;: [
+    &quot;t1&quot;,
+    &quot;t2&quot;
+  ],
+  &quot;reason&quot;: &quot;Customer request&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-109"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/private-bookings</code></div><div class="step-when">Private Bookings page loads</div><div class="step-desc">Lists private/corporate booking requests submitted through the website.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-9"><div class="chapter-marker"><span class="chapter-num">Chapter 9</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127839;</span> Food &amp; Beverages, Bank Accounts</h2><p class="chapter-subtitle">Concession management &mdash; 9 endpoints.</p></section>
+<h3 class="sub-heading">Food Menu (5 endpoints)</h3>
+<div class="flow-diagram"><div class="flow-box">Concession Tabs</div><div class="flow-arrow">&rarr;</div><div class="flow-box">→ Menu Items</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">→ Modifier Groups</div><div class="flow-arrow">&rarr;</div><div class="flow-box">→ Up-sell Items</div></div>
+<div class="api-step" id="step-110"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/food-menu</code></div><div class="step-when">Food Menu list loads</div><div class="step-desc">All food menu items with prices, categories, and availability.</div></div></div>
+<div class="api-step" id="step-111"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/food-menu/:id</code></div><div class="step-when">Admin edits a menu item</div><div class="step-desc">Single menu item detail.</div></div></div>
+<div class="api-step" id="step-112"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/food-menu</code></div><div class="step-when">Admin creates a menu item</div><div class="step-desc">Creates a new food item.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;Popcorn Large&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;price&quot;: 35,
+  &quot;category&quot;: &quot;POPCORN&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-113"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/food-menu/:id</code></div><div class="step-when">Admin updates a menu item</div><div class="step-desc">Updates food item details.</div></div></div>
+<div class="api-step" id="step-114"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/food-menu/:id</code></div><div class="step-when">Admin deletes a menu item</div><div class="step-desc">Removes a food item from the menu.</div></div></div>
+<h3 class="sub-heading">Bank Accounts (4 endpoints)</h3>
+<div class="api-step" id="step-115"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/bank-accounts</code></div><div class="step-when">Bank Accounts list loads</div><div class="step-desc">Bank accounts used for payment settlements.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;bankName&quot;: &quot;Al Rajhi Bank&quot;,
+      &quot;iban&quot;: &quot;SA44...&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-116"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/bank-accounts/:id</code></div><div class="step-when">Admin edits a bank account</div><div class="step-desc">Single bank account detail.</div></div></div>
+<div class="api-step" id="step-117"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/bank-accounts</code></div><div class="step-when">Admin adds a bank account</div><div class="step-desc">Creates a new bank account.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;bankName&quot;: &quot;Al Rajhi Bank&quot;,
+  &quot;iban&quot;: &quot;SA44...&quot;,
+  &quot;accountName&quot;: &quot;Muvi Cinemas&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-118"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/bank-accounts/:id</code></div><div class="step-when">Admin updates a bank account</div><div class="step-desc">Updates bank account details.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-10"><div class="chapter-marker"><span class="chapter-num">Chapter 10</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128276;</span> Notifications &amp; Push Templates</h2><p class="chapter-subtitle">Creating and sending push notifications &mdash; 8 endpoints.</p></section>
+<div class="api-step" id="step-119"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/notification-templates</code></div><div class="step-when">Notifications list loads</div><div class="step-desc">All notification templates. Each has title, body, target audience, schedule.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01N...&quot;,
+      &quot;title&quot;: &quot;New Movie Alert!&quot;,
+      &quot;status&quot;: &quot;DRAFT&quot;,
+      &quot;scheduledAt&quot;: &quot;2026-01-15T10:00:00Z&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-120"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/notification-templates/:id</code></div><div class="step-when">Admin edits a notification</div><div class="step-desc">Single notification template detail.</div></div></div>
+<div class="api-step" id="step-121"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/notification-templates</code></div><div class="step-when">Admin creates a notification</div><div class="step-desc">Creates a push notification template. Can target: all users, specific movie watchers, cinema visitors.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;title&quot;: {
+    &quot;en&quot;: &quot;New Movie Alert!&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;body&quot;: {
+    &quot;en&quot;: &quot;MI8 is now showing&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;targetAudience&quot;: &quot;ALL&quot;,
+  &quot;scheduledAt&quot;: &quot;2026-01-15T10:00:00Z&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-122"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/notification-templates/:notificationId/publish</code></div><div class="step-when">Admin publishes a notification</div><div class="step-desc">Sends/schedules the notification for delivery.</div></div></div>
+<div class="narrative"><p>&ldquo;When creating a notification, admins can target specific audiences. These APIs help with that...&rdquo;</p></div>
+<div class="tip-box"><span class="tip-icon">&#128161;</span> The <code>GET cms/films/watched</code> and <code>GET cms/orders/most-visited</code> endpoints (Chapter 3) are also used here for audience targeting.</div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-11"><div class="chapter-marker"><span class="chapter-num">Chapter 11</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128196;</span> SEO, Dynamic Pages &amp; Onboarding</h2><p class="chapter-subtitle">Content management and app onboarding &mdash; 12 endpoints.</p></section>
+<h3 class="sub-heading">SEO / Page Metadata (4 endpoints)</h3>
+<div class="api-step" id="step-123"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/page-meta-data</code></div><div class="step-when">SEO list page loads</div><div class="step-desc">SEO metadata for all pages: title, description, OG image.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;page&quot;: &quot;HOME&quot;,
+      &quot;title&quot;: &quot;Muvi Cinemas | Book Movie Tickets Online&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-124"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/page-meta-data/:id</code></div><div class="step-when">Admin edits page SEO</div><div class="step-desc">Single page SEO detail.</div></div></div>
+<div class="api-step" id="step-125"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/page-meta-data/:id</code></div><div class="step-when">Admin updates page SEO</div><div class="step-desc">Updates meta title, description, and OG image.</div></div></div>
+<h3 class="sub-heading">Dynamic Pages (2 endpoints)</h3>
+<div class="api-step" id="step-126"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/dynamic-pages/:type</code></div><div class="step-when">Admin opens a dynamic page editor</div><div class="step-desc">Gets content for About Us, Privacy Policy, T&amp;C, House Rules.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;content&quot;: {
+    &quot;en&quot;: &quot;&lt;h1&gt;About Muvi...&lt;/h1&gt;&quot;,
+    &quot;ar&quot;: &quot;&lt;h1&gt;عن موفي...&lt;/h1&gt;&quot;
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-127"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/dynamic-pages/:type</code></div><div class="step-when">Admin saves dynamic page content</div><div class="step-desc">Updates dynamic page content. Types: <code>about-us</code>, <code>privacy-policy</code>, <code>terms-and-conditions</code>, <code>house-rules</code>.</div></div></div>
+<h3 class="sub-heading">Onboarding Slides (6 endpoints)</h3>
+<div class="api-step" id="step-128"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/onboarding-slides</code></div><div class="step-when">Onboarding list loads</div><div class="step-desc">Mobile app onboarding slides. Shown to first-time app users.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;title&quot;: &quot;Welcome to Muvi!&quot;,
+      &quot;image&quot;: &quot;https://cdn.../slide1.jpg&quot;,
+      &quot;order&quot;: 1
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-129"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/onboarding-slides/:id</code></div><div class="step-when">Admin edits a slide</div><div class="step-desc">Single slide detail.</div></div></div>
+<div class="api-step" id="step-130"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/onboarding-slides</code></div><div class="step-when">Admin creates a slide</div><div class="step-desc">Creates a new onboarding slide.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;title&quot;: {
+    &quot;en&quot;: &quot;Book Tickets&quot;,
+    &quot;ar&quot;: &quot;...&quot;
+  },
+  &quot;image&quot;: &quot;https://cdn.../slide.jpg&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-131"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/onboarding-slides/:id</code></div><div class="step-when">Admin updates a slide</div><div class="step-desc">Updates slide content.</div></div></div>
+<div class="api-step" id="step-132"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/onboarding-slides/:id</code></div><div class="step-when">Admin deletes a slide</div><div class="step-desc">Removes an onboarding slide.</div></div></div>
+<div class="api-step" id="step-133"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>cms/onboarding-slides/:dropId/reorder</code></div><div class="step-when">Admin reorders slides</div><div class="step-desc">Updates the display order of onboarding slides via drag-and-drop.</div></div></div>
+<h3 class="sub-heading">Voucher Redemption Steps (5 endpoints)</h3>
+<div class="api-step" id="step-134"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/voucher-redemption-steps</code></div><div class="step-when">Voucher steps list loads</div><div class="step-desc">Step-by-step instructions for voucher redemption displayed on the website.</div></div></div>
+<div class="api-step" id="step-135"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/voucher-redemption-steps/:id</code></div><div class="step-when">Admin edits a step</div><div class="step-desc">Single step detail.</div></div></div>
+<div class="api-step" id="step-136"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/voucher-redemption-steps</code></div><div class="step-when">Admin creates a step</div><div class="step-desc">Creates a new redemption step.</div></div></div>
+<div class="api-step" id="step-137"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/voucher-redemption-steps/:id</code></div><div class="step-when">Admin updates a step</div><div class="step-desc">Updates step content.</div></div></div>
+<div class="api-step" id="step-138"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/voucher-redemption-steps/:id</code></div><div class="step-when">Admin deletes a step</div><div class="step-desc">Removes a redemption step.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-12"><div class="chapter-marker"><span class="chapter-num">Chapter 12</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128736;</span> Logs, Files, Kiosks &amp; Misc</h2><p class="chapter-subtitle">The remaining CMS tools &mdash; 14 endpoints.</p></section>
+<h3 class="sub-heading">Audit & Sync Logs (2 endpoints)</h3>
+<div class="api-step" id="step-139"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/audit-log</code></div><div class="step-when">Audit Logs page loads</div><div class="step-desc">Every CMS action is logged: who did what, when. Shows user, action, resource, timestamp.</div></div></div>
+<div class="api-step" id="step-140"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/sync-logs</code></div><div class="step-when">Sync Logs page loads</div><div class="step-desc">History of Vista sync operations: films, cinemas, showtimes. Shows status, count, errors.</div></div></div>
+<h3 class="sub-heading">File Upload (3 endpoints)</h3>
+<div class="api-step" id="step-141"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>files</code></div><div class="step-when">Admin uploads a single file</div><div class="step-desc">Uploads a file (image/video) and returns a CDN URL. Used across the entire CMS for any media upload.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">(FormData with file)</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;url&quot;: &quot;https://cdn.muvicinemas.com/uploads/abc123.jpg&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-142"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>files/multiple</code></div><div class="step-when">Admin uploads multiple files</div><div class="step-desc">Batch file upload. Returns array of CDN URLs.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;url&quot;: &quot;https://cdn.../file1.jpg&quot;
+  },
+  {
+    &quot;url&quot;: &quot;https://cdn.../file2.jpg&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-143"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>files/upload-pdf</code></div><div class="step-when">Admin uploads a PDF</div><div class="step-desc">Specialized PDF upload endpoint (e.g., for terms documents).</div></div></div>
+<h3 class="sub-heading">Kiosk Management (5 endpoints)</h3>
+<div class="api-step" id="step-144"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/kiosks</code></div><div class="step-when">Kiosks list loads</div><div class="step-desc">All kiosk terminals deployed in cinemas. Shows serial number, cinema, status.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;k1&quot;,
+      &quot;serialNumber&quot;: &quot;KSK-001&quot;,
+      &quot;cinema&quot;: &quot;Mall of Arabia&quot;,
+      &quot;status&quot;: &quot;ACTIVE&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-145"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/kiosks/:id</code></div><div class="step-when">Admin edits a kiosk</div><div class="step-desc">Single kiosk detail.</div></div></div>
+<div class="api-step" id="step-146"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/kiosks</code></div><div class="step-when">Admin registers a kiosk</div><div class="step-desc">Registers a new kiosk terminal.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;serialNumber&quot;: &quot;KSK-002&quot;,
+  &quot;cinemaId&quot;: &quot;01C...&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-147"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/kiosks/:id</code></div><div class="step-when">Admin updates a kiosk</div><div class="step-desc">Updates kiosk configuration.</div></div></div>
+<div class="api-step" id="step-148"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cms/kiosks/:id</code></div><div class="step-when">Admin decommissions a kiosk</div><div class="step-desc">Removes a kiosk from the system.</div></div></div>
+<h3 class="sub-heading">Avatars (4 endpoints)</h3>
+<div class="api-step" id="step-149"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/avatars</code></div><div class="step-when">Avatars list loads</div><div class="step-desc">All avatar images that users can choose from.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: 1,
+      &quot;image&quot;: &quot;https://cdn.../avatar1.png&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-150"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cms/avatars/:id</code></div><div class="step-when">Admin edits an avatar</div><div class="step-desc">Single avatar detail.</div></div></div>
+<div class="api-step" id="step-151"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cms/avatars</code></div><div class="step-when">Admin uploads a new avatar</div><div class="step-desc">Creates a new avatar option.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;image&quot;: &quot;https://cdn.../avatar-new.png&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-152"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cms/avatars/:id</code></div><div class="step-when">Admin updates an avatar</div><div class="step-desc">Updates avatar image.</div></div></div>
+<div class="tip-box"><span class="tip-icon">&#128161;</span> That&rsquo;s all ~130 CMS endpoints covered! Now let&rsquo;s move to the customer-facing website...</div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<div class="part-header"><span class="part-label">Part II</span><span class="part-title">Website &mdash; The Customer Experience</span></div>
+<div class="narrative"><p>Your team lead switches browsers. &ldquo;Now let&rsquo;s see what the customer sees. Open <code>https://muvicinemas.com</code>.&rdquo;</p><p>The website is a <strong>Next.js</strong> app (pages router) with SSR. It uses React Query + Axios, same base URL: <code>http://localhost:3000/api/v1</code>.</p></div>
+<section class="chapter" id="ch-13"><div class="chapter-marker"><span class="chapter-num">Chapter 13</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127758;</span> Website Boots: Settings, Cities, Banners</h2><p class="chapter-subtitle">What fires when a customer opens muvicinemas.com &mdash; 6 endpoints.</p></section>
+<div class="flow-diagram"><div class="flow-box">User opens website</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">GET settings</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET cities</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET banners</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET films</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Homepage renders!</div></div>
+<div class="api-step" id="step-153"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>settings</code></div><div class="step-when">App initialization (every page)</div><div class="step-desc">Platform-wide settings: checkout timeouts, maintenance mode, feature flags. If maintenance mode is on, entire site shows maintenance page.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;maintenanceMode&quot;: false,
+  &quot;checkoutTimeoutMinutes&quot;: 10,
+  &quot;appStoreUrl&quot;: &quot;...&quot;,
+  &quot;playStoreUrl&quot;: &quot;...&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-154"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cities</code></div><div class="step-when">App init &mdash; city selector</div><div class="step-desc">All active cities. Website shows a city picker so users see movies and cinemas near them.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: &quot;01X...&quot;,
+    &quot;name&quot;: {
+      &quot;en&quot;: &quot;Riyadh&quot;,
+      &quot;ar&quot;: &quot;الرياض&quot;
+    },
+    &quot;lat&quot;: 24.7136,
+    &quot;lng&quot;: 46.6753
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-155"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cities/cordinates</code></div><div class="step-when">Auto-detect nearest city</div><div class="step-desc">Given the user&rsquo;s browser geolocation (lat/lng), returns the nearest city.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01X...&quot;,
+  &quot;name&quot;: &quot;Riyadh&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-156"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>banners</code></div><div class="step-when">Homepage hero carousel</div><div class="step-desc">Active homepage banners for the carousel. Different images for desktop/mobile.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;title&quot;: &quot;Summer Blockbusters&quot;,
+    &quot;desktopImage&quot;: &quot;https://cdn.../d.jpg&quot;,
+    &quot;mobileImage&quot;: &quot;https://cdn.../m.jpg&quot;,
+    &quot;link&quot;: &quot;/offers/summer&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-157"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>page-meta-data</code></div><div class="step-when">Each page load (SSR)</div><div class="step-desc">SEO metadata for the current page: title, description, OG tags.</div></div></div>
+<div class="api-step" id="step-158"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>communication-languages</code></div><div class="step-when">Profile settings / language preferences</div><div class="step-desc">Available communication languages for emails and SMS.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;English&quot;
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;Arabic&quot;
+  }
+]</pre></div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-14"><div class="chapter-marker"><span class="chapter-num">Chapter 14</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128241;</span> Sign Up, Login &amp; OTP</h2><p class="chapter-subtitle">Phone-based authentication with all verification flows &mdash; 22 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Unlike the CMS which uses email/password, the website uses <strong>phone number + OTP</strong>. When a user tries to book, they&rsquo;re asked to sign in.&rdquo;</p></div>
+<div class="flow-diagram"><div class="flow-box">User clicks Book</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Login modal opens</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">Enter phone</div><div class="flow-arrow">&rarr;</div><div class="flow-box">POST auth/send-otp</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Enter OTP</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">POST auth/verify-otp</div><div class="flow-arrow">&rarr;</div><div class="flow-box">New user? → Profile</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Authenticated!</div></div>
+<h3 class="sub-heading">Core Auth (10 endpoints)</h3>
+<div class="api-step" id="step-159"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/send-otp</code></div><div class="step-when">User enters phone and clicks Send Code</div><div class="step-desc">Sends a one-time password (OTP) to the user&rsquo;s phone via SMS. Valid for limited time.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;message&quot;: &quot;OTP sent&quot;,
+  &quot;nextStep&quot;: &quot;VERIFY_OTP&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-160"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-otp</code></div><div class="step-when">User enters the 6-digit OTP</div><div class="step-desc">Verifies the OTP. New user → <code>nextStep: COMPLETE_PROFILE</code>. Returning user → returns token and user.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;,
+  &quot;otp&quot;: &quot;123456&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;user&quot;: {
+    &quot;id&quot;: &quot;01U...&quot;,
+    &quot;phoneNumber&quot;: &quot;+966500000000&quot;,
+    &quot;firstName&quot;: &quot;Mohammed&quot;
+  },
+  &quot;token&quot;: &quot;eyJhbG...&quot;,
+  &quot;nextStep&quot;: &quot;HOME&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-161"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/profile</code></div><div class="step-when">New user completes profile</div><div class="step-desc">Completes user profile with name, email, avatar.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;firstName&quot;: &quot;Mohammed&quot;,
+  &quot;lastName&quot;: &quot;Ali&quot;,
+  &quot;email&quot;: &quot;m.ali@example.com&quot;,
+  &quot;avatarId&quot;: 3
+}</pre></div></div></div>
+<div class="api-step" id="step-162"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>auth/me</code></div><div class="step-when">After login / on each page load</div><div class="step-desc">Fetches logged-in user profile: name, avatar, wallet balance.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;user&quot;: {
+    &quot;id&quot;: &quot;01U...&quot;,
+    &quot;firstName&quot;: &quot;Mohammed&quot;,
+    &quot;lastName&quot;: &quot;Ali&quot;,
+    &quot;avatar&quot;: &quot;https://cdn.../a3.png&quot;
+  }
+}</pre></div></div></div>
+<div class="api-step" id="step-163"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/add-token</code></div><div class="step-when">After login (push notification setup)</div><div class="step-desc">Registers the user&rsquo;s FCM push notification token.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;token&quot;: &quot;fcm_token_string&quot;,
+  &quot;platform&quot;: &quot;web&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-164"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/logout</code></div><div class="step-when">User logs out</div><div class="step-desc">Invalidates the refresh token and unregisters the push notification token.</div></div></div>
+<div class="api-step" id="step-165"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>auth/delete-account</code></div><div class="step-when">User deletes their account</div><div class="step-desc">Permanently deletes the user account and all associated data.</div></div></div>
+<div class="api-step" id="step-166"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/unverified-user</code></div><div class="step-when">Handle unverified user state</div><div class="step-desc">Creates/updates an unverified user record during the signup flow.</div></div></div>
+<div class="api-step" id="step-167"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/forget-password</code></div><div class="step-when">User clicks Forgot Password</div><div class="step-desc">Sends a password reset code via SMS.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-168"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/reset-password-code</code></div><div class="step-when">User enters reset code</div><div class="step-desc">Verifies the reset code.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;,
+  &quot;code&quot;: &quot;123456&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-169"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/reset-password-confirmation</code></div><div class="step-when">User sets new password</div><div class="step-desc">Sets the new password after code verification.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;password&quot;: &quot;NewP@ssword!&quot;
+}</pre></div></div></div>
+<h3 class="sub-heading">Email Verification & Change (7 endpoints)</h3>
+<div class="api-step" id="step-170"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/send-login-email-verification-code</code></div><div class="step-when">Old user needs email verification during login</div><div class="step-desc">Sends an email verification code for old users migrating to the new auth system.</div></div></div>
+<div class="api-step" id="step-171"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/send-email-verification-code</code></div><div class="step-when">User initiates email change</div><div class="step-desc">Sends a verification code to the NEW email address when changing email.</div></div></div>
+<div class="api-step" id="step-172"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-email-old-user</code></div><div class="step-when">Old user verifies email</div><div class="step-desc">Verifies the email OTP for existing (old) users during migration.</div></div></div>
+<div class="api-step" id="step-173"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-change-email-old-user</code></div><div class="step-when">Old user verifies NEW email during change</div><div class="step-desc">Verifies the OTP sent to the new email for old users changing their email.</div></div></div>
+<div class="api-step" id="step-174"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-email-new-user</code></div><div class="step-when">New user verifies email during signup</div><div class="step-desc">Verifies the email for a brand new user signing up.</div></div></div>
+<div class="api-step" id="step-175"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/change-email-verification-code</code></div><div class="step-when">Verify OTP for email change</div><div class="step-desc">Verifies the confirmation code for an email change request.</div></div></div>
+<div class="api-step" id="step-176"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>auth/change-email</code></div><div class="step-when">Final step of email change</div><div class="step-desc">Actually changes the user&rsquo;s email after all verification steps are complete.</div></div></div>
+<h3 class="sub-heading">Phone Change & Misc (5 endpoints)</h3>
+<div class="api-step" id="step-177"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-phonenumber</code></div><div class="step-when">User verifies new phone number</div><div class="step-desc">Verifies OTP sent to a new phone number during phone change.</div></div></div>
+<div class="api-step" id="step-178"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/change-phonenumber-verification-code</code></div><div class="step-when">User initiates phone number change</div><div class="step-desc">Sends a verification code to the new phone number.</div></div></div>
+<div class="api-step" id="step-179"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-email</code></div><div class="step-when">Generic email verification</div><div class="step-desc">Verifies an email verification code (used in change-email flow).</div></div></div>
+<div class="api-step" id="step-180"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/init-change-email</code></div><div class="step-when">User starts email change from profile</div><div class="step-desc">Initiates the email change process. Sends OTP to current email first.</div></div></div>
+<h3 class="sub-heading">Guest Checkout Verification (2 endpoints)</h3>
+<div class="api-step" id="step-181"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/phone-number</code></div><div class="step-when">Guest checkout &mdash; enter phone</div><div class="step-desc">Verifies the guest&rsquo;s phone number and sends an OTP.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-182"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/verify</code></div><div class="step-when">Guest checkout &mdash; enter OTP</div><div class="step-desc">Verifies the guest OTP and returns a temporary token for the booking.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;,
+  &quot;otp&quot;: &quot;123456&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-183"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/init-verify-email-user</code></div><div class="step-when">Init email verification (wallet)</div><div class="step-desc">Initiates email verification for wallet-related operations.</div></div></div>
+<div class="api-step" id="step-184"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>auth/verify-email-user</code></div><div class="step-when">Complete email verification (wallet)</div><div class="step-desc">Completes email verification for wallet operations.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-15"><div class="chapter-marker"><span class="chapter-num">Chapter 15</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127916;</span> Browsing Movies</h2><p class="chapter-subtitle">Movie listing, detail pages, and showtimes &mdash; 12 endpoints.</p></section>
+<div class="flow-diagram"><div class="flow-box">Homepage</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Click movie poster</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">GET films/:slug</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Movie Detail Page</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET films/:id/cinemas</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">Select cinema + time</div></div>
+<div class="api-step" id="step-185"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films</code></div><div class="step-when">Homepage &mdash; Now Showing / Coming Soon</div><div class="step-desc">Movies filtered by bookmark. Paginated. Shows poster, title, rating, genres.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;data&quot;: [
+    {
+      &quot;id&quot;: &quot;01A...&quot;,
+      &quot;title&quot;: &quot;Mission Impossible 8&quot;,
+      &quot;poster&quot;: &quot;https://cdn.../mi8.jpg&quot;,
+      &quot;rating&quot;: &quot;PG-13&quot;,
+      &quot;genres&quot;: [
+        &quot;Action&quot;
+      ]
+    }
+  ],
+  &quot;total&quot;: 12
+}</pre></div></div></div>
+<div class="api-step" id="step-186"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films (infinite)</code></div><div class="step-when">Movies page with infinite scroll</div><div class="step-desc">Same endpoint but uses <code>createInfiniteQuery</code> for infinite scrolling on the all-movies page.</div></div></div>
+<div class="api-step" id="step-187"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/unique-name/:slug</code></div><div class="step-when">User clicks a movie</div><div class="step-desc">Full movie detail by slug (SEO-friendly URL). Shows title, description, trailer, cast, genres, rating, duration.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01A...&quot;,
+  &quot;title&quot;: &quot;Mission Impossible 8&quot;,
+  &quot;description&quot;: &quot;Ethan Hunt faces...&quot;,
+  &quot;trailer&quot;: &quot;https://youtube.com/...&quot;,
+  &quot;cast&quot;: [
+    {
+      &quot;name&quot;: &quot;Tom Cruise&quot;,
+      &quot;photo&quot;: &quot;...&quot;
+    }
+  ],
+  &quot;rating&quot;: &quot;PG-13&quot;,
+  &quot;duration&quot;: 165
+}</pre></div></div></div>
+<div class="api-step" id="step-188"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/:id</code></div><div class="step-when">Movie detail (by ID)</div><div class="step-desc">Same movie detail but accessed by ID instead of slug.</div></div></div>
+<div class="api-step" id="step-189"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/:id/cinemas</code></div><div class="step-when">Movie detail &mdash; cinema list</div><div class="step-desc">Which cinemas are showing this movie? Returns cinemas with showtimes grouped by date.</div></div></div>
+<div class="api-step" id="step-190"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cinemas/film-filters</code></div><div class="step-when">Movie detail &mdash; cinema filter</div><div class="step-desc">Available cinema filters for the selected movie: which cities, which cinemas.</div></div></div>
+<div class="api-step" id="step-191"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>experiences/film-filters</code></div><div class="step-when">Movie detail &mdash; experience filter</div><div class="step-desc">Available experiences for the selected movie (IMAX, VIP, etc.).</div></div></div>
+<div class="api-step" id="step-192"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>films/:id/:customUrl</code></div><div class="step-when">User clicks Remind Me (coming soon)</div><div class="step-desc">Sets a reminder for a movie. <code>:customUrl</code> = <code>remind-me</code>.</div><div class="step-headers"><div class="step-label">Headers</div><table class="hdr-table"><tr><td>Authorization</td><td>Bearer eyJhbG...</td></tr></table></div></div></div>
+<div class="api-step" id="step-193"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>films/:id/:customUrl</code></div><div class="step-when">User removes reminder</div><div class="step-desc">Removes a previously set movie reminder.</div></div></div>
+<div class="api-step" id="step-194"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/slug</code></div><div class="step-when">Sitemap generation (SSR)</div><div class="step-desc">All movie slugs for generating the sitemap.xml.</div></div></div>
+<div class="api-step" id="step-195"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/offer</code></div><div class="step-when">Offer detail &mdash; applicable movies</div><div class="step-desc">Movies that a specific offer applies to. Used on offer detail pages (infinite query).</div></div></div>
+<div class="api-step" id="step-196"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>films/showtimes</code></div><div class="step-when">Cinema detail &mdash; movies by date</div><div class="step-desc">Movies showing at a cinema on a specific date (infinite query).</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-16"><div class="chapter-marker"><span class="chapter-num">Chapter 16</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128270;</span> Movie Finder &amp; Search</h2><p class="chapter-subtitle">The powerful multi-filter search &mdash; 11 endpoints.</p></section>
+<div class="flow-diagram"><div class="flow-box">Open Movie Finder</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET .../dates</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET .../filters/films</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET .../filters/cinemas</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">Select filters</div><div class="flow-arrow">&rarr;</div><div class="flow-box">GET film-finder</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Results!</div></div>
+<div class="api-step" id="step-197"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/dates</code></div><div class="step-when">Movie Finder page loads</div><div class="step-desc">Available dates that have showtimes. Populates the date picker.</div></div></div>
+<div class="api-step" id="step-198"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/filters/films</code></div><div class="step-when">Movie Finder loads</div><div class="step-desc">Available movies for the film filter, based on city and date.</div></div></div>
+<div class="api-step" id="step-199"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/filters/cinemas</code></div><div class="step-when">Movie Finder loads</div><div class="step-desc">Available cinemas for the cinema filter.</div></div></div>
+<div class="api-step" id="step-200"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/filters/experiences</code></div><div class="step-when">Movie Finder loads</div><div class="step-desc">Available experiences for the experience filter.</div></div></div>
+<div class="api-step" id="step-201"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/result-count</code></div><div class="step-when">User changes any filter</div><div class="step-desc">Returns count of matching showtimes before loading full results. Shows &ldquo;42 showtimes found&rdquo;.</div></div></div>
+<div class="api-step" id="step-202"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder</code></div><div class="step-when">User clicks Show Results</div><div class="step-desc">Full search results: matching showtimes grouped by movie. Infinite query.</div></div></div>
+<div class="api-step" id="step-203"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/search</code></div><div class="step-when">User types in search bar</div><div class="step-desc">Text search across movies and cinemas. Returns results as the user types (debounced).</div></div></div>
+<div class="api-step" id="step-204"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>recent-searches</code></div><div class="step-when">Search bar focused</div><div class="step-desc">User&rsquo;s recent search history.</div></div></div>
+<div class="api-step" id="step-205"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>recent-searches</code></div><div class="step-when">User selects a search result</div><div class="step-desc">Saves the search term to history.</div></div></div>
+<div class="api-step" id="step-206"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>recent-searches</code></div><div class="step-when">User clears search history</div><div class="step-desc">Clears all recent searches.</div></div></div>
+<div class="api-step" id="step-207"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>film-finder/films/:id/cinemas</code></div><div class="step-when">Finder &mdash; cinemas for a film</div><div class="step-desc">Cinemas showing a specific film (used in finder sub-navigation).</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-17"><div class="chapter-marker"><span class="chapter-num">Chapter 17</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127963;</span> Cinemas &amp; Experiences</h2><p class="chapter-subtitle">Cinema listing, details, and showtimes &mdash; 6 endpoints.</p></section>
+<div class="api-step" id="step-208"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cinemas</code></div><div class="step-when">Cinemas listing page</div><div class="step-desc">All cinemas with city, address, experiences. The cinema directory.</div></div></div>
+<div class="api-step" id="step-209"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cinemas/unique-name/:slug</code></div><div class="step-when">Cinema detail page</div><div class="step-desc">Full cinema info: name, description, images, address, map, available movies.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01C...&quot;,
+  &quot;name&quot;: {
+    &quot;en&quot;: &quot;Muvi Mall of Arabia&quot;
+  },
+  &quot;address&quot;: &quot;...&quot;,
+  &quot;lat&quot;: 21.5,
+  &quot;lng&quot;: 39.1,
+  &quot;images&quot;: [
+    &quot;...&quot;
+  ],
+  &quot;experiences&quot;: [
+    &quot;IMAX&quot;,
+    &quot;VIP&quot;
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-210"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>showtimes</code></div><div class="step-when">Cinema detail &mdash; showtimes for a date</div><div class="step-desc">Showtimes at a specific cinema, filtered by date.</div></div></div>
+<div class="api-step" id="step-211"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>showtimes/:id</code></div><div class="step-when">Showtime detail (before booking)</div><div class="step-desc">Full session details: movie, cinema, screen, experience, date, time, price tiers.</div></div></div>
+<div class="api-step" id="step-212"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>experiences</code></div><div class="step-when">Experience filter on homepage</div><div class="step-desc">All cinema experiences for the filter dropdown: IMAX, VIP, 4DX, Standard.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;IMAX&quot;
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;VIP&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-213"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>experiences/unique-name/:slug</code></div><div class="step-when">Experience detail page</div><div class="step-desc">Full experience info: description, images, which cinemas have it.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-18"><div class="chapter-marker"><span class="chapter-num">Chapter 18</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127922;</span> Booking a Ticket</h2><p class="chapter-subtitle">The complete seat selection and ordering flow &mdash; 14 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;This is the money flow. When a user selects a showtime, the booking journey begins...&rdquo;</p></div>
+<div class="flow-diagram"><div class="flow-box">Select showtime</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">GET .../seats</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Select seats</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">POST orders</div><div class="flow-arrow">&rarr;</div><div class="flow-box">POST orders/:id/seats</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Add food?</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Apply offer?</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">Pay!</div></div>
+<div class="api-step" id="step-214"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>showtimes/:sessionId/seats</code></div><div class="step-when">Seat map page loads</div><div class="step-desc">Full seat map for the screen. Each seat: row, number, status (available/taken/blocked), type, price.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;seats&quot;: [
+    {
+      &quot;row&quot;: &quot;A&quot;,
+      &quot;number&quot;: 1,
+      &quot;status&quot;: &quot;AVAILABLE&quot;,
+      &quot;type&quot;: &quot;STANDARD&quot;,
+      &quot;price&quot;: 50
+    }
+  ],
+  &quot;areas&quot;: [
+    {
+      &quot;id&quot;: &quot;area-1&quot;,
+      &quot;name&quot;: &quot;Standard&quot;,
+      &quot;price&quot;: 50
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-215"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>showtimes/:sessionId/share-seats</code></div><div class="step-when">User shares seat layout</div><div class="step-desc">Generates a shareable seat map image/link.</div></div></div>
+<div class="api-step" id="step-216"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders</code></div><div class="step-when">User clicks Continue after selecting seats</div><div class="step-desc">Creates a new order (reservation). Locks selected seats for the checkout timeout.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;sessionId&quot;: &quot;01S...&quot;,
+  &quot;seats&quot;: [
+    {
+      &quot;row&quot;: &quot;A&quot;,
+      &quot;number&quot;: 1
+    },
+    {
+      &quot;row&quot;: &quot;A&quot;,
+      &quot;number&quot;: 3
+    }
+  ]
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;01ORD...&quot;,
+  &quot;status&quot;: &quot;PENDING&quot;,
+  &quot;expiresAt&quot;: &quot;2026-01-15T14:32:00Z&quot;,
+  &quot;totalAmount&quot;: 100,
+  &quot;currency&quot;: &quot;SAR&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-217"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:orderId/seats</code></div><div class="step-when">Confirming seat selection</div><div class="step-desc">Confirms the selected seats for the order. Prices finalized.</div></div></div>
+<div class="api-step" id="step-218"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:id</code></div><div class="step-when">Order summary page loads</div><div class="step-desc">Full order detail with seats, prices, applicable offers.</div></div></div>
+<div class="warning-box"><span class="tip-icon">&#9888;&#65039;</span> The order has a checkout timeout (typically 10 minutes). If the user doesn&rsquo;t pay in time, seats are automatically released.</div>
+<h3 class="sub-heading">Offers during checkout (4 endpoints)</h3>
+<div class="api-step" id="step-219"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers/check-film</code></div><div class="step-when">Checkout page loads</div><div class="step-desc">Checks if any offers apply to this movie/cinema/date combo.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: &quot;01O...&quot;,
+    &quot;title&quot;: &quot;Buy 2 Get 1 Free&quot;,
+    &quot;discountType&quot;: &quot;PERCENTAGE&quot;,
+    &quot;discountValue&quot;: 33
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-220"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>offers/:offerId/calculate</code></div><div class="step-when">User applies an offer</div><div class="step-desc">Calculates the discount for the selected offer.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;orderId&quot;: &quot;01ORD...&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;originalTotal&quot;: 150,
+  &quot;discountAmount&quot;: 50,
+  &quot;finalTotal&quot;: 100
+}</pre></div></div></div>
+<div class="api-step" id="step-221"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>orders/:id/offers</code></div><div class="step-when">User removes applied offer</div><div class="step-desc">Removes the applied offer from the order.</div></div></div>
+<div class="api-step" id="step-222"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:id/offers/check-card</code></div><div class="step-when">Check card-specific offer</div><div class="step-desc">Checks if a card-specific offer (like bank promos) applies to the order.</div></div></div>
+<h3 class="sub-heading">Food add-on (1 endpoint)</h3>
+<div class="api-step" id="step-223"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>food-menu?page=1&amp;limit=100</code></div><div class="step-when">F&amp;B upsell page after booking</div><div class="step-desc">Food and beverage menu so the user can add snacks.</div></div></div>
+<h3 class="sub-heading">Guest Booking (2 endpoints)</h3>
+<div class="api-step" id="step-224"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>guest-users/orders/:id</code></div><div class="step-when">Guest views their order</div><div class="step-desc">Order detail for guest users (no auth required, just order ID).</div></div></div>
+<div class="api-step" id="step-225"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/orders/:id/pay</code></div><div class="step-when">Guest pays for their order</div><div class="step-desc">Payment for guest users. Same as regular pay but with guest token.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-19"><div class="chapter-marker"><span class="chapter-num">Chapter 19</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128179;</span> Payment &amp; Credit Cards</h2><p class="chapter-subtitle">Card management, payment processing &mdash; 12 endpoints.</p></section>
+<div class="flow-diagram"><div class="flow-box">Select payment</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">GET cards</div><div class="flow-arrow">&rarr;</div><div class="flow-box">Choose card</div><div class="flow-arrow">&rarr;</div><div class="flow-box">POST orders/:id/pay</div><div class="flow-arrow">&rarr;</div><div class="flow-box">3DS?</div><div class="flow-arrow">&rarr;</div><div class="flow-box flow-highlight">CONFIRMED!</div></div>
+<h3 class="sub-heading">Card Management (6 endpoints)</h3>
+<div class="api-step" id="step-226"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cards</code></div><div class="step-when">Payment page / Cards settings</div><div class="step-desc">User&rsquo;s saved credit/debit cards.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: &quot;c1&quot;,
+    &quot;last4&quot;: &quot;4242&quot;,
+    &quot;brand&quot;: &quot;VISA&quot;,
+    &quot;expiryMonth&quot;: 12,
+    &quot;expiryYear&quot;: 2027
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-227"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cards/initialize-add-card</code></div><div class="step-when">User clicks Add Card</div><div class="step-desc">Initializes the add-card flow. Returns a form token for the payment gateway.</div></div></div>
+<div class="api-step" id="step-228"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cards/hyper-pay/initialize-add-card</code></div><div class="step-when">Add card via HyperPay gateway</div><div class="step-desc">Initializes HyperPay-specific card tokenization.</div></div></div>
+<div class="api-step" id="step-229"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cards/payfort/initialize-add-card</code></div><div class="step-when">Add card via PayFort gateway</div><div class="step-desc">Initializes PayFort-specific card tokenization.</div></div></div>
+<div class="api-step" id="step-230"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cards</code></div><div class="step-when">Card tokenization complete</div><div class="step-desc">Saves the tokenized card to the user&rsquo;s account.</div></div></div>
+<div class="api-step" id="step-231"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>cards/:id</code></div><div class="step-when">User updates card nickname</div><div class="step-desc">Updates card display name.</div></div></div>
+<div class="api-step" id="step-232"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>cards/:id</code></div><div class="step-when">User removes a saved card</div><div class="step-desc">Deletes the card from the user&rsquo;s account.</div></div></div>
+<h3 class="sub-heading">Mada & Payment Processing (3 endpoints)</h3>
+<div class="api-step" id="step-233"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cards/check-if-mada-card</code></div><div class="step-when">User enters card number</div><div class="step-desc">Checks if BIN is a Mada card. Mada requires different processing in KSA.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;bin&quot;: &quot;588845&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;isMada&quot;: true
+}</pre></div></div></div>
+<div class="api-step" id="step-234"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:id/pay</code></div><div class="step-when">User confirms payment</div><div class="step-desc">Initiates payment. If 3DS required, returns redirect URL. On success, order becomes CONFIRMED.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;paymentMethod&quot;: &quot;CARD&quot;,
+  &quot;cardId&quot;: &quot;c1&quot;
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;status&quot;: &quot;CONFIRMED&quot;,
+  &quot;orderId&quot;: &quot;01ORD...&quot;,
+  &quot;tickets&quot;: [
+    {
+      &quot;seat&quot;: &quot;A1&quot;,
+      &quot;qrCode&quot;: &quot;data:image/png;base64,...&quot;
+    }
+  ]
+}</pre></div></div></div>
+<div class="api-step" id="step-235"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cards/validate-apple-session</code></div><div class="step-when">Apple Pay</div><div class="step-desc">Validates the Apple Pay merchant session.</div></div></div>
+<div class="api-step" id="step-236"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>cards/create-apple-session</code></div><div class="step-when">Apple Pay session creation</div><div class="step-desc">Creates an Apple Pay payment session.</div></div></div>
+<h3 class="sub-heading">Guest Card Initialization (2 endpoints)</h3>
+<div class="api-step" id="step-237"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/cards/hyper-pay/initialize-add-card</code></div><div class="step-when">Guest adds card via HyperPay</div><div class="step-desc">HyperPay card tokenization for guest checkout users.</div></div></div>
+<div class="api-step" id="step-238"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/cards/payfort/initialize-add-card</code></div><div class="step-when">Guest adds card via PayFort</div><div class="step-desc">PayFort card tokenization for guest checkout users.</div></div></div>
+<h3 class="sub-heading">STC Pay (1 endpoint)</h3>
+<div class="api-step" id="step-239"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>stc-pay/verification-code</code></div><div class="step-when">User pays with STC Pay</div><div class="step-desc">Initiates STC Pay: sends verification to the user&rsquo;s STC number.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;phoneNumber&quot;: &quot;+966500000000&quot;,
+  &quot;orderId&quot;: &quot;01ORD...&quot;
+}</pre></div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-20"><div class="chapter-marker"><span class="chapter-num">Chapter 20</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127903;</span> My Bookings &amp; Cancellations</h2><p class="chapter-subtitle">Order history, sharing, and ticket cancellation &mdash; 10 endpoints.</p></section>
+<div class="api-step" id="step-240"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders</code></div><div class="step-when">My Bookings page loads</div><div class="step-desc">All user bookings: upcoming movies, past visits. Each has movie details, cinema, date, seats, QR code.</div></div></div>
+<div class="api-step" id="step-241"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:id (imperative)</code></div><div class="step-when">User clicks a booking / notification opens order</div><div class="step-desc">Full booking detail (on-demand fetch via mutation pattern for notification deep links).</div></div></div>
+<div class="api-step" id="step-242"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:id/share-ticket</code></div><div class="step-when">User shares their ticket</div><div class="step-desc">Generates a shareable link/image of the ticket.</div></div></div>
+<div class="api-step" id="step-243"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>guest-users/orders/:id/share-ticket</code></div><div class="step-when">Guest shares their ticket</div><div class="step-desc">Same as above but for guest bookings.</div></div></div>
+<div class="api-step" id="step-244"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:id/:customUrl</code></div><div class="step-when">User sets order reminder</div><div class="step-desc">Sets a reminder for the movie date. <code>:customUrl</code> = <code>remind-me</code>.</div></div></div>
+<div class="api-step" id="step-245"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>orders/:id/:customUrl</code></div><div class="step-when">User removes order reminder</div><div class="step-desc">Removes the reminder.</div></div></div>
+<h3 class="sub-heading">Cancellation Flow (4 endpoints)</h3>
+<div class="api-step" id="step-246"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:orderId/check-cancel</code></div><div class="step-when">User wants to cancel</div><div class="step-desc">Checks if this order is eligible for cancellation (time-based policy).</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;canCancel&quot;: true,
+  &quot;refundAmount&quot;: 100,
+  &quot;refundTo&quot;: &quot;WALLET&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-247"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cancellation-reasons</code></div><div class="step-when">Cancel dialog opens</div><div class="step-desc">Available cancellation reasons.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: &quot;r1&quot;,
+    &quot;text&quot;: &quot;Changed my plans&quot;
+  },
+  {
+    &quot;id&quot;: &quot;r2&quot;,
+    &quot;text&quot;: &quot;Booked wrong showtime&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-248"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:orderId/cancel</code></div><div class="step-when">User confirms cancellation</div><div class="step-desc">Cancels the order. Refund processed to wallet or original payment method.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;reasonId&quot;: &quot;r1&quot;
+}</pre></div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-21"><div class="chapter-marker"><span class="chapter-num">Chapter 21</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128176;</span> Wallet &amp; Top-ups</h2><p class="chapter-subtitle">Digital wallet management &mdash; 8 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;The wallet is a key feature. Refunds go to the wallet, and users can top it up with a card to pay for future bookings.&rdquo;</p></div>
+<div class="api-step" id="step-249"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>wallet/balance</code></div><div class="step-when">Wallet page / header badge</div><div class="step-desc">Current wallet balance.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;balance&quot;: 250,
+  &quot;currency&quot;: &quot;SAR&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-250"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>wallet</code></div><div class="step-when">Wallet transactions page</div><div class="step-desc">Transaction history: top-ups, payments, refunds. Paginated.</div></div></div>
+<div class="api-step" id="step-251"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>wallet (infinite)</code></div><div class="step-when">Wallet with infinite scroll</div><div class="step-desc">Same endpoint with <code>createInfiniteQuery</code> for endless scrolling.</div></div></div>
+<div class="api-step" id="step-252"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>wallet/expired</code></div><div class="step-when">Expired wallet transactions</div><div class="step-desc">Expired wallet amounts (infinite query). Wallet credits have an expiration date.</div></div></div>
+<div class="api-step" id="step-253"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>wallet/detailed-balance</code></div><div class="step-when">Wallet balance breakdown</div><div class="step-desc">Breakdown: available balance, pending refunds, expiring amounts.</div></div></div>
+<div class="api-step" id="step-254"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>top-ups</code></div><div class="step-when">User clicks Add Money</div><div class="step-desc">Creates a pending wallet top-up.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;amount&quot;: 100
+}</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;id&quot;: &quot;tu1&quot;,
+  &quot;amount&quot;: 100,
+  &quot;status&quot;: &quot;PENDING&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-255"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>top-ups/:topUpId</code></div><div class="step-when">Top-up detail loads</div><div class="step-desc">Top-up detail for pending review.</div></div></div>
+<div class="api-step" id="step-256"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>top-ups/:topUpId/pay</code></div><div class="step-when">User pays top-up</div><div class="step-desc">Processes payment for the wallet top-up using a saved card.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-22"><div class="chapter-marker"><span class="chapter-num">Chapter 22</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128184;</span> Cashback</h2><p class="chapter-subtitle">Cashback rewards system &mdash; 4 endpoints.</p></section>
+<div class="narrative"><p>&ldquo;Cashback is separate from the wallet. Users earn cashback on eligible purchases, and it can expire.&rdquo;</p></div>
+<div class="api-step" id="step-257"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cashback/balance</code></div><div class="step-when">Cashback page loads</div><div class="step-desc">Current cashback balance.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;balance&quot;: 25,
+  &quot;currency&quot;: &quot;SAR&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-258"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cashback</code></div><div class="step-when">Cashback transactions</div><div class="step-desc">Cashback transaction history (infinite query).</div></div></div>
+<div class="api-step" id="step-259"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>cashback/expired</code></div><div class="step-when">Expired cashback</div><div class="step-desc">Expired cashback amounts (infinite query).</div></div></div>
+<div class="tip-box"><span class="tip-icon">&#128161;</span> Cashback also reuses <code>POST orders/:orderId/cancel</code> and email verification endpoints from the wallet feature.</div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-23"><div class="chapter-marker"><span class="chapter-num">Chapter 23</span></div><h2 class="chapter-title"><span class="chapter-icon">&#127915;</span> Offers &amp; Vouchers</h2><p class="chapter-subtitle">Promotions on the website side &mdash; 10 endpoints.</p></section>
+<h3 class="sub-heading">Offers (7 endpoints)</h3>
+<div class="api-step" id="step-260"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers</code></div><div class="step-when">Offers listing page</div><div class="step-desc">Active offers for the website.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: &quot;01O...&quot;,
+    &quot;title&quot;: &quot;Buy 2 Get 1 Free&quot;,
+    &quot;image&quot;: &quot;...&quot;,
+    &quot;validUntil&quot;: &quot;2026-03-31&quot;
+  }
+]</pre></div></div></div>
+<div class="api-step" id="step-261"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers/unique-name/:slug</code></div><div class="step-when">Offer detail page</div><div class="step-desc">Full offer details by slug with terms, conditions, applicable movies/cinemas.</div></div></div>
+<div class="api-step" id="step-262"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers/:offerId</code></div><div class="step-when">Offer detail by ID</div><div class="step-desc">Full offer detail by ID.</div></div></div>
+<div class="api-step" id="step-263"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers/:offerId/showtimes</code></div><div class="step-when">Offer detail &mdash; available showtimes</div><div class="step-desc">Showtimes available for a specific offer. Shows when/where the offer applies.</div></div></div>
+<div class="api-step" id="step-264"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>offers/:offerId/verify</code></div><div class="step-when">Verify offer applicability</div><div class="step-desc">Verifies if an offer is still valid and can be applied to the current order (imperative GET).</div></div></div>
+<h3 class="sub-heading">Vouchers (4 endpoints)</h3>
+<div class="api-step" id="step-265"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:orderId/voucher/verify</code></div><div class="step-when">User enters voucher code</div><div class="step-desc">Validates the voucher code and returns its value.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;valid&quot;: true,
+  &quot;value&quot;: 50,
+  &quot;type&quot;: &quot;FIXED&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-266"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>orders/:orderId/voucher</code></div><div class="step-when">User applies voucher</div><div class="step-desc">Attaches the voucher to the order.</div></div></div>
+<div class="api-step" id="step-267"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>orders/:orderId/voucher</code></div><div class="step-when">User removes voucher</div><div class="step-desc">Removes the applied voucher from the order.</div></div></div>
+<div class="api-step" id="step-268"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>orders/:orderId/voucher/calculate</code></div><div class="step-when">Calculate multiple vouchers</div><div class="step-desc">Calculates the total discount when multiple vouchers are applied.</div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<section class="chapter" id="ch-24"><div class="chapter-marker"><span class="chapter-num">Chapter 24</span></div><h2 class="chapter-title"><span class="chapter-icon">&#128100;</span> Profile, Notifications &amp; Everything Else</h2><p class="chapter-subtitle">The remaining website endpoints &mdash; 27 endpoints.</p></section>
+<h3 class="sub-heading">Profile & User Settings (5 endpoints)</h3>
+<div class="api-step" id="step-269"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>auth/profile</code></div><div class="step-when">User updates profile</div><div class="step-desc">Updates name, email, avatar.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;firstName&quot;: &quot;Mohammed&quot;,
+  &quot;lastName&quot;: &quot;Ali&quot;,
+  &quot;avatarId&quot;: 5
+}</pre></div></div></div>
+<div class="api-step" id="step-270"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>users/cities</code></div><div class="step-when">User changes preferred city</div><div class="step-desc">Updates the default city for movie/cinema listings.</div></div></div>
+<div class="api-step" id="step-271"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>users/language</code></div><div class="step-when">User switches app language (EN/AR)</div><div class="step-desc">Updates the app language preference.</div></div></div>
+<div class="api-step" id="step-272"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-violet">PATCH</span> <code>users/communication-language</code></div><div class="step-when">User changes communication language</div><div class="step-desc">Updates the language for emails and SMS notifications.</div></div></div>
+<div class="api-step" id="step-273"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>avatars</code></div><div class="step-when">Profile / signup avatar picker</div><div class="step-desc">Available avatar images.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">[
+  {
+    &quot;id&quot;: 1,
+    &quot;image&quot;: &quot;https://cdn.../a1.png&quot;
+  },
+  {
+    &quot;id&quot;: 2,
+    &quot;image&quot;: &quot;https://cdn.../a2.png&quot;
+  }
+]</pre></div></div></div>
+<h3 class="sub-heading">Notifications (5 endpoints)</h3>
+<div class="api-step" id="step-274"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>notifications</code></div><div class="step-when">Notifications page loads</div><div class="step-desc">User&rsquo;s push notifications (infinite query): new movies, confirmations, offers.</div></div></div>
+<div class="api-step" id="step-275"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>notifications/unread/count</code></div><div class="step-when">App header (always)</div><div class="step-desc">Unread notification count for the bell icon badge.</div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;count&quot;: 3
+}</pre></div></div></div>
+<div class="api-step" id="step-276"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>notifications/:id/make-read</code></div><div class="step-when">User opens a notification</div><div class="step-desc">Marks a notification as read.</div></div></div>
+<div class="api-step" id="step-277"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-amber">PUT</span> <code>notifications/make-read/notification-template/:id</code></div><div class="step-when">Push notification opened</div><div class="step-desc">Marks a push notification as read by template ID (used when notification is opened from system tray).</div></div></div>
+<div class="api-step" id="step-278"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-rose">DELETE</span> <code>notifications/:id</code></div><div class="step-when">User deletes a notification</div><div class="step-desc">Removes a notification from the list.</div></div></div>
+<h3 class="sub-heading">File Upload (2 endpoints)</h3>
+<div class="api-step" id="step-279"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>files</code></div><div class="step-when">User uploads profile photo, etc.</div><div class="step-desc">Uploads a single file and returns CDN URL.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">(FormData with file)</pre></div><div class="step-response"><div class="step-label">Response</div><pre class="json-block">{
+  &quot;url&quot;: &quot;https://cdn.../upload.jpg&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-280"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>files/multiple</code></div><div class="step-when">User uploads multiple files</div><div class="step-desc">Batch file upload.</div></div></div>
+<h3 class="sub-heading">Static Pages & Content (5 endpoints)</h3>
+<div class="api-step" id="step-281"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>dynamic-pages/:type</code></div><div class="step-when">About Us / Privacy / T&amp;C page</div><div class="step-desc">Content for static pages. Types: about-us, privacy-policy, terms-and-conditions, house-rules.</div></div></div>
+<div class="api-step" id="step-282"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-emerald">GET</span> <code>voucher-redemption-steps</code></div><div class="step-when">Voucher redemption page</div><div class="step-desc">Step-by-step instructions for voucher redemption.</div></div></div>
+<div class="api-step" id="step-283"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>contact-us</code></div><div class="step-when">User submits Contact Us form</div><div class="step-desc">Sends a complaint/inquiry.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: &quot;Mohammed&quot;,
+  &quot;email&quot;: &quot;m@example.com&quot;,
+  &quot;subject&quot;: &quot;Question&quot;,
+  &quot;message&quot;: &quot;When will IMAX be in Jeddah?&quot;
+}</pre></div></div></div>
+<div class="api-step" id="step-284"><div class="step-connector"></div><div class="step-dot"></div><div class="step-content"><div class="step-title"><span class="method-badge method-sky">POST</span> <code>private-bookings</code></div><div class="step-when">User submits private booking request</div><div class="step-desc">Creates a private/corporate booking inquiry.</div><div class="step-payload"><div class="step-label">Request Payload</div><pre class="json-block">{
+  &quot;name&quot;: &quot;...&quot;,
+  &quot;email&quot;: &quot;...&quot;,
+  &quot;companyName&quot;: &quot;...&quot;,
+  &quot;date&quot;: &quot;2026-02-01&quot;,
+  &quot;guestCount&quot;: 50
+}</pre></div></div></div>
+<div class="section-divider"><div class="divider-line"></div><div class="divider-dot"></div><div class="divider-line"></div></div>
+<div class="epilogue">
+<div class="epilogue-counter">284 API endpoints documented</div>
+<h2 class="epilogue-title">That&rsquo;s the full story! &#127881;</h2>
+<p class="epilogue-text">You&rsquo;ve walked through every API flow in the Muvi Cinemas platform &mdash; from CMS admin operations to the end-user booking journey. Every single endpoint from both the CMS (~130) and Website (~142) apps has been explained in context.</p>
+<div class="epilogue-stats">
+<div class="epilogue-stat"><span class="epilogue-stat-num">24</span><span class="epilogue-stat-label">Chapters</span></div>
+<div class="epilogue-stat"><span class="epilogue-stat-num">2</span><span class="epilogue-stat-label">Applications</span></div>
+<div class="epilogue-stat"><span class="epilogue-stat-num">63</span><span class="epilogue-stat-label">Service Dirs</span></div>
+<div class="epilogue-stat"><span class="epilogue-stat-num">284</span><span class="epilogue-stat-label">API Steps</span></div>
+</div>
+<p class="epilogue-text">For the interactive endpoint reference with Try-it buttons, check the <a href="api.html">API Reference</a>.</p>
+</div>
+</div>
+</body>
+</html>

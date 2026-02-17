@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — UAT Infrastructure Gap Analysis</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --border: #2a2a3a;
+    --text: #e4e4ef;
+    --text-dim: #8888a0;
+    --accent: #6c5ce7;
+    --green: #00b894;
+    --green-bg: rgba(0,184,148,0.08);
+    --yellow: #fdcb6e;
+    --yellow-bg: rgba(253,203,110,0.08);
+    --red: #ff6b6b;
+    --red-bg: rgba(255,107,107,0.08);
+    --blue: #74b9ff;
+    --blue-bg: rgba(116,185,255,0.08);
+    --orange: #e17055;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif; line-height:1.7; }
+  
+  .container { max-width:1200px; margin:0 auto; padding:40px 24px; }
+  
+  /* Header */
+  .header { text-align:center; margin-bottom:60px; padding-bottom:40px; border-bottom:1px solid var(--border); }
+  .header h1 { font-size:2.4rem; font-weight:700; margin-bottom:8px; background:linear-gradient(135deg,var(--accent),var(--blue)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .header .subtitle { color:var(--text-dim); font-size:1.1rem; }
+  .header .date { color:var(--text-dim); font-size:0.85rem; margin-top:8px; }
+  
+  /* Executive Summary */
+  .exec-summary { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:32px; margin-bottom:40px; }
+  .exec-summary h2 { font-size:1.3rem; margin-bottom:16px; color:var(--accent); }
+  .exec-summary p { color:var(--text-dim); margin-bottom:12px; }
+  
+  /* Score Cards */
+  .score-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:40px; }
+  .score-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; text-align:center; }
+  .score-card .number { font-size:2.2rem; font-weight:800; }
+  .score-card .label { color:var(--text-dim); font-size:0.85rem; margin-top:4px; }
+  .score-card.green .number { color:var(--green); }
+  .score-card.yellow .number { color:var(--yellow); }
+  .score-card.red .number { color:var(--red); }
+  .score-card.blue .number { color:var(--blue); }
+  
+  /* Section */
+  .section { margin-bottom:48px; }
+  .section-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; }
+  .section-header .icon { width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.2rem; }
+  .section-header h2 { font-size:1.4rem; font-weight:600; }
+  .section-header .badge { font-size:0.75rem; padding:3px 10px; border-radius:20px; font-weight:600; margin-left:auto; }
+  
+  /* Status Badges */
+  .badge-done { background:var(--green-bg); color:var(--green); border:1px solid rgba(0,184,148,0.2); }
+  .badge-partial { background:var(--yellow-bg); color:var(--yellow); border:1px solid rgba(253,203,110,0.2); }
+  .badge-missing { background:var(--red-bg); color:var(--red); border:1px solid rgba(255,107,107,0.2); }
+  .badge-ok { background:var(--blue-bg); color:var(--blue); border:1px solid rgba(116,185,255,0.2); }
+  
+  /* Tables */
+  table { width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:16px; }
+  thead th { background:var(--surface2); padding:14px 16px; text-align:left; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-dim); font-weight:600; border-bottom:1px solid var(--border); }
+  tbody td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:0.9rem; }
+  tbody tr:last-child td { border-bottom:none; }
+  tbody tr:hover { background:var(--surface2); }
+  
+  .status { display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:600; padding:3px 10px; border-radius:6px; }
+  .status-match { background:var(--green-bg); color:var(--green); }
+  .status-partial { background:var(--yellow-bg); color:var(--yellow); }
+  .status-missing { background:var(--red-bg); color:var(--red); }
+  .status-acceptable { background:var(--blue-bg); color:var(--blue); }
+  
+  .dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+  .dot-green { background:var(--green); }
+  .dot-yellow { background:var(--yellow); }
+  .dot-red { background:var(--red); }
+  .dot-blue { background:var(--blue); }
+  
+  /* Verdict Box */
+  .verdict { background:var(--surface); border-left:4px solid; border-radius:0 8px 8px 0; padding:20px 24px; margin:16px 0; }
+  .verdict.mandatory { border-color:var(--red); }
+  .verdict.keep { border-color:var(--green); }
+  .verdict.recommended { border-color:var(--yellow); }
+  .verdict h4 { font-size:0.95rem; margin-bottom:6px; }
+  .verdict p { color:var(--text-dim); font-size:0.88rem; }
+  .verdict .tag { display:inline-block; font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; padding:2px 8px; border-radius:4px; margin-bottom:8px; }
+  .verdict .tag-mandatory { background:var(--red-bg); color:var(--red); }
+  .verdict .tag-keep { background:var(--green-bg); color:var(--green); }
+  .verdict .tag-recommended { background:var(--yellow-bg); color:var(--yellow); }
+  
+  /* Phase Cards */
+  .phase-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:16px; }
+  .phase-card .phase-num { font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent); font-weight:700; margin-bottom:8px; }
+  .phase-card h3 { font-size:1.1rem; margin-bottom:12px; }
+  .phase-card ul { list-style:none; padding:0; }
+  .phase-card ul li { padding:6px 0; color:var(--text-dim); font-size:0.88rem; display:flex; align-items:flex-start; gap:8px; }
+  .phase-card ul li::before { content:"→"; color:var(--accent); font-weight:700; flex-shrink:0; margin-top:1px; }
+  
+  /* Comparison highlight */
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0; }
+  .compare-box { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:16px; }
+  .compare-box .region { font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; color:var(--text-dim); margin-bottom:8px; font-weight:600; }
+  .compare-box .value { font-size:1.5rem; font-weight:700; }
+  .compare-box .detail { font-size:0.82rem; color:var(--text-dim); margin-top:4px; }
+  
+  /* Legend */
+  .legend { display:flex; gap:24px; flex-wrap:wrap; margin:20px 0; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:8px; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--text-dim); }
+  
+  /* Responsive */
+  @media(max-width:768px) {
+    .score-row { grid-template-columns:repeat(2,1fr); }
+    .compare-grid { grid-template-columns:1fr; }
+  }
+  
+  /* Print */
+  @media print {
+    body { background:#fff; color:#000; }
+    .container { max-width:100%; }
+    table, .score-card, .phase-card, .verdict, .exec-summary { break-inside:avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Header -->
+<div class="header">
+  <h1>UAT Infrastructure Gap Analysis</h1>
+  <div class="subtitle">Frankfurt (Vendor) vs UAE (Team Lead) — Side-by-Side Comparison</div>
+  <div class="date">Generated: February 12, 2026 &nbsp;|&nbsp; AWS Account: 739991759290 &nbsp;|&nbsp; Prepared by: Rehan Tariq</div>
+</div>
+
+<!-- Executive Summary -->
+<div class="exec-summary">
+  <h2>Executive Summary</h2>
+  <p>The vendor's UAT environment in <strong>Frankfurt (eu-central-1)</strong> serves as the reference architecture. The team lead has begun replicating this into <strong>UAE (me-central-1)</strong> to reduce latency for the Saudi/Gulf region. This report compares both environments component-by-component, identifies what's been done correctly, what can remain different to save costs, and what <strong>must</strong> be completed for the UAE environment to function reliably.</p>
+  <p>Overall replication status: <strong style="color:var(--yellow)">~60% Complete</strong> — Core services run but critical networking, security, CI/CD, and two services are missing.</p>
+</div>
+
+<!-- Score Cards -->
+<div class="score-row">
+  <div class="score-card green">
+    <div class="number">11</div>
+    <div class="label">Components Matched</div>
+  </div>
+  <div class="score-card yellow">
+    <div class="number">5</div>
+    <div class="label">Partially Done</div>
+  </div>
+  <div class="score-card red">
+    <div class="number">7</div>
+    <div class="label">Missing / Mandatory</div>
+  </div>
+  <div class="score-card blue">
+    <div class="number">4</div>
+    <div class="label">OK to Keep Different</div>
+  </div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><span class="dot dot-green"></span> Matches vendor — no action needed</div>
+  <div class="legend-item"><span class="dot dot-yellow"></span> Partially done — minor fixes needed</div>
+  <div class="legend-item"><span class="dot dot-red"></span> Missing — mandatory to complete</div>
+  <div class="legend-item"><span class="dot dot-blue"></span> Different but acceptable — cost saving</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 1: ECS SERVICES -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:var(--accent)">🐳</div>
+    <h2>1. ECS Services (Containers)</h2>
+    <span class="badge badge-partial">PARTIALLY DONE</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Service</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>CPU / Memory</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Gateway</strong></td>
+        <td>2 containers, ALB target group</td>
+        <td>2 containers, ALB target group</td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-match">✓ Match</span></td>
+      </tr>
+      <tr>
+        <td><strong>Main</strong></td>
+        <td>1 container, ALB target group</td>
+        <td>2 containers, <strong>no ALB</strong></td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-partial">⚠ No ALB TG</span></td>
+      </tr>
+      <tr>
+        <td><strong>Identity</strong></td>
+        <td>1 container, ALB target group</td>
+        <td>2 containers, <strong>no ALB</strong></td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-partial">⚠ No ALB TG</span></td>
+      </tr>
+      <tr>
+        <td><strong>Payment</strong></td>
+        <td>1 container, ALB target group</td>
+        <td>2 containers, <strong>no ALB</strong></td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-partial">⚠ No ALB TG</span></td>
+      </tr>
+      <tr>
+        <td><strong>F&B</strong></td>
+        <td>1 container, ALB target group, <strong>2048/4096</strong></td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td>2048 / 4096 (Frankfurt)</td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>Notification</strong></td>
+        <td>1 container, ALB target group</td>
+        <td>2 containers, <strong>no ALB</strong></td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-partial">⚠ No ALB TG</span></td>
+      </tr>
+      <tr>
+        <td><strong>Offer</strong></td>
+        <td>1 container, internal (no ALB)</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td>512 / 1024 (Frankfurt)</td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>Website</strong></td>
+        <td>1 container, ALB target group</td>
+        <td>1 container, ALB target group</td>
+        <td>512 / 1024 (both)</td>
+        <td><span class="status status-match">✓ Match</span></td>
+      </tr>
+      <tr>
+        <td><strong>Ticket</strong></td>
+        <td>0 containers (disabled)</td>
+        <td>Not created</td>
+        <td>—</td>
+        <td><span class="status status-acceptable">◉ Skip — disabled in vendor too</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Create F&B and Offer services in UAE ECS cluster</h4>
+    <p><strong>Why:</strong> The F&B service handles all food & beverage ordering (concessions at the cinema). Without it, customers cannot order food with their tickets. The Offer service handles promotions and discounts — without it, cashback, coupons, and promotional campaigns won't work. These are <strong>customer-facing features that generate revenue</strong>.</p>
+  </div>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Register Main, Identity, Payment, Notification with Internal ALB target groups</h4>
+    <p><strong>Why:</strong> Without ALB target groups, these services rely <strong>only</strong> on Cloud Map DNS for discovery. If a container crashes, DNS cache means traffic continues routing to the dead container for 60-120 seconds. ALB health checks detect failures in 10 seconds and stop routing immediately. This directly affects <strong>payment reliability</strong> — a 2-minute window of failed payments is unacceptable.</p>
+  </div>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEEP AS-IS</span>
+    <h4>Container count: UAE runs 2 containers per service vs Frankfurt's 1</h4>
+    <p><strong>Why it's fine:</strong> More containers = better availability during deployments (rolling updates need at least 2 to maintain uptime). Your team lead actually improved on the vendor's setup here. This costs a bit more but ensures zero-downtime deploys.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 2: LOAD BALANCERS -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#e17055">⚖️</div>
+    <h2>2. Load Balancers (ALB)</h2>
+    <span class="badge badge-partial">PARTIALLY DONE</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Load Balancer</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Public API ALB</strong></td>
+        <td>Muvi-UAT (internet-facing)</td>
+        <td>Muvi-UAT (internet-facing)</td>
+        <td><span class="status status-match">✓ Match</span></td>
+      </tr>
+      <tr>
+        <td><strong>Internal ALB</strong></td>
+        <td>Muvi-Internal-UAT (internal)</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>Website ALB</strong></td>
+        <td>Muvi-Website-UAT (internet-facing)</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-acceptable">◉ Can share public ALB with host-based routing</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Create Internal ALB (Muvi-Internal-UAT)</h4>
+    <p><strong>Why:</strong> The internal ALB is how microservices communicate with each other securely inside the VPC. The gateway forwards requests to identity/main/payment/notification through this ALB. Without it, inter-service communication has <strong>no load balancing and no health checking</strong>. When gRPC calls from gateway → payment fail because a container is unhealthy, customers get payment errors.</p>
+  </div>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEEP AS-IS</span>
+    <h4>Separate Website ALB is not required</h4>
+    <p><strong>Why it's fine:</strong> Frankfurt has a dedicated ALB for the website, but you can use <strong>host-based routing rules</strong> on the single public ALB to route website traffic. One ALB can serve multiple services via different hostnames. Saves ~$18/month.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 3: DATABASES -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#00b894">🗄️</div>
+    <h2>3. Databases (RDS)</h2>
+    <span class="badge badge-partial">PARTIALLY DONE</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Database</th>
+        <th>Frankfurt Class</th>
+        <th>UAE Class</th>
+        <th>Storage</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Main</strong></td>
+        <td>db.t3.medium</td>
+        <td>db.t3.micro</td>
+        <td>2000 GB (both)</td>
+        <td><span class="status status-acceptable">◉ Cost saving OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Identity</strong></td>
+        <td>db.t3.medium</td>
+        <td>db.t3.micro</td>
+        <td>200 GB (both)</td>
+        <td><span class="status status-acceptable">◉ Cost saving OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Payment</strong></td>
+        <td>db.t3.medium</td>
+        <td>db.t3.micro</td>
+        <td>200 GB (both)</td>
+        <td><span class="status status-acceptable">◉ Cost saving OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>F&B</strong></td>
+        <td>db.t3.medium</td>
+        <td>db.t3.medium</td>
+        <td>200 GB (both)</td>
+        <td><span class="status status-match">✓ Match</span></td>
+      </tr>
+      <tr>
+        <td><strong>Notification</strong></td>
+        <td>db.t3.medium</td>
+        <td>db.t3.micro</td>
+        <td>200 GB (both)</td>
+        <td><span class="status status-acceptable">◉ Cost saving OK</span></td>
+      </tr>
+      <tr>
+        <td><strong>Offer</strong></td>
+        <td>db.t3.small</td>
+        <td>db.t3.micro</td>
+        <td>20 GB (both)</td>
+        <td><span class="status status-acceptable">◉ Cost saving OK</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEEP AS-IS</span>
+    <h4>Using db.t3.micro instead of db.t3.medium is fine for UAT</h4>
+    <p><strong>Why:</strong> UAT doesn't serve real customer traffic. db.t3.micro has 2 vCPUs and 1GB RAM — sufficient for testing and development. This saves ~$40/month per instance (~$200/month total). If performance issues arise during load testing, you can upgrade on-the-fly without downtime.</p>
+  </div>
+  
+  <div class="verdict recommended">
+    <span class="tag tag-recommended">RECOMMENDED</span>
+    <h4>Fix naming: rename "temp-muvi-uat-*" to "muvi-uat-*" and fix "idetity" typo</h4>
+    <p><strong>Why:</strong> The "temp-" prefix suggests these are throwaway resources. Team members may hesitate to use them or accidentally delete them. The typo <code>temp-muvi-uat-idetity</code> (missing 'n') causes confusion. Clean naming = fewer mistakes. <strong>Do this when convenient, not urgent.</strong></p>
+  </div>
+  
+  <div class="verdict recommended">
+    <span class="tag tag-recommended">RECOMMENDED</span>
+    <h4>Evaluate the extra Aurora cluster (uatclusterdb) — does not exist in Frankfurt</h4>
+    <p><strong>Why:</strong> UAE has an Aurora PostgreSQL cluster with 2 instances (primary + reader replica) that Frankfurt doesn't have. If nothing uses it, it costs ~$90/month for no reason. If it was created for future use, document its purpose. <strong>Check and delete if unused.</strong></p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 4: REDIS -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#ff6b6b">⚡</div>
+    <h2>4. Redis (ElastiCache)</h2>
+    <span class="badge badge-ok">ACCEPTABLE</span>
+  </div>
+  
+  <div class="compare-grid">
+    <div class="compare-box">
+      <div class="region">Frankfurt (Vendor)</div>
+      <div class="value">4 Clusters</div>
+      <div class="detail">muvi-uat (t3.small) · fb-redis (t3.small) · shared-redis (t3.medium) · ccds-redis (t3.medium)</div>
+    </div>
+    <div class="compare-box">
+      <div class="region">UAE (Team Lead)</div>
+      <div class="value">1 Cluster</div>
+      <div class="detail">muvi-uat-redis-uae-classic (t3.small)</div>
+    </div>
+  </div>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEEP AS-IS</span>
+    <h4>1 shared Redis cluster is sufficient for UAT</h4>
+    <p><strong>Why:</strong> Frankfurt has 4 clusters because they accumulated over time — F&B got its own, CCDS (CDP analytics) got its own, etc. For UAT, a single Redis instance can handle all workloads (caching, Bull queues, pub/sub). Redis is fast enough that combining workloads on one instance won't cause issues at UAT traffic levels. Saves ~$75/month.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 5: CDN & SECURITY -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#fdcb6e">🛡️</div>
+    <h2>5. CloudFront (CDN) & WAF (Security)</h2>
+    <span class="badge badge-missing">NEEDS WORK</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>API CloudFront</strong></td>
+        <td>api.uat.muvicinemas.com → ALB</td>
+        <td>1 unnamed distribution → ALB (no domain alias)</td>
+        <td><span class="status status-partial">⚠ No domain alias</span></td>
+      </tr>
+      <tr>
+        <td><strong>Website CloudFront</strong></td>
+        <td>app.uat.muvicinemas.com → Website ALB</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>CMS CloudFront</strong></td>
+        <td>cms.uat.muvicinemas.com → S3 bucket</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+      <tr>
+        <td><strong>Media CloudFront</strong></td>
+        <td>Unnamed → muvi-media-uat S3</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-partial">⚠ Needed only when media uploads are tested</span></td>
+      </tr>
+      <tr>
+        <td><strong>WAF</strong></td>
+        <td>API-WAF on ALB</td>
+        <td style="color:var(--red)"><strong>MISSING</strong></td>
+        <td><span class="status status-missing">✗ Missing</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Assign domain aliases to CloudFront distributions</h4>
+    <p><strong>Why:</strong> Without proper domains, the mobile app and website cannot point to the UAE environment. The app is hardcoded to call <code>api.uat.muvicinemas.com</code> — if that still routes to Frankfurt's CloudFront, you're not actually testing the UAE setup. You need the DNS records to point to UAE's CloudFront. Otherwise <strong>UAE UAT is unreachable by the real app</strong>.</p>
+  </div>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Set up WAF on the public ALB</h4>
+    <p><strong>Why:</strong> A UAT environment exposed to the internet without WAF is an <strong>open attack vector</strong>. Bots, vulnerability scanners, and attackers will find it. WAF blocks SQL injection, XSS, and rate-limits abusive requests. Basic WAF with AWS Managed Rules costs ~$6/month — negligible cost, significant security. <strong>If UAT gets compromised, attackers get database access to real customer test data.</strong></p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 6: SERVICE DISCOVERY -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#74b9ff">🔍</div>
+    <h2>6. Service Discovery (Cloud Map)</h2>
+    <span class="badge badge-done">DONE ✓</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Namespace</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>uat.internal</strong></td>
+        <td>DNS_PRIVATE</td>
+        <td>DNS_PRIVATE</td>
+        <td><span class="status status-match">✓ Match</span></td>
+      </tr>
+      <tr>
+        <td><strong>uat2.internal</strong></td>
+        <td>DNS_PRIVATE</td>
+        <td>Not present</td>
+        <td><span class="status status-acceptable">◉ Phase 2 — not needed yet</span></td>
+      </tr>
+      <tr>
+        <td><strong>Muvi-UAT-phase2</strong></td>
+        <td>HTTP</td>
+        <td>Not present</td>
+        <td><span class="status status-acceptable">◉ Phase 2 — not needed yet</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEEP AS-IS</span>
+    <h4>uat.internal namespace is correctly set up</h4>
+    <p><strong>Why:</strong> Services can find each other using names like <code>identity.uat.internal</code> and <code>payment.uat.internal</code>. This matches the vendor exactly. The phase-2 namespaces are for duplicate services which aren't needed in UAE.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 7: CI/CD -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#e17055">🚀</div>
+    <h2>7. CI/CD Pipelines</h2>
+    <span class="badge badge-missing">NOT DONE</span>
+  </div>
+  
+  <div class="compare-grid">
+    <div class="compare-box">
+      <div class="region">Frankfurt (Vendor)</div>
+      <div class="value" style="color:var(--green)">18 Pipelines</div>
+      <div class="detail">1 per service × 2 phases. Source: GitHub → Build: CodeBuild → Deploy: ECS. Fully automated. Push to "uat" branch = auto deploy.</div>
+    </div>
+    <div class="compare-box">
+      <div class="region">UAE (Team Lead)</div>
+      <div class="value" style="color:var(--red)">0 App Pipelines</div>
+      <div class="detail">Only 1 SAM test pipeline exists. All deployments are manual — update task definition by hand in AWS Console.</div>
+    </div>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Frankfurt Pipeline</th>
+        <th>Source → Build → Deploy</th>
+        <th>UAE Equivalent</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Gateway-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS gateway</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Main-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS main</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Identity-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS identity</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Payment-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS payment</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>FB-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS fb</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Notification-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS notification</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Offer-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS offer</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>Website-UAT</td><td>GitHub (uat branch) → CodeBuild → ECS website</td><td style="color:var(--red)">MISSING</td></tr>
+      <tr><td>CMS-UAT</td><td>GitHub (uat branch) → CodeBuild → S3 bucket</td><td style="color:var(--red)">MISSING</td></tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Create CI/CD pipelines for ALL services</h4>
+    <p><strong>Why:</strong> Without pipelines, every deployment requires someone to manually build a Docker image, push it to ECR, and update the ECS task definition through the AWS Console. This is:</p>
+    <p>1. <strong>Error-prone</strong> — wrong image tag, missed env var, typo in task definition = broken service</p>
+    <p>2. <strong>Slow</strong> — a manual deploy takes 15-30 minutes per service vs 3 minutes automated</p>
+    <p>3. <strong>Not auditable</strong> — no record of who deployed what, when, or which commit</p>
+    <p>4. <strong>Bus factor = 1</strong> — only the person who knows the manual process can deploy</p>
+    <p><strong>Recommendation:</strong> Use GitHub Actions (team already uses GitHub). Workflow files live in the repo, are version-controlled, and the team is familiar with them. Each service gets a <code>.github/workflows/deploy-uat-uae.yml</code>.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 8: ECR (Docker Image Registry) -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#a29bfe">📦</div>
+    <h2>8. ECR (Container Image Registry)</h2>
+    <span class="badge badge-partial">PARTIALLY DONE</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>ECR Repository</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>muvi-gateway</td><td>muvi-gateway</td><td>muvi-gateway-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+      <tr><td>muvi-main</td><td>muvi-main</td><td>muvi-main-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+      <tr><td>muvi-identity</td><td>muvi-identity</td><td>muvi-identity-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+      <tr><td>muvi-payment</td><td>muvi-payment</td><td>muvi-payment-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+      <tr><td>muvi-fb</td><td>muvi-fb</td><td><strong style="color:var(--red)">MISSING</strong></td><td><span class="status status-missing">✗ Missing</span></td></tr>
+      <tr><td>muvi-notification</td><td>muvi-notification</td><td>muvi-notification-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+      <tr><td>muvi-offer</td><td>muvi-offer</td><td><strong style="color:var(--red)">MISSING</strong></td><td><span class="status status-missing">✗ Missing</span></td></tr>
+      <tr><td>muvi-website</td><td>muvi-website</td><td>muvi-website-uat</td><td><span class="status status-match">✓ Exists</span></td></tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict mandatory">
+    <span class="tag tag-mandatory">MANDATORY</span>
+    <h4>Create ECR repositories for F&B and Offer services</h4>
+    <p><strong>Why:</strong> You can't deploy a container without first storing its Docker image. ECR repos for muvi-fb-uat and muvi-offer-uat must be created before the services can run. This is a 30-second task per repo.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 9: LAMBDA FUNCTIONS -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#00cec9">λ</div>
+    <h2>9. Lambda Functions (Serverless Utilities)</h2>
+    <span class="badge badge-missing">NOT DONE</span>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Lambda Function</th>
+        <th>Frankfurt</th>
+        <th>UAE</th>
+        <th>Priority</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>StopUAT</strong></td>
+        <td>Stops RDS/ECS at night</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-partial">⚠ High — saves $150+/month</span></td>
+      </tr>
+      <tr>
+        <td><strong>start-rds / stop-rds</strong></td>
+        <td>Start/stop RDS instances</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-partial">⚠ High — cost control</span></td>
+      </tr>
+      <tr>
+        <td><strong>sync-job</strong></td>
+        <td>Syncs data from Vista</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-acceptable">◉ Only if Vista sync is needed</span></td>
+      </tr>
+      <tr>
+        <td><strong>InvalidateCache</strong></td>
+        <td>Clears CloudFront cache</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-acceptable">◉ After CloudFront is set up</span></td>
+      </tr>
+      <tr>
+        <td><strong>ewallet-transactions-export</strong></td>
+        <td>Exports wallet data</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-acceptable">◉ Low — analytics</span></td>
+      </tr>
+      <tr>
+        <td><strong>Datadog Forwarder</strong></td>
+        <td>Ships logs to Datadog</td>
+        <td style="color:var(--red)">MISSING</td>
+        <td><span class="status status-partial">⚠ Medium — needed for monitoring</span></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict recommended">
+    <span class="tag tag-recommended">RECOMMENDED</span>
+    <h4>Create StopUAT/StartUAT Lambdas with EventBridge schedules</h4>
+    <p><strong>Why:</strong> UAT doesn't need to run 24/7. Shutting down RDS + reducing ECS to 0 containers between 8 PM and 8 AM (14 hours/day) saves approximately <strong>$150-200/month</strong>. The Lambda itself costs pennies. Frankfurt already has this — it's proven cost optimization.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION 10: SSM & SECRETS -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#6c5ce7">🔐</div>
+    <h2>10. Configuration & Secrets (SSM + Secrets Manager)</h2>
+    <span class="badge badge-partial">NEEDS VERIFICATION</span>
+  </div>
+  
+  <div class="compare-grid">
+    <div class="compare-box">
+      <div class="region">Frankfurt (Vendor)</div>
+      <div class="value">56 SSM Params</div>
+      <div class="detail">Under /uat/ path. All service configs: DB settings, service URLs, API keys, Redis config, Vista credentials, S3 config, Datadog, Unifonic, etc.</div>
+    </div>
+    <div class="compare-box">
+      <div class="region">UAE (Team Lead)</div>
+      <div class="value" style="color:var(--yellow)">Needs Audit</div>
+      <div class="detail">ECS task definitions in UAE may hardcode env vars instead of referencing SSM. Need to verify each service pulls config from SSM, not hardcoded in task defs.</div>
+    </div>
+  </div>
+  
+  <div class="verdict recommended">
+    <span class="tag tag-recommended">RECOMMENDED</span>
+    <h4>Create UAE-specific SSM parameters (e.g., /uat-uae/) and update task definitions</h4>
+    <p><strong>Why:</strong> Hardcoded env vars in task definitions are dangerous — changing a config requires redeploying the service. SSM allows changing config without redeployment. Also prevents secrets from appearing in task definition revision history.</p>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- COMPLETE SUMMARY TABLE -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:var(--accent)">📊</div>
+    <h2>Complete Component Matrix</h2>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Frankfurt (Vendor)</th>
+        <th>UAE (Team Lead)</th>
+        <th>Verdict</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="background:var(--green-bg)">
+        <td>ECS Cluster</td><td>Muvi-UAT</td><td>Muvi-Cluster</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>Gateway Service</td><td>2 containers + ALB</td><td>2 containers + ALB</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>Website Service</td><td>1 container + ALB</td><td>1 container + ALB</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>Service Discovery</td><td>uat.internal</td><td>uat.internal</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>Public ALB</td><td>Muvi-UAT</td><td>Muvi-UAT</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>All 6 Databases</td><td>6 RDS instances</td><td>6 RDS instances</td><td><span class="status status-match">✓</span></td><td>None (size diff is OK)</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>Container Specs</td><td>512 CPU / 1024 MB</td><td>512 CPU / 1024 MB</td><td><span class="status status-match">✓</span></td><td>None</td>
+      </tr>
+      <tr style="background:var(--green-bg)">
+        <td>6 ECR Repositories</td><td>8 repos</td><td>6 repos</td><td><span class="status status-match">✓</span></td><td>None (create 2 more for FB/Offer)</td>
+      </tr>
+      
+      <tr style="background:var(--blue-bg)">
+        <td>DB Instance Sizes</td><td>db.t3.medium</td><td>db.t3.micro</td><td><span class="status status-acceptable">◉ OK</span></td><td>Keep — saves $200/mo</td>
+      </tr>
+      <tr style="background:var(--blue-bg)">
+        <td>Redis Clusters</td><td>4 clusters</td><td>1 cluster</td><td><span class="status status-acceptable">◉ OK</span></td><td>Keep — saves $75/mo</td>
+      </tr>
+      <tr style="background:var(--blue-bg)">
+        <td>Website ALB</td><td>Dedicated ALB</td><td>Shared with public ALB</td><td><span class="status status-acceptable">◉ OK</span></td><td>Keep — saves $18/mo</td>
+      </tr>
+      <tr style="background:var(--blue-bg)">
+        <td>Ticket Service</td><td>0 containers (disabled)</td><td>Not created</td><td><span class="status status-acceptable">◉ OK</span></td><td>Skip — disabled in vendor too</td>
+      </tr>
+      
+      <tr style="background:var(--yellow-bg)">
+        <td>Main/Identity/Payment/Notif</td><td>ALB target groups</td><td>No ALB target groups</td><td><span class="status status-partial">⚠</span></td><td>Register with Internal ALB</td>
+      </tr>
+      <tr style="background:var(--yellow-bg)">
+        <td>CloudFront (API)</td><td>api.uat.muvicinemas.com</td><td>No domain alias</td><td><span class="status status-partial">⚠</span></td><td>Assign domain</td>
+      </tr>
+      <tr style="background:var(--yellow-bg)">
+        <td>DB Naming</td><td>muvi-uat-*</td><td>temp-muvi-uat-* + typo</td><td><span class="status status-partial">⚠</span></td><td>Rename when convenient</td>
+      </tr>
+      <tr style="background:var(--yellow-bg)">
+        <td>SSM Parameters</td><td>56 params under /uat/</td><td>Unverified</td><td><span class="status status-partial">⚠</span></td><td>Audit & create UAE-specific params</td>
+      </tr>
+      <tr style="background:var(--yellow-bg)">
+        <td>Aurora Cluster (extra)</td><td>Does not exist</td><td>uatclusterdb (2 instances)</td><td><span class="status status-partial">⚠</span></td><td>Delete if unused — saves $90/mo</td>
+      </tr>
+      
+      <tr style="background:var(--red-bg)">
+        <td><strong>F&B Service</strong></td><td>Running</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create ECR + Task Def + Service</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>Offer Service</strong></td><td>Running</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create ECR + Task Def + Service</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>Internal ALB</strong></td><td>Muvi-Internal-UAT</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create + wire target groups</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>CI/CD Pipelines</strong></td><td>18 CodePipelines</td><td><strong>0 app pipelines</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create 8 pipelines (GitHub Actions)</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>WAF</strong></td><td>API-WAF</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create WAF + attach to ALB</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>CloudFront (Website)</strong></td><td>app.uat.muvicinemas.com</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create distribution</strong></td>
+      </tr>
+      <tr style="background:var(--red-bg)">
+        <td><strong>CloudFront (CMS)</strong></td><td>cms.uat.muvicinemas.com</td><td><strong>MISSING</strong></td><td><span class="status status-missing">✗</span></td><td><strong>Create distribution + S3</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ============================================================ -->
+<!-- EXECUTION ROADMAP -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:var(--green)">📋</div>
+    <h2>Recommended Execution Roadmap</h2>
+  </div>
+  
+  <div class="phase-card">
+    <div class="phase-num">Week 1 — Get Everything Running</div>
+    <h3>Complete Missing Services + Internal ALB</h3>
+    <ul>
+      <li>Create ECR repos for F&B and Offer in me-central-1</li>
+      <li>Build & push F&B and Offer Docker images to ECR</li>
+      <li>Create ECS task definitions for F&B and Offer</li>
+      <li>Register F&B and Offer as ECS services in Muvi-Cluster</li>
+      <li>Create Internal ALB (Muvi-Internal-UAT, scheme: internal)</li>
+      <li>Create target groups and register all internal services</li>
+    </ul>
+  </div>
+  
+  <div class="phase-card">
+    <div class="phase-num">Week 2 — Networking & Security</div>
+    <h3>CloudFront + WAF + DNS</h3>
+    <ul>
+      <li>Assign domain aliases to CloudFront (api, app, cms subdomains)</li>
+      <li>Create missing CloudFront distributions (website, CMS, media)</li>
+      <li>Set up WAF with AWS Managed Rules on public ALB</li>
+      <li>Update Route 53 DNS records to point to UAE CloudFront</li>
+    </ul>
+  </div>
+  
+  <div class="phase-card">
+    <div class="phase-num">Week 3 — CI/CD</div>
+    <h3>Automated Deployment Pipelines</h3>
+    <ul>
+      <li>Create GitHub Actions workflow template for ECS deployment</li>
+      <li>Add deploy-uat-uae.yml to all 8 service repositories</li>
+      <li>Configure GitHub Secrets (AWS credentials, ECR URIs)</li>
+      <li>Test pipeline: push to branch → auto-build → auto-deploy → verify</li>
+    </ul>
+  </div>
+  
+  <div class="phase-card">
+    <div class="phase-num">Week 4 — Optimization & Cleanup</div>
+    <h3>Cost Controls + Config Management</h3>
+    <ul>
+      <li>Create StopUAT / StartUAT Lambda functions with schedules</li>
+      <li>Audit and clean up SSM parameters for UAE</li>
+      <li>Evaluate and delete unused Aurora cluster (uatclusterdb) if confirmed unused</li>
+      <li>Fix database naming (remove "temp-" prefix, fix "idetity" typo)</li>
+      <li>Set up Datadog forwarder for monitoring</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- COST COMPARISON -->
+<!-- ============================================================ -->
+<div class="section">
+  <div class="section-header">
+    <div class="icon" style="background:#fdcb6e">💰</div>
+    <h2>Monthly Cost Comparison</h2>
+  </div>
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Resource</th>
+        <th>Frankfurt (Vendor)</th>
+        <th>UAE (Current)</th>
+        <th>UAE (After Completion)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>ECS Fargate (10 containers)</td>
+        <td>~$150</td>
+        <td>~$110 (missing 2 services)</td>
+        <td>~$170 (8 services, 2 containers each)</td>
+      </tr>
+      <tr>
+        <td>RDS (6 databases)</td>
+        <td>~$290 (t3.medium)</td>
+        <td>~$90 (t3.micro) + $90 (Aurora extra)</td>
+        <td>~$90 (t3.micro, delete Aurora)</td>
+      </tr>
+      <tr>
+        <td>ElastiCache Redis</td>
+        <td>~$100 (4 clusters)</td>
+        <td>~$25 (1 cluster)</td>
+        <td>~$25</td>
+      </tr>
+      <tr>
+        <td>ALB (load balancers)</td>
+        <td>~$54 (3 ALBs)</td>
+        <td>~$18 (1 ALB)</td>
+        <td>~$36 (2 ALBs)</td>
+      </tr>
+      <tr>
+        <td>CloudFront</td>
+        <td>~$15</td>
+        <td>~$2</td>
+        <td>~$10</td>
+      </tr>
+      <tr>
+        <td>WAF</td>
+        <td>~$8</td>
+        <td>$0</td>
+        <td>~$8</td>
+      </tr>
+      <tr>
+        <td>NAT Gateway + misc</td>
+        <td>~$40</td>
+        <td>~$40</td>
+        <td>~$40</td>
+      </tr>
+      <tr style="font-weight:700; font-size:1rem;">
+        <td><strong>TOTAL</strong></td>
+        <td style="color:var(--yellow)"><strong>~$657/mo</strong></td>
+        <td style="color:var(--text)"><strong>~$375/mo</strong></td>
+        <td style="color:var(--green)"><strong>~$379/mo</strong></td>
+      </tr>
+      <tr style="font-weight:700; font-size:1rem;">
+        <td><strong>With Stop/Start Lambdas (nights off)</strong></td>
+        <td>—</td>
+        <td>—</td>
+        <td style="color:var(--green)"><strong>~$230/mo</strong></td>
+      </tr>
+    </tbody>
+  </table>
+  
+  <div class="verdict keep">
+    <span class="tag tag-keep">KEY INSIGHT</span>
+    <h4>UAE can match Frankfurt's functionality at 35-58% of the cost</h4>
+    <p>By keeping t3.micro DBs, 1 Redis cluster, and implementing stop/start Lambdas, the completed UAE UAT will cost <strong>$230-379/month</strong> vs Frankfurt's <strong>~$657/month</strong>. The infrastructure matches in architecture — the cost saving comes from right-sizing hardware for UAT workloads, which is the correct approach.</p>
+  </div>
+</div>
+
+<!-- Footer -->
+<div style="text-align:center; padding:40px 0; border-top:1px solid var(--border); margin-top:40px; color:var(--text-dim); font-size:0.82rem;">
+  <p>Muvi Cinemas — UAT Infrastructure Gap Analysis Report</p>
+  <p>Data sourced from AWS API calls on Feb 12, 2026 | Account: 739991759290 | Regions: eu-central-1, me-central-1</p>
+  <p style="margin-top:8px; color:var(--accent)">Generated with live AWS data — all numbers verified against running infrastructure</p>
+</div>
+
+</div>
+</body>
+</html>

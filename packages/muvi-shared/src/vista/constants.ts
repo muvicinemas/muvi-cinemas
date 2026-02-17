@@ -1,0 +1,1 @@
+export const VISTA_OPTIONS = 'VISTA_OPTIONS';

@@ -1,0 +1,134 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Local - Identity DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "identity_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "2": {
+      "Name": "Local - Main DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "main_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "3": {
+      "Name": "Local - Payment DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "payment_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "4": {
+      "Name": "Local - F&B DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "fb_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "5": {
+      "Name": "Local - Notification DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "notification_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "6": {
+      "Name": "Local - Offer DB",
+      "Group": "Local Dev",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "offer_db",
+      "Username": "muvi",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "7": {
+      "Name": "UAE - UAT Cluster (All Databases)",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "postgres",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "8": {
+      "Name": "Frankfurt UAT - Identity",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_identity_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "9": {
+      "Name": "Frankfurt UAT - Main",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_main_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "10": {
+      "Name": "Frankfurt UAT - Payment",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_payment_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "11": {
+      "Name": "Frankfurt UAT - F&B",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_fb_db",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "12": {
+      "Name": "Frankfurt UAT - Notification",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_notification_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "13": {
+      "Name": "Frankfurt UAT - Offer",
+      "Group": "Frankfurt UAT",
+      "Host": "muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_offer_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    }
+  }
+}

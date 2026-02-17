@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — Vendor Takeover Checklist</title>
+<style>
+  :root {
+    --bg: #0f172a; --surface: #1e293b; --surface2: #334155; --border: #475569;
+    --text: #e2e8f0; --text2: #94a3b8; --accent: #38bdf8; --green: #4ade80;
+    --red: #f87171; --orange: #fb923c; --purple: #c084fc; --yellow: #fbbf24;
+    --pink: #f472b6; --teal: #2dd4bf;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+  .container { max-width: 1280px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .header { text-align: center; padding: 48px 24px 32px; margin-bottom: 32px; background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1a1a2e 100%); border-radius: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .header::before { content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle at 30% 40%, rgba(56,189,248,0.06) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(192,132,252,0.06) 0%, transparent 50%); }
+  .header h1 { font-size: 2.2rem; font-weight: 700; position: relative; }
+  .header h1 span { color: var(--accent); }
+  .header p { color: var(--text2); margin-top: 8px; font-size: 1rem; position: relative; }
+  .header .badge { display: inline-block; background: var(--surface2); padding: 4px 14px; border-radius: 20px; font-size: 0.8rem; color: var(--accent); margin-top: 12px; border: 1px solid var(--border); position: relative; }
+
+  /* Master Progress */
+  .master-progress { position: sticky; top: 0; z-index: 100; background: linear-gradient(135deg, #1e3a5f 0%, #1e293b 100%); border-radius: 0 0 16px 16px; padding: 20px 28px; margin-bottom: 32px; border: 1px solid #2563eb44; border-top: none; backdrop-filter: blur(20px); }
+  .master-progress h2 { color: var(--accent); font-size: 1.1rem; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .master-stats { display: flex; gap: 24px; margin-bottom: 12px; flex-wrap: wrap; }
+  .master-stat { text-align: center; }
+  .master-stat .stat-val { font-size: 1.6rem; font-weight: 800; }
+  .master-stat .stat-label { font-size: 0.72rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .progress-bar-outer { height: 24px; background: var(--surface2); border-radius: 12px; overflow: hidden; position: relative; }
+  .progress-bar-fill { height: 100%; border-radius: 12px; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; min-width: 40px; }
+  .progress-bar-fill.low { background: linear-gradient(90deg, #dc2626, #f87171); }
+  .progress-bar-fill.mid { background: linear-gradient(90deg, #ea580c, #fb923c); }
+  .progress-bar-fill.high { background: linear-gradient(90deg, #16a34a, #4ade80); }
+  .progress-bar-fill.done { background: linear-gradient(90deg, #059669, #34d399); }
+  .master-cats { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .cat-pill { padding: 4px 12px; border-radius: 16px; font-size: 0.72rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: var(--surface); transition: all 0.2s; }
+  .cat-pill:hover { border-color: var(--accent); }
+  .cat-pill .pill-pct { margin-left: 6px; opacity: 0.7; }
+
+  /* Controls */
+  .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: center; }
+  .controls button { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.82rem; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+  .controls button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 700; }
+  .controls button.danger { border-color: var(--red); color: var(--red); }
+  .controls button.danger:hover { background: var(--red); color: white; }
+  .search-box { flex: 1; min-width: 200px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 0.85rem; font-family: inherit; outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+  .search-box::placeholder { color: var(--text2); }
+
+  /* Section */
+  .section { background: var(--surface); border-radius: 16px; padding: 0; margin-bottom: 24px; border: 1px solid var(--border); overflow: hidden; }
+  .section-header { padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  .section-header:hover { background: #ffffff06; }
+  .section-header h2 { font-size: 1.15rem; color: var(--accent); display: flex; align-items: center; gap: 10px; }
+  .section-header .section-meta { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .section-progress { width: 120px; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+  .section-progress-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+  .section-pct { font-size: 0.85rem; font-weight: 700; min-width: 40px; text-align: right; }
+  .section-count { font-size: 0.75rem; color: var(--text2); }
+  .section-toggle { font-size: 1.2rem; color: var(--text2); transition: transform 0.3s; margin-left: 8px; }
+  .section-toggle.collapsed { transform: rotate(-90deg); }
+  .section-body { padding: 0; max-height: 5000px; overflow: hidden; transition: max-height 0.4s ease, padding 0.3s; }
+  .section-body.collapsed { max-height: 0; }
+
+  /* Checklist Items */
+  .checklist-group { padding: 12px 24px 0; }
+  .checklist-group-title { font-size: 0.82rem; color: var(--purple); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0; margin-top: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+
+  .check-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 24px; border-bottom: 1px solid #334155; transition: background 0.15s; position: relative; }
+  .check-item:hover { background: #ffffff04; }
+  .check-item.checked { opacity: 0.6; }
+  .check-item.checked .item-name { text-decoration: line-through; text-decoration-color: var(--green); }
+  .check-item.hidden { display: none; }
+
+  .check-box { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); background: var(--bg); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; margin-top: 2px; }
+  .check-box:hover { border-color: var(--accent); }
+  .check-box.checked { background: var(--green); border-color: var(--green); }
+  .check-box.checked::after { content: '✓'; color: var(--bg); font-size: 0.82rem; font-weight: 900; }
+
+  .item-content { flex: 1; min-width: 0; }
+  .item-name { font-size: 0.92rem; font-weight: 600; }
+  .item-desc { font-size: 0.8rem; color: var(--text2); margin-top: 2px; }
+  .item-env { font-family: 'Courier New', monospace; font-size: 0.75rem; color: var(--teal); margin-top: 4px; word-break: break-all; }
+  .item-meta { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+  .tag-green { background: #4ade8020; color: var(--green); }
+  .tag-red { background: #f8717120; color: var(--red); }
+  .tag-orange { background: #fb923c20; color: var(--orange); }
+  .tag-blue { background: #38bdf820; color: var(--accent); }
+  .tag-purple { background: #c084fc20; color: var(--purple); }
+  .tag-yellow { background: #fbbf2420; color: var(--yellow); }
+  .tag-teal { background: #2dd4bf20; color: var(--teal); }
+  .tag-pink { background: #f472b620; color: var(--pink); }
+
+  .priority-badge { position: absolute; right: 24px; top: 12px; }
+  .priority-badge .tag { font-size: 0.65rem; }
+
+  /* Notes area */
+  .item-notes { margin-top: 6px; }
+  .item-notes textarea { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 6px 10px; font-size: 0.78rem; font-family: inherit; resize: vertical; min-height: 32px; outline: none; }
+  .item-notes textarea:focus { border-color: var(--accent); }
+  .notes-toggle { font-size: 0.72rem; color: var(--text2); cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .notes-toggle:hover { color: var(--accent); }
+
+  /* Info/Warning boxes */
+  .info-box { margin: 16px 24px; padding: 14px 18px; background: #38bdf815; border-left: 3px solid var(--accent); border-radius: 0 8px 8px 0; font-size: 0.85rem; }
+  .info-box .title { font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+  .warning-box { margin: 16px 24px; padding: 14px 18px; background: #f59e0b15; border-left: 3px solid var(--yellow); border-radius: 0 8px 8px 0; font-size: 0.85rem; color: var(--yellow); }
+  .critical-box { margin: 16px 24px; padding: 14px 18px; background: #f8717115; border-left: 3px solid var(--red); border-radius: 0 8px 8px 0; font-size: 0.85rem; color: var(--red); }
+  .critical-box .title { font-weight: 700; }
+
+  /* Footer */
+  .footer { text-align: center; padding: 24px; color: var(--text2); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 32px; }
+
+  /* Export floating button */
+  .fab-group { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 200; }
+  .fab { width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.4); transition: transform 0.2s; }
+  .fab:hover { transform: scale(1.1); }
+  .fab.primary { background: var(--accent); color: var(--bg); }
+  .fab.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  .fab-tooltip { position: absolute; right: 56px; background: var(--surface2); color: var(--text); padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .fab:hover .fab-tooltip { opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container { padding: 12px; }
+    .master-stats { gap: 16px; }
+    .master-stat .stat-val { font-size: 1.2rem; }
+    .controls { flex-direction: column; }
+    .search-box { min-width: 100%; }
+    .check-item { padding: 10px 16px; }
+    .section-header { padding: 16px; }
+    .section-progress { width: 80px; }
+    .priority-badge { position: static; margin-top: 6px; }
+  }
+
+  /* Print styles */
+  @media print {
+    .master-progress, .controls, .fab-group, .notes-toggle, .item-notes textarea { display: none !important; }
+    .section-body { max-height: none !important; }
+    .check-item.checked { opacity: 1; }
+    body { background: white; color: #1a1a1a; }
+    .section, .header { border-color: #ccc; background: white; }
+    .section-header h2, .item-name { color: #1a1a1a; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HEADER -->
+<div class="header">
+  <h1>Muvi Cinemas — <span>Vendor Takeover Checklist</span></h1>
+  <p>Complete handover inventory: every key, credential, service, and access that must be transferred from Alpha Apps</p>
+  <div class="badge">~120+ items across 15 categories &bull; Interactive &bull; Progress saved in browser &bull; Updated Feb 15, 2026</div>
+</div>
+
+<!-- STICKY MASTER PROGRESS -->
+<div class="master-progress" id="masterProgress">
+  <h2>
+    <span>📊 Overall Takeover Progress</span>
+    <span style="font-size: 0.78rem; font-weight: 400; color: var(--text2);">Auto-saved in browser</span>
+  </h2>
+  <div class="master-stats">
+    <div class="master-stat"><div class="stat-val" style="color: var(--green);" id="statDone">0</div><div class="stat-label">Completed</div></div>
+    <div class="master-stat"><div class="stat-val" style="color: var(--orange);" id="statRemaining">0</div><div class="stat-label">Remaining</div></div>
+    <div class="master-stat"><div class="stat-val" style="color: var(--accent);" id="statTotal">0</div><div class="stat-label">Total Items</div></div>
+    <div class="master-stat"><div class="stat-val" style="color: var(--red);" id="statCritical">0</div><div class="stat-label">Critical Left</div></div>
+  </div>
+  <div class="progress-bar-outer">
+    <div class="progress-bar-fill low" id="masterBar" style="width: 0%;">0%</div>
+  </div>
+  <div class="master-cats" id="masterCats"></div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <input type="text" class="search-box" placeholder="🔍 Search items, env vars, services..." id="searchBox" oninput="filterItems()">
+  <button onclick="filterByStatus('all')" class="active" data-filter="all">All</button>
+  <button onclick="filterByStatus('pending')" data-filter="pending">⬜ Pending</button>
+  <button onclick="filterByStatus('done')" data-filter="done">✅ Done</button>
+  <button onclick="filterByStatus('critical')" data-filter="critical">🔴 Critical</button>
+  <button onclick="expandAll()">Expand All</button>
+  <button onclick="collapseAll()">Collapse All</button>
+  <button class="danger" onclick="resetAll()">Reset All</button>
+</div>
+
+<!-- ═══════════════════════════════════════ -->
+<!-- SECTIONS START HERE -->
+<!-- ═══════════════════════════════════════ -->
+
+<div id="sectionsContainer"></div>
+
+<!-- FOOTER -->
+<div class="footer">
+  <p>Vendor Takeover Checklist — Muvi Cinemas (muvicinemas.com)</p>
+  <p>Vendor: Alpha Apps &bull; In-house Team Lead: Rehan Tariq &bull; February 2026</p>
+  <p style="margin-top: 8px; color: var(--accent);">Progress is saved in your browser's localStorage. Export regularly as backup.</p>
+</div>
+
+</div>
+
+<!-- FAB BUTTONS -->
+<div class="fab-group">
+  <button class="fab primary" onclick="exportJSON()" title="Export"><span class="fab-tooltip">Export Progress (JSON)</span>💾</button>
+  <button class="fab secondary" onclick="importJSON()" title="Import"><span class="fab-tooltip">Import Progress (JSON)</span>📂</button>
+  <button class="fab secondary" onclick="window.print()" title="Print"><span class="fab-tooltip">Print Checklist</span>🖨️</button>
+</div>
+
+<input type="file" id="importInput" accept=".json" style="display:none" onchange="handleImport(event)">
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// DATA — All checklist items organized by category
+// ══════════════════════════════════════════════════════════════
+const CHECKLIST_DATA = [
+  {
+    id: 'aws-infra',
+    title: '☁️ AWS Infrastructure & Accounts',
+    icon: '☁️',
+    items: [
+      { id: 'aws-1', name: 'AWS Production Account Access', desc: 'Full admin IAM access to vendor\'s AWS production account (eu-central-1 Frankfurt)', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-2', name: 'AWS IAM Users & Roles (Frankfurt)', desc: 'Transfer all IAM users, roles, and policies from vendor account. Document who has what access.', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-3', name: 'SSM Parameter Store — All Parameters', desc: '56+ parameters in /{env}/* path. Contains all production secrets. Must export ALL.', env: 'SSM_ACCESS_KEY_ID, SSM_SECRET_ACCESS_KEY, SSM_REGION', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-4', name: 'SSM IAM Access Key (Production)', desc: 'IAM access key that all services use to pull config from SSM at startup', env: 'SSM_ACCESS_KEY_ID, SSM_SECRET_ACCESS_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-5', name: 'ECS Cluster Configuration', desc: 'Muvi-Cluster — task definitions, service configs, auto-scaling rules for all 8 services', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-6', name: 'ECS Task Definitions (All 8 Services)', desc: 'Gateway, Main, Identity, Payment, Notification, FB, Offer, Website — all task def JSON exports', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-7', name: 'ECR Repositories (Frankfurt)', desc: 'All Docker image repos: muvi-gateway, muvi-main, muvi-identity, muvi-payment, muvi-notification, muvi-fb, muvi-offer, muvi-website', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-8', name: 'ECR Repos Missing in UAE (F&B + Offer)', desc: 'muvi-fb and muvi-offer ECR repos and ECS services do NOT exist in UAE — must create', env: '', tags: ['in-house','gap'], priority: 'high' },
+      { id: 'aws-9', name: 'ALB Configuration (3x Frankfurt)', desc: 'Muvi-UAT, Internal-UAT, Website-UAT — listener rules, target groups, SSL certs', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-10', name: 'Internal ALB Missing in UAE', desc: 'UAE has 4 ALBs but Internal ALB is missing — service-to-service traffic issue', env: '', tags: ['in-house','gap'], priority: 'high' },
+      { id: 'aws-11', name: 'NAT Gateway Optimization (UAE)', desc: '3 NAT Gateways running (~$70/mo waste) vs 1 in Frankfurt — reduce to 1', env: '', tags: ['in-house','cost'], priority: 'medium' },
+      { id: 'aws-12', name: 'VPC & Networking Config', desc: 'VPC, subnets, route tables, security groups, NACLs — full networking export', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-13', name: 'CloudFront Distributions (12x)', desc: 'API, website, CMS, media, and 8 more distributions — behavior configs, origins, caching', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-14', name: 'WAF Rules', desc: 'API-WAF on ALB in Frankfurt — MISSING in UAE. Get rule configs.', env: '', tags: ['vendor','gap'], priority: 'high' },
+      { id: 'aws-15', name: 'Cloud Map / Service Discovery', desc: 'uat.internal namespace (DNS_PRIVATE) — service registrations', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'aws-16', name: 'Lambda Functions (6+)', desc: 'StopUAT, start-rds, stop-rds, sync-job, InvalidateCache, ewallet-transactions-export — ALL missing in UAE', env: 'EXPORT_FINANCE_REPORT_LAMBDA_FUNCTION_NAME', tags: ['vendor','gap'], priority: 'medium' },
+      { id: 'aws-17', name: 'EC2 Jump Station', desc: 't3.small — for SSH access to VPC private resources. 1 running, 4 stopped.', env: '', tags: ['vendor'], priority: 'low' },
+      { id: 'aws-18', name: 'Secrets Manager Entries (~10)', desc: 'All secrets stored in AWS Secrets Manager — must transfer or recreate', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'aws-19', name: 'S3 Buckets (30+)', desc: 'Media, CMS, artifacts, logs, backups — list all buckets, get policies, lifecycle rules', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-20', name: 'S3 IAM Access Keys', desc: 'IAM keys that services use to upload/download from S3', env: 'S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, S3_BUCKET, S3_REGION', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'aws-21', name: 'CodePipeline Configs (18 Pipelines)', desc: 'All pipeline definitions — stages, buildspec.yml, triggers, deploy configs', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'aws-22', name: 'CodeBuild Project Config', desc: 'Muvi-Build project — environment, compute, docker cache settings', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'aws-23', name: 'CloudWatch Alarms & Dashboards', desc: 'All monitoring alarms, dashboards, log groups, log retention policies', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'aws-24', name: 'Load Balancer CA Certificate', desc: 'LB CA cert used for HTTPS termination on ALB in production/staging', env: 'LB_CA', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'databases',
+    title: '🐘 Database Credentials & Access',
+    icon: '🐘',
+    items: [
+      { id: 'db-1', name: 'identity_db — RDS Credentials', desc: 'PostgreSQL db.t3.medium, 200GB — user management, auth, OTP', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USERNAME, DB_WRITE_USERNAME, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_DATABASE, DB_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-2', name: 'main_db — RDS Credentials', desc: 'PostgreSQL db.t3.medium, 2000GB (excessive) — movies, cinemas, bookings, seating', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USERNAME, DB_WRITE_USERNAME, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_DATABASE, DB_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-3', name: 'payment_db — RDS Credentials', desc: 'PostgreSQL db.t3.medium, 200GB — transactions, refunds, wallets, payment logs', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USERNAME, DB_WRITE_USERNAME, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_DATABASE, DB_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-4', name: 'fb_db — RDS Credentials', desc: 'PostgreSQL db.t3.medium, 200GB — food & beverage, concession orders, kiosk', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USERNAME, DB_WRITE_USERNAME, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_DATABASE, DB_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-5', name: 'notification_db — RDS Credentials', desc: 'PostgreSQL db.t3.medium, 200GB — notification logs, push registrations, email history', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USERNAME, DB_WRITE_USERNAME, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_DATABASE, DB_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-6', name: 'offer_db — RDS Credentials', desc: 'PostgreSQL db.t3.small, 20GB — offers, promotions, student discounts (Go service, GORM)', env: 'DB_READ_HOST, DB_WRITE_HOST, DB_READ_USER, DB_WRITE_USER, DB_READ_PASSWORD, DB_WRITE_PASSWORD, DB_NAME, DB_READ_PORT, DB_WRITE_PORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'db-7', name: 'Aurora Cluster (UAE Only)', desc: 'uatclusterdb-instance-1 + replica — $90/mo, not in Frankfurt. Evaluate if needed.', env: '', tags: ['in-house','cost'], priority: 'medium' },
+      { id: 'db-8', name: 'RDS Snapshots & Backup Policy', desc: 'Automated backup retention, manual snapshots, cross-region backup strategy', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'db-9', name: 'Database Migration History', desc: 'All Sequelize migration files — verify all have been run on production DB', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'db-10', name: 'Database Connection Pooling Config', desc: 'Pool min/max, auto-load models, sync, force, logging settings per service', env: 'DB_POOL_MIN, DB_POOL_MAX, DB_AUTO_LOAD_MODELS, DB_SYNC, DB_FORCE, DB_LOGGING, DB_UNDERSCORED', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'redis',
+    title: '🔴 Redis / Cache Infrastructure',
+    icon: '🔴',
+    items: [
+      { id: 'redis-1', name: 'Main Redis Cluster (Frankfurt)', desc: 'ccds-redis-uat (3GB) — rate limiting, caching, Bull queues, sessions', env: 'REDIS_HOST, REDIS_PORT, REDIS_TTL', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-2', name: 'Shared Redis Cluster (Frankfurt)', desc: 'shared-redis (3GB) — cross-service shared cache', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-3', name: 'Muvi-UAT Redis (Frankfurt)', desc: 'muvi-uat (1.5GB)', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-4', name: 'FB Redis (Frankfurt)', desc: 'fb-redis (1.5GB) — F&B specific cache', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-5', name: 'CMS Redis', desc: 'Separate Redis for CMS notification system', env: 'CMS_REDIS_HOST, CMS_REDIS_PORT', tags: ['vendor'], priority: 'medium' },
+      { id: 'redis-6', name: 'Refund Queue Redis', desc: 'Dedicated Redis for BullMQ refund processing queue', env: 'REFUND_REDIS_HOST, REFUND_REDIS_PORT', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-7', name: 'E-Wallet Queue Redis', desc: 'Dedicated Redis for wallet operations (top-up, spend, expire)', env: 'E_WALLET_REDIS_HOST, E_WALLET_REDIS_PORT', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-8', name: 'Generate Ticket Redis', desc: 'Cross-service ticket generation queue (Payment + Main)', env: 'GENERATE_TICKET_REDIS_HOST, GENERATE_TICKET_REDIS_PORT', tags: ['vendor'], priority: 'high' },
+      { id: 'redis-9', name: 'Bulk Refund Redis', desc: 'Bulk refund booking processing queue', env: 'BULK_REFUND_BOOKING_REDIS_HOST, BULK_REFUND_BOOKING_REDIS_PORT', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'vista',
+    title: '🎬 Vista Entertainment (Core Cinema System)',
+    icon: '🎬',
+    items: [
+      { id: 'vista-1', name: 'Vista Base URL', desc: 'Core cinema management system — movies, sessions, seating, loyalty. THE critical integration.', env: 'VISTA_BASE_URL', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-2', name: 'Vista Android Token', desc: 'Android platform API authentication token', env: 'VISTA_ANDROID_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-3', name: 'Vista iOS Token', desc: 'iOS platform API authentication token', env: 'VISTA_IOS_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-4', name: 'Vista Website Token', desc: 'Website platform API authentication token', env: 'VISTA_WEBSITE_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-5', name: 'Vista Huawei Token', desc: 'Huawei platform API authentication token', env: 'VISTA_HUAWEI_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-6', name: 'Vista Kiosk Token', desc: 'Kiosk platform API authentication token', env: 'VISTA_KIOSK_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'vista-7', name: 'Vista Club ID', desc: 'Loyalty club identifier for member operations', env: 'VISTA_CLUB_ID', tags: ['vendor'], priority: 'high' },
+      { id: 'vista-8', name: 'Vista Client IDs (Payment)', desc: 'Per-platform client identifiers used during payment completion', env: 'VISTA_IOS_CLIENT_ID, VISTA_WEBSITE_CLIENT_ID, VISTA_HUAWEI_CLIENT_ID, VISTA_ANDROID_CLIENT_ID', tags: ['vendor'], priority: 'high' },
+      { id: 'vista-9', name: 'Vista SSL Configuration', desc: 'REJECT_UNAUTHORIZED flag and any custom CA certificates for Vista API', env: 'VISTA_REJECT_UNAUTHORIZED', tags: ['vendor'], priority: 'medium' },
+      { id: 'vista-10', name: 'Vista API Documentation', desc: 'Full REST/OData API docs — endpoints, auth flow, error codes, rate limits', env: '', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'payments',
+    title: '💳 Payment Gateways',
+    icon: '💳',
+    items: [
+      { id: 'pay-1', name: 'HyperPay — Base URL & Token', desc: 'Card payment gateway — prod: eu-prod.oppwa.com', env: 'HYPER_PAY_BASE_URL, HYPER_PAY_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-2', name: 'HyperPay — Entity ID', desc: 'Merchant entity identifier for transaction processing', env: 'HYPER_PAY_ENTITY_ID', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-3', name: 'HyperPay — Secret Key', desc: 'Webhook signature verification key', env: 'HYPER_SECRET_KEY, HYPERPAY_SECRET_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-4', name: 'HyperPay — Callback URL', desc: 'Payment result callback endpoint — must point to our domain', env: 'HYPER_PAY_CALLBACK_END_POINT', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-5', name: 'HyperPay Merchant Account Access', desc: 'HyperPay dashboard login — for viewing transactions, managing settings', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-6', name: 'PayFort (APS) — Credentials', desc: 'Amazon Payment Services — access code, merchant ID, SHA phrases', env: 'PAYFORT_BASE_URL, PAYFORT_ACCESS_CODE, PAYFORT_MERCHANT_IDENTIFIER, PAYFORT_SHA_TYPE', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-7', name: 'PayFort — SHA Signing Phrases', desc: 'HMAC request/response signing secrets for payment verification', env: 'PAYFORT_SHA_REQUEST_PHRASE, PAYFORT_SHA_RESPONSE_PHRASE', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-8', name: 'PayFort — Callback URL', desc: 'Payment callback endpoint', env: 'PAYFORT_CALLBACK_END_POINT', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-9', name: 'PayFort Merchant Dashboard', desc: 'PayFort / APS dashboard login for transaction management', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-10', name: 'Checkout.com — Secret Key', desc: 'Server-side secret key for payment processing', env: 'CHECKOUT_SECRET_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-11', name: 'Checkout.com — Primary & Public Keys', desc: 'Primary API key + client-side public key for tokenization', env: 'CHECKOUT_PRIMARY_KEY, CHECKOUT_PUBLIC_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-12', name: 'Checkout.com — Webhook Config', desc: 'Webhook secret, success/failed endpoints', env: 'CHECKOUT_WEBHOOKS_API, CHECKOUT_SUCCESS_END_POINT, CHECKOUT_FAILED_END_POINT', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-13', name: 'Checkout.com Dashboard Access', desc: 'Checkout.com Hub login for viewing payments, refunds, disputes', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-14', name: 'Tabby — API Key & Merchant Code', desc: 'Buy Now Pay Later — API auth and merchant identification', env: 'TABBY_BASE_URL, TABBY_API_KEY, TABBY_MERCHANT_CODE', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-15', name: 'Tabby — Secret Key', desc: 'Webhook signature verification for payment callbacks', env: 'TABBY_SECRET_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-16', name: 'Tabby — Callback URL', desc: 'BNPL payment completion callback endpoint', env: 'TABBY_CALLBACK_END_POINT', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-17', name: 'Tabby Dashboard Access', desc: 'Tabby merchant dashboard login', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-18', name: 'NearPay — API Key & UUID', desc: 'POS terminal payment integration — in-cinema kiosks', env: 'NEARPAY_BASE_URL, NEARPAY_API_KEY, NEARPAY_CLIENT_UUID', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-19', name: 'NearPay — RS256 Private Key', desc: 'JWT signing private key for NearPay API auth', env: 'NEARPAY_PRIVATE_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'pay-20', name: 'NearPay Dashboard Access', desc: 'NearPay merchant portal login', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'pay-21', name: 'External Webhook Config', desc: 'External webhook delivery for payment events — endpoint, auth, retry policy', env: 'WEBHOOK_ENDPOINT, WEBHOOK_API_KEY, WEBHOOK_TIMEOUT, WEBHOOK_RETRY_COUNT', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'apple-pay',
+    title: '🍎 Apple Pay & Apple Wallet',
+    icon: '🍎',
+    items: [
+      { id: 'apple-1', name: 'Checkout.com — Apple Pay Certificate', desc: 'Mutual TLS certificate for Apple Pay via Checkout.com', env: 'CHECKOUT_APPLE_PAY_CER', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-2', name: 'Checkout.com — Apple Pay Key', desc: 'Private key for Checkout.com Apple Pay', env: 'CHECKOUT_APPLE_PAY_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-3', name: 'Checkout.com — Apple Pay Merchant ID', desc: 'merchant.com.muvi.ios.checkout', env: 'CHECKOUT_APPLE_PAY_MERCHANT_IDENTIFIER, MERCHANT_ID_CHECKOUT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-4', name: 'HyperPay — Apple Pay Certificate + Key', desc: 'Apple Pay mutual TLS for HyperPay gateway', env: 'HYPER_PAY_APPLE_PAY_CER, HYPER_PAY_APPLE_PAY_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-5', name: 'HyperPay — Apple Pay Merchant ID', desc: 'merchant.com.muvi.ios.hyperpay', env: 'HYPER_PAY_APPLE_PAY_MERCHANT_IDENTIFIER, MERCHANT_ID_HYPER_PAY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-6', name: 'PayFort — Apple Pay Certificate + Key', desc: 'Apple Pay mutual TLS for PayFort / APS gateway', env: 'PAYFORT_APPLE_PAY_CER, PAYFORT_APPLE_PAY_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-7', name: 'PayFort — Apple Pay Merchant ID', desc: 'merchant.com.muvi.payfort', env: 'PAYFORT_APPLE_PAY_MERCHANT_IDENTIFIE, MERCHANT_ID_PAYFORT', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-8', name: 'Apple Pay Domain Verification', desc: 'Domain verification file + domain name config', env: 'APPLE_PAY_DOMAIN_NAME, APPLE_PAY_INITIATIVE_CONTEXT', tags: ['vendor'], priority: 'high' },
+      { id: 'apple-9', name: 'Apple Pay Session URL', desc: 'Apple Pay merchant validation session endpoint', env: 'APPLE_PAY_VALIDATE_SESSION_URL', tags: ['vendor'], priority: 'medium' },
+      { id: 'apple-10', name: 'Apple Wallet — Signing Certificate', desc: 'Pass signing certificate for Apple Wallet boarding passes', env: 'APPLE_WALLET_CER_FILE_NAME', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'apple-11', name: 'Apple Wallet — WWDR CA Certificate', desc: 'Apple WWDR intermediate G4 certificate', env: 'APPLE_WALLET_WWDRCAG4_FILE_NAME', tags: ['vendor'], priority: 'high' },
+      { id: 'apple-12', name: 'Apple Wallet — Team & Pass Type IDs', desc: 'Apple Developer team identifier + pass.com.muvi pass type', env: 'APPLE_WALLET_TEAM_IDENTIFIER, APPLE_WALLET_PASS_TYPE_IDENTIFIER, APPLE_WALLET_ORGANIZATION_NAME', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'sms-email',
+    title: '📧 SMS & Email Services',
+    icon: '📧',
+    items: [
+      { id: 'sms-1', name: 'Unifonic — Primary SMS Provider', desc: 'SMS OTP delivery — primary provider for user authentication', env: 'UNIFONIC_URL, UNIFONIC_APP_ID, UNIFONIC_AUTH_TOKEN', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'sms-2', name: 'Unifonic — Android App Credentials', desc: 'Separate app credentials for Android SMS autofill', env: 'UNIFONIC_ANDROID_APP_ID, UNIFONIC_ANDROID_AUTH_TOKEN', tags: ['vendor'], priority: 'high' },
+      { id: 'sms-3', name: 'Unifonic Dashboard Access', desc: 'Unifonic portal login — for managing sender IDs, viewing delivery reports', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'sms-4', name: 'Taqnyat — Alternative SMS Provider', desc: 'Backup SMS provider — switchable via factory pattern', env: 'TAQNYAT_URL, TAQNYAT_API_KEY', tags: ['vendor'], priority: 'high' },
+      { id: 'sms-5', name: 'Taqnyat — Android Autofill Hash', desc: 'Hash for Android SMS autofill auto-verification', env: 'TAQNYAT_ANDROID_AUTOFILL_HASH', tags: ['vendor'], priority: 'medium' },
+      { id: 'sms-6', name: 'SendGrid — API Key', desc: 'Single API key used by 5 services for all transactional email delivery', env: 'SENDGRID_API_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'sms-7', name: 'SendGrid — Account / Dashboard Access', desc: 'SendGrid web console for managing templates, viewing delivery stats, API keys', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'sms-8', name: 'SendGrid — All Email Templates (15+)', desc: 'English + Arabic templates: booking, refund, wallet, CMS, verification, survey, reminder, F&B, bulk refund, password reset', env: 'BOOKING_TEMPLATE, REFUND_PAYMENT_TEMPLATE, E_WALLET_FINANCIAL_REPORT_TEMPLATE, FB_ORDER_TEMPLATE, REMINDER_TEMPLATE, SURVEY_EMAIL_TEMPLATE, etc. + *_AR variants', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'sms-9', name: 'Sender Email Address', desc: 'Verified sender email (noreply@) and sender display name', env: 'SENDER_EMAIL, EMAIL_SENDER_NAME', tags: ['vendor'], priority: 'high' },
+      { id: 'sms-10', name: 'Alternative Email Provider', desc: 'Secondary email provider — used by Payment and FB services', env: 'EMAIL_PROVIDER_API_URL, EMAIL_PROVIDER_API_KEY', tags: ['vendor'], priority: 'medium' },
+      { id: 'sms-11', name: 'Admin Email Addresses', desc: 'System admin emails for CMS sync reports, super admin, reset password notifications', env: 'CMS_SYNC_REPORT_EMAIL, CMS_RESET_PASSWORD_EMAIL, VISTA_RESET_PASSWORD_EMAIL, SUPER_ADMIN_EMAIL', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'push-engagement',
+    title: '🔔 Push Notifications & Customer Engagement',
+    icon: '🔔',
+    items: [
+      { id: 'push-1', name: 'OneSignal — API Key & App ID', desc: 'Push notification delivery to iOS, Android, Huawei, Web', env: 'ONESIGNAL_API_KEY, ONESIGNAL_APP_ID', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'push-2', name: 'OneSignal — Dashboard Access', desc: 'OneSignal dashboard for managing segments, testing push, viewing delivery', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'push-3', name: 'OneSignal — UAT App ID', desc: 'Separate app ID for UAT environment push testing', env: 'ONE_SIGNAL_APP_ID (website)', tags: ['vendor'], priority: 'medium' },
+      { id: 'push-4', name: 'Braze — API Key & Base URL', desc: 'Customer engagement platform — push messaging, user tracking, segmentation', env: 'BRAZE_BASE_URL, BRAZE_API_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'push-5', name: 'Braze — Segment IDs', desc: 'User audience segments: logged-in users vs guests', env: 'BRAZE_LOGGED_IN_SEGMENT_ID, BRAZE_GUEST_SEGMENT_ID', tags: ['vendor'], priority: 'high' },
+      { id: 'push-6', name: 'Braze — Dashboard Access', desc: 'Braze dashboard login — campaigns, segments, analytics', env: '', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'google-apis',
+    title: '🔑 Google APIs & Analytics',
+    icon: '🔑',
+    items: [
+      { id: 'goog-1', name: 'Google Maps API Key (Backend)', desc: 'Reverse geocoding for cinema proximity calculations', env: 'GOOGLE_API_KEY', tags: ['vendor'], priority: 'high' },
+      { id: 'goog-2', name: 'Google Maps Key (CMS)', desc: 'CMS cinema location picker map', env: 'VITE_GOOGLE_MAP_KEY', tags: ['vendor'], priority: 'medium' },
+      { id: 'goog-3', name: 'Google Maps Key (Website)', desc: 'Website cinema locator map', env: 'MAP_KEY', tags: ['vendor'], priority: 'medium' },
+      { id: 'goog-4', name: 'Google reCAPTCHA Secrets (3 Platforms)', desc: 'Bot protection for iOS, Android, and Website', env: 'RE_CAPTCHA_IOS_SECRET, RE_CAPTCHA_ANDROID_SECRET, RE_CAPTCHA_WEBSITE_SECRET', tags: ['vendor'], priority: 'high' },
+      { id: 'goog-5', name: 'reCAPTCHA Client Key (Website)', desc: 'Client-side reCAPTCHA key for web forms', env: 'RECAPTCHA_CLIENT_KEY', tags: ['vendor'], priority: 'medium' },
+      { id: 'goog-6', name: 'Google Analytics ID', desc: 'GA4 tracking — prod: G-8P6V4NP26Z', env: 'GOOGLE_ANALYTICS_ID', tags: ['vendor'], priority: 'medium' },
+      { id: 'goog-7', name: 'Google Tag Manager ID', desc: 'GTM container — prod: GTM-KNDFGVN', env: 'GOOGLE_TAG_MANAGER_ID', tags: ['vendor'], priority: 'medium' },
+      { id: 'goog-8', name: 'Google Cloud Console Access', desc: 'GCP project that owns Maps, reCAPTCHA API keys — billing account', env: '', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'monitoring',
+    title: '📊 Monitoring, Logging & Error Tracking',
+    icon: '📊',
+    items: [
+      { id: 'mon-1', name: 'Datadog — API Key', desc: 'APM / logging — used by ALL 7 services. ~$700-1200/mo.', env: 'DATADOG_API_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'mon-2', name: 'Datadog — Account / Dashboard Access', desc: 'Datadog web console — dashboards, APM traces, log search, alerts', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'mon-3', name: 'Datadog — Service Configuration', desc: 'Host, path, source, batch config, SSL settings per service', env: 'DATADOG_HOST, DATADOG_PATH, DATADOG_DDSOURCE, DATADOG_SERVICE, DATADOG_BATCH, DATADOG_BATCH_COUNT, DATADOG_BATCH_INTERVAL, DATADOG_SSL', tags: ['vendor'], priority: 'high' },
+      { id: 'mon-4', name: 'Datadog — Go Agent Config (Offer)', desc: 'DD-Trace-Go configuration for Offer service', env: 'DD_SITE, DD_API_KEY, DD_SERVICE, DD_VERSION, DD_AGENT_HOST, DD_TRACE_AGENT_PORT, DD_SEND_RETRIES', tags: ['vendor'], priority: 'high' },
+      { id: 'mon-5', name: 'Datadog — RUM (Website)', desc: 'Real User Monitoring for website frontend', env: 'APPLICATION_ID, CLIENT_TOKEN', tags: ['vendor'], priority: 'medium' },
+      { id: 'mon-6', name: 'Datadog — Forwarder Lambda', desc: 'Datadog log forwarder Lambda in Frankfurt', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'mon-7', name: 'Sentry — DSN', desc: 'Error tracking — org: o1326668. Used by ALL services in production.', env: 'SENTRY_DSN, SENTRY_ID', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'mon-8', name: 'Sentry — Account / Dashboard Access', desc: 'Sentry web UI — error triage, release tracking, issue assignment', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'mon-9', name: 'UAE Observability GAP', desc: 'No Datadog configured in UAE environment at all — complete blind spot', env: '', tags: ['in-house','gap'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'domains-dns',
+    title: '🌐 Domains, DNS & SSL',
+    icon: '🌐',
+    items: [
+      { id: 'dns-1', name: 'muvicinemas.com — Domain Ownership', desc: 'Primary domain — verify registrar access, whois info, transfer if needed', env: '', tags: ['verify','critical'], priority: 'critical' },
+      { id: 'dns-2', name: 'Route53 Hosted Zones', desc: 'All DNS records: A, CNAME, ALIAS records for all subdomains', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'dns-3', name: 'SSL/ACM Certificates (Production)', desc: 'ACM certificates on ALBs for HTTPS termination — all subdomains', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'dns-4', name: 'api-gateway.prod.muvicinemas.com', desc: 'Production API gateway endpoint', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'dns-5', name: 'www.muvicinemas.com', desc: 'Production website', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'dns-6', name: 'api-gateway.uat.muvicinemas.com', desc: 'UAT API gateway endpoint', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'dns-7', name: 'app.uat.muvicinemas.com', desc: 'UAT website', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'dns-8', name: 'cms.uat.muvicinemas.com', desc: 'UAT CMS admin panel', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'dns-9', name: 'api.dev / api.qa / api.staging subdomains', desc: 'Dev, QA, Staging API endpoints', env: '', tags: ['vendor'], priority: 'low' },
+      { id: 'dns-10', name: 'CloudFront Domain Aliases', desc: 'All 12 CloudFront distributions need domain aliases configured', env: 'CLOUDFRONT_DOMAIN', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'source-control',
+    title: '📁 Source Control & CI/CD',
+    icon: '📁',
+    items: [
+      { id: 'git-1', name: 'GitHub Organization (muvicinemas)', desc: 'Our in-house org — verify owner access, team permissions', env: '', tags: ['in-house'], priority: 'high' },
+      { id: 'git-2', name: 'GitHub Organization (AlphaApps)', desc: 'Vendor\'s original org — ensure we have copies of all repos including history', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'git-3', name: 'GitLab Repos (AlphaApps)', desc: 'Offer service and muvi-proto imported from GitLab — gitlab.com/AlphaApps/', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'git-4', name: 'All 7 Backend Repo Access Verified', desc: 'gateway, main, identity, payment, fb, notification, offer — all in muvicinemas org', env: '', tags: ['in-house'], priority: 'high' },
+      { id: 'git-5', name: 'Website & CMS Repo Access', desc: 'alpha-muvi-website-main, alpha-muvi-cms-main — frontend repos', env: '', tags: ['in-house'], priority: 'high' },
+      { id: 'git-6', name: 'Mobile App Repos', desc: 'iOS, Android, Huawei app repositories — verify if in our org', env: '', tags: ['verify'], priority: 'high' },
+      { id: 'git-7', name: 'CodeStar Connection (AWS → GitHub)', desc: 'OAuth connection needed for CodePipeline to trigger on push', env: '', tags: ['in-house'], priority: 'medium' },
+      { id: 'git-8', name: 'NPM Token / Registry Access', desc: 'Expired npmjs.org token for @alpha.apps packages — replaced by Verdaccio locally', env: 'NPM_TOKEN', tags: ['vendor'], priority: 'medium' },
+      { id: 'git-9', name: 'Branch Protection Rules', desc: 'Set up branch protection on main/uat/prod — require PR reviews, no force push', env: '', tags: ['in-house'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'app-stores',
+    title: '📱 App Stores & Mobile Signing',
+    icon: '📱',
+    items: [
+      { id: 'app-1', name: 'Apple Developer Account', desc: 'Required for iOS app, Apple Pay, Apple Wallet — verify ownership, team admin access', env: '', tags: ['verify','critical'], priority: 'critical' },
+      { id: 'app-2', name: 'Google Play Console', desc: 'Android app distribution — verify ownership, publishing admin access', env: '', tags: ['verify','critical'], priority: 'critical' },
+      { id: 'app-3', name: 'Huawei AppGallery', desc: 'Huawei app distribution account', env: '', tags: ['verify'], priority: 'high' },
+      { id: 'app-4', name: 'iOS App Signing Identity', desc: 'Distribution certificate + provisioning profiles — in Apple Developer portal', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'app-5', name: 'iOS Push Notification Certificate', desc: 'APNs certificate/key for iOS push delivery', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'app-6', name: 'Android Keystore', desc: 'Upload/signing keystore for Google Play (.jks/.keystore file + passwords)', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'app-7', name: 'Android SHA Keys', desc: 'SHA-1 and SHA-256 fingerprints registered with Google Play and Firebase', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'app-8', name: 'Huawei Signing Key', desc: 'Huawei app signing config and keys', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'app-9', name: 'App Store Connect API Key', desc: 'App Store Connect API key for CI/CD automated submissions', env: '', tags: ['vendor'], priority: 'medium' },
+      { id: 'app-10', name: 'Google Play Service Account', desc: 'Service account JSON key for automated Play Store deployments', env: '', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'third-party',
+    title: '🔗 Other Third-Party Integrations',
+    icon: '🔗',
+    items: [
+      { id: 'tp-1', name: 'Freshdesk — API Key & Dashboard', desc: 'Customer support ticket integration', env: 'FRESHDESK_BASE_URL, FRESHDESK_API_KEY', tags: ['vendor'], priority: 'high' },
+      { id: 'tp-2', name: 'Freshdesk — Default Config', desc: 'Default cinema name (AR), default city for ticket assignment', env: 'FRESHDESK_DEFAULT_CINEMA_NAME_AR, FRESHDESK_DEFAULT_CITY', tags: ['vendor'], priority: 'medium' },
+      { id: 'tp-3', name: 'Avius — Survey Platform', desc: 'Post-movie survey integration — auth URL, survey ID, token', env: 'AVIUS_BASE_URL, AVIUS_AUTH_URL, AVIUS_SURVEY_ID, AVIUS_TOKEN', tags: ['vendor'], priority: 'medium' },
+      { id: 'tp-4', name: 'Huawei Safety Detect', desc: 'Device integrity verification for Huawei devices', env: 'HUAWEI_SAFTY_DETECT_APP_ID, HUAWEI_SAFTY_DETECT_CLIENT_SECRET', tags: ['vendor'], priority: 'medium' },
+      { id: 'tp-5', name: 'UniPal — Student Verification', desc: 'Student discount verification API', env: 'UNIPAL_BASE_URL, UNIPAL_API_KEY', tags: ['vendor'], priority: 'medium' },
+      { id: 'tp-6', name: 'ZATCA — Saudi Tax Compliance', desc: 'E-invoicing QR code generation (seller name, tax ID)', env: 'ZATCA_SELLER_NAME', tags: ['vendor'], priority: 'high' },
+    ]
+  },
+  {
+    id: 'auth-security',
+    title: '🔐 Authentication & Security Keys',
+    icon: '🔐',
+    items: [
+      { id: 'auth-1', name: 'JWT Secret Key', desc: 'Token signing secret — must rotate on handover', env: 'JWT_SECRET_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'auth-2', name: 'Refresh Token Secret Key', desc: 'Refresh token signing secret', env: 'REFRESH_SECRET_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'auth-3', name: 'New Refresh Secret Key', desc: 'Key rotation variant — parallel key for zero-downtime rotation', env: 'NEW_REFRESH_SECRET_KEY', tags: ['vendor'], priority: 'high' },
+      { id: 'auth-4', name: 'JWT Configuration', desc: 'Salt work factor (bcrypt rounds), token TTLs', env: 'JWT_SALT_WORK_FACTOR, JWT_EXPIRES_IN, REFRESH_JWT_EXPIRES_IN, RESET_JWT_EXPIRES_IN', tags: ['vendor'], priority: 'high' },
+      { id: 'auth-5', name: 'Gateway API Key', desc: 'Internal API key for authenticating gateway-to-service calls', env: 'API_KEY', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'auth-6', name: 'CORS Allowed Origins (BASE_URLS)', desc: 'Whitelist of allowed frontend domains for CORS', env: 'BASE_URLS', tags: ['vendor'], priority: 'high' },
+      { id: 'auth-7', name: 'Super Admin Credentials', desc: 'Default super admin account — email and password', env: 'SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD, DEFAULT_PASSWORD', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'auth-8', name: 'Key Rotation Plan', desc: 'Plan to rotate ALL secrets after handover — JWT, API keys, DB passwords', env: '', tags: ['in-house'], priority: 'critical' },
+    ]
+  },
+  {
+    id: 'frontend-config',
+    title: '🖥️ Frontend & Website Configuration',
+    icon: '🖥️',
+    items: [
+      { id: 'fe-1', name: 'Website API URLs', desc: 'Production and UAT API gateway URLs for Next.js frontend', env: 'NEXT_PUBLIC_API_URL, NEXT_PUBLIC_BASE_URL', tags: ['vendor'], priority: 'high' },
+      { id: 'fe-2', name: 'CMS API URL', desc: 'Vite-based CMS admin panel API endpoint', env: 'VITE_API_URL', tags: ['vendor'], priority: 'high' },
+      { id: 'fe-3', name: 'Website Checkout & Top-Up Routes', desc: 'Custom route configurations for payment flow', env: 'WEBSITE_BASE_URL, WEBSITE_CHECKOUT_ROUTE, WEBSITE_TOP_UP_ROUTE', tags: ['vendor'], priority: 'medium' },
+      { id: 'fe-4', name: 'Transaction Base URL', desc: 'Payment redirect base URL for post-payment flows', env: 'TRANSACTION_BASE_URL, BACKEND_API_DOMAIN', tags: ['vendor'], priority: 'high' },
+      { id: 'fe-5', name: 'Checkout Token URL', desc: 'Checkout.com client-side tokenization endpoint', env: 'CHECKOUT_TOKEN_URL', tags: ['vendor'], priority: 'medium' },
+    ]
+  },
+  {
+    id: 'documentation',
+    title: '📄 Documentation & Knowledge Transfer',
+    icon: '📄',
+    items: [
+      { id: 'doc-1', name: 'System Architecture Document', desc: 'Complete architecture overview — service interactions, data flow, deployment diagram', env: '', tags: ['vendor'], priority: 'critical' },
+      { id: 'doc-2', name: 'API Documentation (All Endpoints)', desc: 'Gateway API surface — 60+ controller methods across all services', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-3', name: 'Database Schema / ERD', desc: 'Entity relationship diagram for all 6 databases', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-4', name: 'Vista Integration Guide', desc: 'How the Vista API is used — endpoints, auth flow, data mappings, error handling', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'doc-5', name: 'Payment Flow Documentation', desc: 'End-to-end payment lifecycle: cart → checkout → callback → ticket generation → refund', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'doc-6', name: 'Deployment Runbook', desc: 'Step-by-step deployment procedure, rollback steps, health check endpoints', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-7', name: 'Incident Response Procedures', desc: 'On-call procedures, escalation paths, known issues & workarounds', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-8', name: 'Cron Job & Queue Documentation', desc: '10 cron jobs + 5 Bull queues — what they do, schedule, failure behavior', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-9', name: 'Third-Party Contract/Agreement Docs', desc: 'Contracts with Vista, HyperPay, Checkout, Tabby, SendGrid, OneSignal, Braze, Datadog, Sentry', env: '', tags: ['verify'], priority: 'high' },
+      { id: 'doc-10', name: 'Production Environment Inventory', desc: 'Complete list of all production resources with IDs, names, and configurations', env: '', tags: ['vendor'], priority: 'high' },
+      { id: 'doc-11', name: 'Knowledge Transfer Sessions', desc: '2-3 sessions with vendor engineers covering: Vista, payments, cron jobs, edge cases', env: '', tags: ['vendor','critical'], priority: 'critical' },
+      { id: 'doc-12', name: 'Vendor Support Period Agreement', desc: 'Agree on post-handover support window (30-90 days) for questions and issues', env: '', tags: ['vendor','critical'], priority: 'critical' },
+    ]
+  },
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE MANAGEMENT
+// ══════════════════════════════════════════════════════════════
+const STORAGE_KEY = 'muvi-takeover-checklist-v2';
+let state = loadState();
+let activeFilter = 'all';
+let searchQuery = '';
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return { checked: {}, notes: {}, collapsed: {} };
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDERING
+// ══════════════════════════════════════════════════════════════
+function render() {
+  const container = document.getElementById('sectionsContainer');
+  container.innerHTML = '';
+
+  CHECKLIST_DATA.forEach(section => {
+    const sectionEl = document.createElement('div');
+    sectionEl.className = 'section';
+    sectionEl.id = 'section-' + section.id;
+
+    const checked = section.items.filter(i => state.checked[i.id]).length;
+    const total = section.items.length;
+    const pct = total > 0 ? Math.round((checked / total) * 100) : 0;
+    const isCollapsed = state.collapsed[section.id];
+
+    let fillColor = 'var(--red)';
+    if (pct >= 100) fillColor = 'var(--green)';
+    else if (pct >= 60) fillColor = 'var(--teal)';
+    else if (pct >= 30) fillColor = 'var(--orange)';
+
+    sectionEl.innerHTML = `
+      <div class="section-header" onclick="toggleSection('${section.id}')">
+        <h2>${section.title}</h2>
+        <div class="section-meta">
+          <span class="section-count">${checked}/${total}</span>
+          <div class="section-progress">
+            <div class="section-progress-fill" style="width:${pct}%; background:${fillColor};"></div>
+          </div>
+          <span class="section-pct" style="color:${fillColor};">${pct}%</span>
+          <span class="section-toggle ${isCollapsed ? 'collapsed' : ''}">▼</span>
+        </div>
+      </div>
+      <div class="section-body ${isCollapsed ? 'collapsed' : ''}">
+        ${section.items.map(item => renderItem(item)).join('')}
+      </div>
+    `;
+
+    container.appendChild(sectionEl);
+  });
+
+  updateMasterProgress();
+  applyFilters();
+}
+
+function renderItem(item) {
+  const isChecked = !!state.checked[item.id];
+  const note = state.notes[item.id] || '';
+  const hasNote = note.length > 0;
+
+  const tagHtml = (item.tags || []).map(t => {
+    const cls = t === 'critical' ? 'tag-red' : t === 'vendor' ? 'tag-orange' : t === 'in-house' ? 'tag-green' : t === 'gap' ? 'tag-yellow' : t === 'verify' ? 'tag-purple' : t === 'cost' ? 'tag-teal' : 'tag-blue';
+    return `<span class="tag ${cls}">${t}</span>`;
+  }).join('');
+
+  const priorityHtml = item.priority === 'critical' ? '<div class="priority-badge"><span class="tag tag-red">🔴 CRITICAL</span></div>' :
+    item.priority === 'high' ? '<div class="priority-badge"><span class="tag tag-orange">🟠 HIGH</span></div>' : '';
+
+  return `
+    <div class="check-item ${isChecked ? 'checked' : ''}" data-id="${item.id}" data-priority="${item.priority}" data-tags="${(item.tags||[]).join(',')}" data-search="${(item.name + ' ' + item.desc + ' ' + item.env).toLowerCase()}">
+      <div class="check-box ${isChecked ? 'checked' : ''}" onclick="toggleItem('${item.id}')"></div>
+      <div class="item-content">
+        <div class="item-name">${item.name}</div>
+        <div class="item-desc">${item.desc}</div>
+        ${item.env ? '<div class="item-env">' + item.env + '</div>' : ''}
+        <div class="item-meta">${tagHtml}</div>
+        <div class="item-notes">
+          <span class="notes-toggle" onclick="toggleNotes('${item.id}', this)">📝 ${hasNote ? 'Edit note' : 'Add note'}</span>
+          <textarea id="note-${item.id}" style="display:${hasNote ? 'block' : 'none'};" placeholder="Add notes about this item..." oninput="saveNote('${item.id}', this.value)">${note}</textarea>
+        </div>
+      </div>
+      ${priorityHtml}
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════
+// INTERACTIONS
+// ══════════════════════════════════════════════════════════════
+function toggleItem(id) {
+  state.checked[id] = !state.checked[id];
+  saveState();
+  render();
+}
+
+function toggleSection(id) {
+  state.collapsed[id] = !state.collapsed[id];
+  saveState();
+  const section = document.getElementById('section-' + id);
+  const body = section.querySelector('.section-body');
+  const toggle = section.querySelector('.section-toggle');
+  body.classList.toggle('collapsed');
+  toggle.classList.toggle('collapsed');
+}
+
+function toggleNotes(id, el) {
+  const ta = document.getElementById('note-' + id);
+  ta.style.display = ta.style.display === 'none' ? 'block' : 'none';
+  if (ta.style.display === 'block') ta.focus();
+}
+
+function saveNote(id, val) {
+  state.notes[id] = val;
+  saveState();
+}
+
+function filterByStatus(status) {
+  activeFilter = status;
+  document.querySelectorAll('.controls button[data-filter]').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.controls button[data-filter="${status}"]`).classList.add('active');
+  applyFilters();
+}
+
+function filterItems() {
+  searchQuery = document.getElementById('searchBox').value.toLowerCase();
+  applyFilters();
+}
+
+function applyFilters() {
+  document.querySelectorAll('.check-item').forEach(el => {
+    const id = el.dataset.id;
+    const isChecked = !!state.checked[id];
+    const isCritical = el.dataset.priority === 'critical';
+    const searchText = el.dataset.search;
+
+    let visible = true;
+    if (activeFilter === 'pending' && isChecked) visible = false;
+    if (activeFilter === 'done' && !isChecked) visible = false;
+    if (activeFilter === 'critical' && !isCritical) visible = false;
+    if (searchQuery && !searchText.includes(searchQuery)) visible = false;
+
+    el.classList.toggle('hidden', !visible);
+  });
+}
+
+function expandAll() {
+  CHECKLIST_DATA.forEach(s => { state.collapsed[s.id] = false; });
+  saveState();
+  document.querySelectorAll('.section-body').forEach(b => b.classList.remove('collapsed'));
+  document.querySelectorAll('.section-toggle').forEach(t => t.classList.remove('collapsed'));
+}
+
+function collapseAll() {
+  CHECKLIST_DATA.forEach(s => { state.collapsed[s.id] = true; });
+  saveState();
+  document.querySelectorAll('.section-body').forEach(b => b.classList.add('collapsed'));
+  document.querySelectorAll('.section-toggle').forEach(t => t.classList.add('collapsed'));
+}
+
+function resetAll() {
+  if (!confirm('⚠️ This will RESET ALL progress — all checkboxes and notes. Are you sure?')) return;
+  if (!confirm('⚠️ LAST CHANCE — this cannot be undone. Continue?')) return;
+  state = { checked: {}, notes: {}, collapsed: {} };
+  saveState();
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════
+// MASTER PROGRESS
+// ══════════════════════════════════════════════════════════════
+function updateMasterProgress() {
+  const allItems = CHECKLIST_DATA.flatMap(s => s.items);
+  const total = allItems.length;
+  const done = allItems.filter(i => state.checked[i.id]).length;
+  const remaining = total - done;
+  const criticalLeft = allItems.filter(i => i.priority === 'critical' && !state.checked[i.id]).length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statRemaining').textContent = remaining;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statCritical').textContent = criticalLeft;
+
+  const bar = document.getElementById('masterBar');
+  bar.style.width = Math.max(pct, 3) + '%';
+  bar.textContent = pct + '%';
+  bar.className = 'progress-bar-fill ' + (pct >= 100 ? 'done' : pct >= 60 ? 'high' : pct >= 30 ? 'mid' : 'low');
+
+  // Category pills
+  const catsEl = document.getElementById('masterCats');
+  catsEl.innerHTML = CHECKLIST_DATA.map(s => {
+    const c = s.items.filter(i => state.checked[i.id]).length;
+    const t = s.items.length;
+    const p = t > 0 ? Math.round((c/t)*100) : 0;
+    const color = p >= 100 ? 'var(--green)' : p >= 50 ? 'var(--teal)' : p > 0 ? 'var(--orange)' : 'var(--text2)';
+    return `<span class="cat-pill" onclick="scrollToSection('${s.id}')" style="border-color:${color}; color:${color};">${s.icon} ${c}/${t}<span class="pill-pct">${p}%</span></span>`;
+  }).join('');
+}
+
+function scrollToSection(id) {
+  // Uncollapse if collapsed
+  if (state.collapsed[id]) {
+    state.collapsed[id] = false;
+    saveState();
+    const section = document.getElementById('section-' + id);
+    const body = section.querySelector('.section-body');
+    const toggle = section.querySelector('.section-toggle');
+    body.classList.remove('collapsed');
+    toggle.classList.remove('collapsed');
+  }
+  document.getElementById('section-' + id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ══════════════════════════════════════════════════════════════
+// IMPORT / EXPORT
+// ══════════════════════════════════════════════════════════════
+function exportJSON() {
+  const allItems = CHECKLIST_DATA.flatMap(s => s.items);
+  const total = allItems.length;
+  const done = allItems.filter(i => state.checked[i.id]).length;
+  const pct = Math.round((done/total)*100);
+
+  const data = {
+    _export: 'Muvi Cinemas — Vendor Takeover Checklist',
+    _date: new Date().toISOString(),
+    _progress: `${done}/${total} (${pct}%)`,
+    state: state
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `muvi-takeover-progress-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importJSON() {
+  document.getElementById('importInput').click();
+}
+
+function handleImport(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.state) {
+        if (confirm(`Import progress from ${data._date || 'unknown date'}?\n${data._progress || ''}\n\nThis will REPLACE your current progress.`)) {
+          state = data.state;
+          saveState();
+          render();
+        }
+      }
+    } catch(err) { alert('Invalid JSON file'); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>

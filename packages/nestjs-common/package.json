@@ -1,0 +1,45 @@
+{
+  "name": "@alpha.apps/nestjs-common",
+  "version": "1.1.18",
+  "description": "common libs for NestJS - Sentry, Winston logging, gRPC exceptions, outgoing request logging",
+  "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "rimraf lib tsconfig.tsbuildinfo && tsc -p ."
+  },
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "files": [
+    "lib"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "@grpc/grpc-js": "*",
+    "@mswjs/interceptors": "0.17.3",
+    "@nestjs/common": "*",
+    "@nestjs/microservices": "*",
+    "@sentry/node": "*",
+    "datadog-winston": "^1.5.1",
+    "rxjs": "*",
+    "winston": "^3.8.1"
+  },
+  "devDependencies": {
+    "@sentry/node": "^7.120.4",
+    "@types/node": "^20.1.2",
+    "eslint": "^8.21.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.7.1",
+    "rimraf": "^5.0.0",
+    "typescript": "^4.7.4"
+  },
+  "dependencies": {
+    "fast-safe-stringify": "^2.1.1",
+    "moment": "^2.29.4",
+    "qs": "^6.11.0",
+    "winston-transport": "^4.5.0"
+  }
+}

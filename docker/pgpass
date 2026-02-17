@@ -1,0 +1,8 @@
+postgres:5432:*:muvi:muvi_local
+uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com:5432:*:postgres:HR)q0Cpn?D$OyqREGo0-BlupVueo
+muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:yjBjtYRhpbbwhHoNH0H7
+muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:8Jm5b6mPB5eJitDhCgR2
+muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:12mGGVdrTOO4bdV4DvU5
+muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:AEZmOiL4q7DWQYm9a2g2
+muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:fHOohyG91vpi1rXSnuVM
+muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com:5432:*:postgres:3irkuEqCBpTMPTUtNeBr

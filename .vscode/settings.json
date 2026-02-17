@@ -1,0 +1,9 @@
+{
+  "git.ignoredRepositories": [],
+  "git.autoRepositoryDetection": "openEditors",
+  "git.repositoryScanMaxDepth": 3,
+  "scm.repositories.visible": 15,
+  "chat.agent.runInTerminal.visibility": "always",
+  "github.copilot.chat.runCommand.enabled": true,
+  "chat.runInTerminal.showTerminal": true
+}

@@ -1,0 +1,24 @@
+# Package sources (not part of the running system)
+_packages-source/
+
+# Verdaccio local storage (rebuilt by setup script)
+verdaccio/storage/
+
+# Generated auth file
+.npmrc-verdaccio
+
+# Docker volumes
+pgdata/
+
+# Service-level env files (contain secrets)
+main-backend-microservices/**/.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+
+# Node
+node_modules/
