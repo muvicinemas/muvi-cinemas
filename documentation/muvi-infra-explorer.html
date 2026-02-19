@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — Infrastructure & Cost Explorer</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1e293b;
+    --card: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #6366f1;
+    --accent2: #818cf8;
+    --green: #22c55e;
+    --green-dim: #16a34a;
+    --red: #ef4444;
+    --orange: #f97316;
+    --yellow: #eab308;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --purple: #a855f7;
+    --layer1: #6366f1;
+    --layer2: #3b82f6;
+    --layer3: #06b6d4;
+    --layer4: #22c55e;
+    --layer5: #eab308;
+    --layer6: #f97316;
+    --layer7: #ef4444;
+    --layer8: #ec4899;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* =========== HERO =========== */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 2rem;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(99,102,241,.18) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(6,182,212,.12) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 20% 70%, rgba(236,72,153,.08) 0%, transparent 60%);
+  }
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(99,102,241,.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,102,241,.06) 1px, transparent 1px);
+    background-size: 60px 60px;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black, transparent);
+  }
+  .hero-content {
+    position: relative;
+    text-align: center;
+    max-width: 900px;
+  }
+  .hero-badge {
+    display: inline-block;
+    padding: 6px 18px;
+    background: rgba(99,102,241,.15);
+    border: 1px solid rgba(99,102,241,.3);
+    border-radius: 999px;
+    font-size: 0.85rem;
+    color: var(--accent2);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #e2e8f0, #6366f1, #06b6d4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--muted);
+    max-width: 650px;
+    margin: 0 auto 2.5rem;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .hero-stat {
+    text-align: center;
+  }
+  .hero-stat .num {
+    display: block;
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-stat .label {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    animation: bounce 2s infinite;
+  }
+  .scroll-hint svg { width: 24px; height: 24px; }
+  @keyframes bounce {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(8px); }
+  }
+
+  /* =========== NAVIGATION =========== */
+  .toc {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,14,26,.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 1rem;
+    overflow-x: auto;
+  }
+  .toc-inner {
+    display: flex;
+    gap: 0;
+    max-width: 1400px;
+    margin: 0 auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .toc-inner::-webkit-scrollbar { display: none; }
+  .toc a {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 14px 16px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .toc a:hover, .toc a.active {
+    color: var(--text);
+    border-bottom-color: var(--accent);
+  }
+  .toc-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* =========== COST OVERVIEW =========== */
+  .cost-overview {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+  .section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  .section-header h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+  .section-header p {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .cost-big-number {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  .cost-big-number .amount {
+    font-size: 5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--red), var(--orange), var(--yellow));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+  .cost-big-number .subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-top: 0.5rem;
+  }
+
+  .cost-trend {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 3rem;
+    height: 180px;
+    padding: 0 1rem;
+  }
+  .cost-trend-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    max-width: 120px;
+  }
+  .cost-trend-bar .bar {
+    width: 100%;
+    border-radius: 8px 8px 4px 4px;
+    min-height: 20px;
+    transition: height .8s ease;
+    position: relative;
+  }
+  .cost-trend-bar .bar-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text);
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+  .cost-trend-bar .month {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  /* Cost Pie / Donut */
+  .cost-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .cost-grid { grid-template-columns: 1fr; }
+  }
+  .donut-container {
+    position: relative;
+    width: 380px;
+    height: 380px;
+    margin: 0 auto;
+  }
+  .donut-container svg { width: 100%; height: 100%; }
+  .donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .donut-center .amount {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+  .donut-center .label {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .cost-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .cost-item {
+    display: grid;
+    grid-template-columns: 12px 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--bg2);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: all .2s;
+  }
+  .cost-item:hover {
+    border-color: var(--accent);
+    background: rgba(99,102,241,.05);
+  }
+  .cost-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cost-item .name {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  .cost-item .percent {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .cost-item .amount {
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .cost-bar-bg {
+    grid-column: 1 / -1;
+    height: 4px;
+    background: rgba(255,255,255,.05);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: -2px;
+  }
+  .cost-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+
+  /* =========== LAYER SECTIONS =========== */
+  .layer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+    border-top: 1px solid var(--border);
+  }
+  .layer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 1rem;
+  }
+  .layer-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+  .layer-subtitle {
+    font-size: 1.1rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    max-width: 700px;
+  }
+
+  .layer-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) {
+    .layer-content { grid-template-columns: 1fr; }
+  }
+
+  .explain-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .explain-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .explain-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .explain-card h3 .icon {
+    font-size: 1.4rem;
+  }
+  .explain-card p, .explain-card ul {
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.8;
+  }
+  .explain-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .explain-card ul li {
+    padding: 4px 0 4px 20px;
+    position: relative;
+  }
+  .explain-card ul li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+  }
+
+  .full-width { grid-column: 1 / -1; }
+
+  /* Mini Cost Card */
+  .cost-callout {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(239,68,68,.06);
+    border: 1px solid rgba(239,68,68,.2);
+    border-radius: var(--radius-sm);
+    margin-top: 1.5rem;
+  }
+  .cost-callout.green {
+    background: rgba(34,197,94,.06);
+    border-color: rgba(34,197,94,.2);
+  }
+  .cost-callout .price {
+    font-size: 1.8rem;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+  .cost-callout .price.red { color: var(--red); }
+  .cost-callout .price.green { color: var(--green); }
+  .cost-callout .price.orange { color: var(--orange); }
+  .cost-callout .detail {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .cost-callout .detail strong {
+    color: var(--text);
+  }
+
+  /* Diagram Boxes */
+  .diagram {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--muted);
+    margin-top: 1.5rem;
+  }
+  .diagram .hl { color: var(--accent2); font-weight: 700; }
+  .diagram .g { color: var(--green); }
+  .diagram .o { color: var(--orange); }
+  .diagram .c { color: var(--cyan); }
+  .diagram .r { color: var(--red); }
+  .diagram .p { color: var(--pink); }
+  .diagram .y { color: var(--yellow); }
+
+  /* Visual Layer Stack */
+  .layer-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 800px;
+    margin: 3rem auto;
+    position: relative;
+  }
+  .layer-stack::before {
+    content: '';
+    position: absolute;
+    left: 40px;
+    top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--layer1), var(--layer3), var(--layer5), var(--layer7));
+    opacity: 0.3;
+  }
+  .stack-item {
+    display: flex;
+    align-items: stretch;
+    gap: 1.5rem;
+    padding: 0;
+    cursor: pointer;
+    position: relative;
+  }
+  .stack-dot-col {
+    width: 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 1.5rem;
+    flex-shrink: 0;
+  }
+  .stack-dot {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 3px solid;
+    z-index: 1;
+    background: var(--bg);
+  }
+  .stack-line {
+    flex: 1;
+    width: 2px;
+    opacity: 0.2;
+  }
+  .stack-card {
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    margin: 6px 0;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    transition: all .25s;
+  }
+  .stack-card:hover {
+    background: var(--bg3);
+    transform: translateX(4px);
+  }
+  .stack-card .stack-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .stack-card .stack-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .stack-card .stack-desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .stack-card .stack-cost {
+    font-size: 0.85rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Service Cards Grid */
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .svc-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem;
+    transition: all .25s;
+    position: relative;
+    overflow: hidden;
+  }
+  .svc-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(99,102,241,.1);
+  }
+  .svc-card .svc-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .svc-card .svc-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .svc-card .svc-tasks {
+    background: rgba(34,197,94,.12);
+    color: var(--green);
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .svc-card .svc-role {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 10px;
+    line-height: 1.5;
+  }
+  .svc-card .svc-specs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .svc-card .spec {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    background: rgba(255,255,255,.04);
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .svc-card .spec .val { color: var(--text); }
+
+  /* Insight Panel */
+  .insight {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(99,102,241,.06);
+    border: 1px solid rgba(99,102,241,.2);
+    border-radius: var(--radius-sm);
+    margin-top: 1.5rem;
+    align-items: flex-start;
+  }
+  .insight.warn {
+    background: rgba(234,179,8,.06);
+    border-color: rgba(234,179,8,.2);
+  }
+  .insight.danger {
+    background: rgba(239,68,68,.06);
+    border-color: rgba(239,68,68,.2);
+  }
+  .insight .icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 2px; }
+  .insight .text { font-size: 0.88rem; color: var(--muted); line-height: 1.7; }
+  .insight .text strong { color: var(--text); }
+
+  /* Comparison Table */
+  .compare-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 1.5rem;
+    font-size: 0.88rem;
+  }
+  .compare-table th {
+    text-align: left;
+    padding: 12px 16px;
+    background: var(--bg3);
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+  }
+  .compare-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+  .compare-table th:last-child { border-radius: 0 var(--radius-sm) 0 0; }
+  .compare-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(51,65,85,.4);
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: 0; }
+  .compare-table tr:hover td { background: rgba(99,102,241,.03); }
+  .compare-table .row-label { font-weight: 600; color: var(--text); white-space: nowrap; }
+  .compare-table .highlight { color: var(--green); font-weight: 700; }
+  .compare-table .dim { color: var(--muted); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 4rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* Data Flow Animation */
+  .flow-container {
+    position: relative;
+    padding: 2rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-top: 1.5rem;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+  }
+  .flow-box {
+    padding: 10px 18px;
+    border-radius: var(--radius-sm);
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .flow-arrow {
+    font-size: 1.2rem;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .tag-free { background: rgba(34,197,94,.15); color: var(--green); }
+  .tag-cheap { background: rgba(6,182,212,.15); color: var(--cyan); }
+  .tag-moderate { background: rgba(234,179,8,.15); color: var(--yellow); }
+  .tag-expensive { background: rgba(239,68,68,.15); color: var(--red); }
+  .tag-critical { background: rgba(239,68,68,.2); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .tag-new { background: rgba(168,85,247,.15); color: var(--purple); }
+
+  /* Savings Banner */
+  .savings-banner {
+    background: linear-gradient(135deg, rgba(34,197,94,.08), rgba(6,182,212,.08));
+    border: 1px solid rgba(34,197,94,.2);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+    text-align: center;
+    margin: 2rem 0;
+  }
+  .savings-banner .big {
+    font-size: 3.5rem;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--green), var(--cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1.1;
+  }
+  .savings-banner p {
+    color: var(--muted);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  /* Tooltip */
+  [data-tip] {
+    position: relative;
+    cursor: help;
+    border-bottom: 1px dashed var(--muted);
+  }
+  [data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 50;
+    box-shadow: 0 8px 30px rgba(0,0,0,.3);
+  }
+
+  /* Utility */
+  .mt-1 { margin-top: 1rem; }
+  .mt-2 { margin-top: 2rem; }
+  .mb-1 { margin-bottom: 1rem; }
+  .mb-2 { margin-bottom: 2rem; }
+  .text-center { text-align: center; }
+  .flex-center { display: flex; justify-content: center; }
+</style>
+</head>
+<body>
+
+<!-- =========== HERO =========== -->
+<section class="hero" id="top">
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">Confidential — Muvi Cinemas Infrastructure</div>
+    <h1>The Complete Cloud Infrastructure, Layer by Layer</h1>
+    <p>Every service explained in plain English with real cost data. From the security guard at the door to the database in the vault.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num">$27,873</span>
+        <span class="label">Monthly AWS Bill</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">9</span>
+        <span class="label">Microservices</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">39</span>
+        <span class="label">Running Containers</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">6</span>
+        <span class="label">Databases</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    Scroll to explore
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+  </div>
+</section>
+
+<!-- =========== STICKY NAV =========== -->
+<nav class="toc" id="toc">
+  <div class="toc-inner">
+    <a href="#cost"><span class="toc-dot" style="background:#ef4444"></span>Costs</a>
+    <a href="#journey"><span class="toc-dot" style="background:#6366f1"></span>Journey</a>
+    <a href="#layer-dns"><span class="toc-dot" style="background:var(--layer1)"></span>DNS</a>
+    <a href="#layer-cdn"><span class="toc-dot" style="background:var(--layer2)"></span>CDN</a>
+    <a href="#layer-waf"><span class="toc-dot" style="background:var(--layer3)"></span>WAF</a>
+    <a href="#layer-alb"><span class="toc-dot" style="background:var(--layer4)"></span>ALB</a>
+    <a href="#layer-ecs"><span class="toc-dot" style="background:var(--layer5)"></span>ECS</a>
+    <a href="#layer-db"><span class="toc-dot" style="background:var(--layer6)"></span>Database</a>
+    <a href="#layer-redis"><span class="toc-dot" style="background:var(--layer7)"></span>Redis</a>
+    <a href="#layer-vpc"><span class="toc-dot" style="background:var(--layer8)"></span>VPC</a>
+    <a href="#layer-storage"><span class="toc-dot" style="background:var(--cyan)"></span>Storage</a>
+    <a href="#layer-serverless"><span class="toc-dot" style="background:var(--purple)"></span>Serverless</a>
+    <a href="#layer-cicd"><span class="toc-dot" style="background:var(--green)"></span>CI/CD</a>
+    <a href="#layer-monitoring"><span class="toc-dot" style="background:var(--yellow)"></span>Monitoring</a>
+    <a href="#uat"><span class="toc-dot" style="background:var(--green)"></span>UAT Plan</a>
+  </div>
+</nav>
+
+<!-- =========== COST OVERVIEW =========== -->
+<section class="cost-overview" id="cost">
+  <div class="section-header">
+    <h2>Where Does the Money Go?</h2>
+    <p>January 2026 — actual AWS bill broken down so you can see every dollar</p>
+  </div>
+
+  <div class="cost-big-number">
+    <div class="amount">$27,873</div>
+    <div class="subtitle">Total AWS spend in January 2026 &nbsp;·&nbsp; That's <strong>$929/day</strong> or <strong>$38.7/hour</strong></div>
+  </div>
+
+  <!-- Monthly Trend -->
+  <div style="text-align:center; margin-bottom:0.5rem; font-size:0.85rem; color:var(--muted);">6-Month Cost Trend (good news: it's coming down)</div>
+  <div class="cost-trend">
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:160px; background:linear-gradient(to top,var(--red),var(--orange));">
+        <div class="bar-label">$47.4K</div>
+      </div>
+      <div class="month">Aug '25</div>
+    </div>
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:128px; background:linear-gradient(to top,var(--orange),var(--yellow));">
+        <div class="bar-label">$38.7K</div>
+      </div>
+      <div class="month">Sep '25</div>
+    </div>
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:90px; background:linear-gradient(to top,var(--yellow),var(--green));">
+        <div class="bar-label">$27.3K</div>
+      </div>
+      <div class="month">Oct '25</div>
+    </div>
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:89px; background:linear-gradient(to top,var(--green),var(--cyan));">
+        <div class="bar-label">$27.3K</div>
+      </div>
+      <div class="month">Nov '25</div>
+    </div>
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:90px; background:linear-gradient(to top,var(--cyan),var(--blue));">
+        <div class="bar-label">$27.5K</div>
+      </div>
+      <div class="month">Dec '25</div>
+    </div>
+    <div class="cost-trend-bar">
+      <div class="bar" style="height:91px; background:linear-gradient(to top,var(--accent),var(--accent2));">
+        <div class="bar-label">$27.9K</div>
+      </div>
+      <div class="month">Jan '26</div>
+    </div>
+  </div>
+
+  <!-- Cost Breakdown -->
+  <div class="cost-grid">
+    <div class="donut-container">
+      <svg viewBox="0 0 42 42">
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#1e293b" stroke-width="4.5"/>
+        <!-- RDS 18.9% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#ef4444" stroke-width="4.5"
+          stroke-dasharray="18.9 81.1" stroke-dashoffset="25" />
+        <!-- CloudWatch 13.5% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#f97316" stroke-width="4.5"
+          stroke-dasharray="13.5 86.5" stroke-dashoffset="6.1"/>
+        <!-- CloudFront 12.7% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#eab308" stroke-width="4.5"
+          stroke-dasharray="12.7 87.3" stroke-dashoffset="92.6"/>
+        <!-- Tax 10.8% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#94a3b8" stroke-width="4.5"
+          stroke-dasharray="10.8 89.2" stroke-dashoffset="79.9"/>
+        <!-- ECS/Fargate/Savings Plans 9.7% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#6366f1" stroke-width="4.5"
+          stroke-dasharray="9.7 90.3" stroke-dashoffset="69.1"/>
+        <!-- Support 6.4% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#3b82f6" stroke-width="4.5"
+          stroke-dasharray="6.4 93.6" stroke-dashoffset="59.4"/>
+        <!-- S3 4.3% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#06b6d4" stroke-width="4.5"
+          stroke-dasharray="4.3 95.7" stroke-dashoffset="53"/>
+        <!-- Datadog 3.9% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#ec4899" stroke-width="4.5"
+          stroke-dasharray="3.9 96.1" stroke-dashoffset="48.7"/>
+        <!-- Backup 3.6% -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#a855f7" stroke-width="4.5"
+          stroke-dasharray="3.6 96.4" stroke-dashoffset="44.8"/>
+        <!-- Rest -->
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#334155" stroke-width="4.5"
+          stroke-dasharray="16.2 83.8" stroke-dashoffset="41.2"/>
+      </svg>
+      <div class="donut-center">
+        <div class="amount">$27.9K</div>
+        <div class="label">Jan 2026</div>
+      </div>
+    </div>
+
+    <div class="cost-list">
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#ef4444"></span>
+        <span class="name">Databases (Aurora PostgreSQL)</span>
+        <span class="percent">18.9%</span>
+        <span class="amount">$5,275</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:100%; background:#ef4444"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#f97316"></span>
+        <span class="name">CloudWatch (Monitoring & Logs)</span>
+        <span class="percent">13.5%</span>
+        <span class="amount">$3,766</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:71%; background:#f97316"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#eab308"></span>
+        <span class="name">CloudFront (CDN)</span>
+        <span class="percent">12.7%</span>
+        <span class="amount">$3,529</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:67%; background:#eab308"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#94a3b8"></span>
+        <span class="name">Tax (Saudi VAT 15%)</span>
+        <span class="percent">10.8%</span>
+        <span class="amount">$3,010</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:57%; background:#94a3b8"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#6366f1"></span>
+        <span class="name">Compute (ECS Fargate + Savings Plans)</span>
+        <span class="percent">9.7%</span>
+        <span class="amount">$2,704</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:51%; background:#6366f1"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#3b82f6"></span>
+        <span class="name">AWS Business Support</span>
+        <span class="percent">6.4%</span>
+        <span class="amount">$1,791</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:34%; background:#3b82f6"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#06b6d4"></span>
+        <span class="name">S3 (File Storage)</span>
+        <span class="percent">4.3%</span>
+        <span class="amount">$1,212</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:23%; background:#06b6d4"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#ec4899"></span>
+        <span class="name">Datadog Pro (External Monitoring)</span>
+        <span class="percent">3.9%</span>
+        <span class="amount">$1,080</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:20%; background:#ec4899"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#a855f7"></span>
+        <span class="name">AWS Backup (Disaster Recovery)</span>
+        <span class="percent">3.6%</span>
+        <span class="amount">$1,001</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:19%; background:#a855f7"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:var(--green)"></span>
+        <span class="name">GuardDuty (Threat Detection)</span>
+        <span class="percent">3.5%</span>
+        <span class="amount">$985</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:19%; background:var(--green)"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#f43f5e"></span>
+        <span class="name">ElastiCache (Redis)</span>
+        <span class="percent">2.6%</span>
+        <span class="amount">$717</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:14%; background:#f43f5e"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#14b8a6"></span>
+        <span class="name">API Gateway</span>
+        <span class="percent">2.3%</span>
+        <span class="amount">$628</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:12%; background:#14b8a6"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#d946ef"></span>
+        <span class="name">VPC (Networking / NAT Gateway)</span>
+        <span class="percent">2.3%</span>
+        <span class="amount">$627</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:12%; background:#d946ef"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#fb923c"></span>
+        <span class="name">WAF (Web Firewall)</span>
+        <span class="percent">2.0%</span>
+        <span class="amount">$555</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:11%; background:#fb923c"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#64748b"></span>
+        <span class="name">EC2 — Other (NAT data, IPs, EBS)</span>
+        <span class="percent">1.9%</span>
+        <span class="amount">$539</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:10%; background:#64748b"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#818cf8"></span>
+        <span class="name">EC2 — Compute (Bastion / misc)</span>
+        <span class="percent">0.6%</span>
+        <span class="amount">$170</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:3%; background:#818cf8"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#34d399"></span>
+        <span class="name">ELB (Load Balancers)</span>
+        <span class="percent">0.5%</span>
+        <span class="amount">$145</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:3%; background:#34d399"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#fbbf24"></span>
+        <span class="name">ECS (Container Service Fee)</span>
+        <span class="percent">0.5%</span>
+        <span class="amount">$139</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:3%; background:#fbbf24"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#7c3aed"></span>
+        <span class="name">DevOps Guru (AI anomaly detection)</span>
+        <span class="percent">0.46%</span>
+        <span class="amount">$127.56</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:2.4%; background:#7c3aed"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#be185d"></span>
+        <span class="name">Inspector (vulnerability scanning)</span>
+        <span class="percent">0.25%</span>
+        <span class="amount">$68.61</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:1.3%; background:#be185d"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#0d9488"></span>
+        <span class="name">ECR (Docker image registry)</span>
+        <span class="percent">0.12%</span>
+        <span class="amount">$34.33</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.7%; background:#0d9488"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#b45309"></span>
+        <span class="name">AWS Config (compliance tracking)</span>
+        <span class="percent">0.09%</span>
+        <span class="amount">$26.11</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.5%; background:#b45309"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#059669"></span>
+        <span class="name">Secrets Manager (API keys vault)</span>
+        <span class="percent">0.05%</span>
+        <span class="amount">$15.09</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.3%; background:#059669"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#dc2626"></span>
+        <span class="name">Security Hub (central findings)</span>
+        <span class="percent">0.05%</span>
+        <span class="amount">$14.05</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.3%; background:#dc2626"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#4338ca"></span>
+        <span class="name">KMS (encryption keys)</span>
+        <span class="percent">0.03%</span>
+        <span class="amount">$9.37</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.2%; background:#4338ca"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#0284c7"></span>
+        <span class="name">Route 53 (DNS)</span>
+        <span class="percent">0.02%</span>
+        <span class="amount">$6.53</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.1%; background:#0284c7"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#78716c"></span>
+        <span class="name">CloudTrail (audit logging)</span>
+        <span class="percent">0.02%</span>
+        <span class="amount">$4.63</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.1%; background:#78716c"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#16a34a"></span>
+        <span class="name">CodePipeline (CI/CD)</span>
+        <span class="percent">0.01%</span>
+        <span class="amount">$2.00</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.04%; background:#16a34a"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#65a30d"></span>
+        <span class="name">CodeBuild (build minutes)</span>
+        <span class="percent">0.001%</span>
+        <span class="amount">$0.18</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.01%; background:#65a30d"></div></div>
+      </div>
+      <div class="cost-item">
+        <span class="cost-dot" style="background:#84cc16"></span>
+        <span class="name">Lambda (serverless functions)</span>
+        <span class="percent">0.00%</span>
+        <span class="amount">$0.003</span>
+        <div class="cost-bar-bg"><div class="cost-bar-fill" style="width:0.01%; background:#84cc16"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight warn">
+    <span class="icon">💡</span>
+    <div class="text">
+      <strong>Top 3 cost hogs eat 45% of the bill:</strong> Databases ($5,275) + CloudWatch Logs ($3,766) + CloudFront CDN ($3,529) = $12,570/month. 
+      The CloudWatch cost is unusually high — likely from verbose Datadog agent logging. CloudFront is high because they use PriceClass_All (all 400+ global edge locations) when traffic is mostly from Saudi Arabia.
+    </div>
+  </div>
+</section>
+
+<!-- =========== THE JOURNEY =========== -->
+<section class="layer" id="journey">
+  <div class="section-header">
+    <h2>The Journey of a Single Request</h2>
+    <p>What happens when someone in Riyadh opens muvicinemas.com?</p>
+  </div>
+
+  <div class="layer-stack">
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer1);"></div>
+        <div class="stack-line" style="background:var(--layer1);"></div>
+      </div>
+      <a href="#layer-dns" class="stack-card" style="border-left-color:var(--layer1);">
+        <div class="stack-label" style="color:var(--layer1);">Layer 1 · The Phone Book</div>
+        <div class="stack-title">Route 53 (DNS)</div>
+        <div class="stack-desc">User types "muvicinemas.com" → DNS resolves it to a CloudFront IP address near the user</div>
+        <div class="stack-cost" style="color:var(--green);">$7/mo <span class="tag tag-cheap">Cheap</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer2);"></div>
+        <div class="stack-line" style="background:var(--layer2);"></div>
+      </div>
+      <a href="#layer-cdn" class="stack-card" style="border-left-color:var(--layer2);">
+        <div class="stack-label" style="color:var(--layer2);">Layer 2 · The Speed Boost</div>
+        <div class="stack-title">CloudFront (CDN)</div>
+        <div class="stack-desc">Request hits the nearest edge server (Dubai/Riyadh). Cached content returned instantly. Otherwise forwarded to origin.</div>
+        <div class="stack-cost" style="color:var(--red);">$3,529/mo <span class="tag tag-expensive">High — using all global edge locations</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer3);"></div>
+        <div class="stack-line" style="background:var(--layer3);"></div>
+      </div>
+      <a href="#layer-waf" class="stack-card" style="border-left-color:var(--layer3);">
+        <div class="stack-label" style="color:var(--layer3);">Layer 3 · The Security Guard</div>
+        <div class="stack-title">WAF (Firewall)</div>
+        <div class="stack-desc">Every request is inspected: block SQL injection, bots, DDoS attacks, brute force OTP attempts. 13 rules.</div>
+        <div class="stack-cost" style="color:var(--orange);">$555/mo <span class="tag tag-moderate">Moderate</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer4);"></div>
+        <div class="stack-line" style="background:var(--layer4);"></div>
+      </div>
+      <a href="#layer-alb" class="stack-card" style="border-left-color:var(--layer4);">
+        <div class="stack-label" style="color:var(--layer4);">Layer 4 · The Traffic Director</div>
+        <div class="stack-title">Load Balancers (ALB)</div>
+        <div class="stack-desc">Request arrives at the Application Load Balancer which picks the healthiest container to handle it.</div>
+        <div class="stack-cost" style="color:var(--cyan);">$145/mo <span class="tag tag-cheap">Cheap</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer5);"></div>
+        <div class="stack-line" style="background:var(--layer5);"></div>
+      </div>
+      <a href="#layer-ecs" class="stack-card" style="border-left-color:var(--layer5);">
+        <div class="stack-label" style="color:var(--layer5);">Layer 5 · The Application</div>
+        <div class="stack-title">ECS Fargate (Your Code)</div>
+        <div class="stack-desc">9 microservices running in Docker containers. This is where your NestJS/Go code actually runs.</div>
+        <div class="stack-cost" style="color:var(--orange);">$2,704/mo <span class="tag tag-moderate">39 containers · 66 vCPU</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer6);"></div>
+        <div class="stack-line" style="background:var(--layer6);"></div>
+      </div>
+      <a href="#layer-db" class="stack-card" style="border-left-color:var(--layer6);">
+        <div class="stack-label" style="color:var(--layer6);">Layer 6 · The Vault</div>
+        <div class="stack-title">Aurora PostgreSQL (Databases)</div>
+        <div class="stack-desc">6 separate databases, each owned by one service. Writer + Reader replicas. Accessed via RDS Proxy.</div>
+        <div class="stack-cost" style="color:var(--red);">$5,275/mo <span class="tag tag-expensive">#1 cost — 19% of total bill</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer7);"></div>
+        <div class="stack-line" style="background:var(--layer7);"></div>
+      </div>
+      <a href="#layer-redis" class="stack-card" style="border-left-color:var(--layer7);">
+        <div class="stack-label" style="color:var(--layer7);">Layer 7 · The Sticky Notes</div>
+        <div class="stack-title">ElastiCache Redis (Fast Cache)</div>
+        <div class="stack-desc">9 Redis clusters for caching, session storage, rate limiting, real-time queues. Reads in &lt;1ms.</div>
+        <div class="stack-cost" style="color:var(--orange);">$717/mo <span class="tag tag-moderate">Moderate</span></div>
+      </a>
+    </div>
+    <div class="stack-item">
+      <div class="stack-dot-col">
+        <div class="stack-dot" style="border-color:var(--layer8);"></div>
+        <div class="stack-line" style="background:var(--layer8);"></div>
+      </div>
+      <a href="#layer-vpc" class="stack-card" style="border-left-color:var(--layer8);">
+        <div class="stack-label" style="color:var(--layer8);">The Foundation · The Building</div>
+        <div class="stack-title">VPC (Private Network)</div>
+        <div class="stack-desc">All of the above lives inside a private network. 9 subnets, 3 tiers, 1 NAT Gateway, ~40 security groups.</div>
+        <div class="stack-cost" style="color:var(--orange);">$627/mo <span class="tag tag-moderate">Mostly NAT Gateway data transfer</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 1: DNS =========== -->
+<section class="layer" id="layer-dns">
+  <span class="layer-badge" style="background:rgba(99,102,241,.12); color:var(--layer1); border:1px solid rgba(99,102,241,.3);">
+    <span style="font-size:1.2rem">🌐</span> Layer 1 — The Phone Book
+  </span>
+  <h2 class="layer-title">Route 53 — DNS</h2>
+  <p class="layer-subtitle">When you type "muvicinemas.com" in your browser, your device asks: "What's the IP address of this website?" Route 53 answers that question.</p>
+
+  <div class="layer-content">
+    <div class="explain-card" style="--accent-c:var(--layer1);">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer1);"></div>
+      <h3><span class="icon">📞</span> In Plain English</h3>
+      <p>Think of a phone book. You look up "Pizza Hut" and get their number. Route 53 is the phone book of the internet — you look up "muvicinemas.com" and get the server's IP address. Without it, nobody can find your website.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer1);"></div>
+      <h3><span class="icon">📋</span> What Muvi Has</h3>
+      <ul>
+        <li><strong>muvicinemas.com</strong> — Public zone with 161 DNS records</li>
+        <li><strong>prod.microservices.internal</strong> — Private zone (only works inside the VPC) for service-to-service communication</li>
+        <li>Each microservice has an internal DNS name like <code>identity.prod.microservices.internal</code></li>
+      </ul>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer1);"></div>
+      <h3><span class="icon">💵</span> Cost Breakdown — $7/month</h3>
+      <p>
+        <strong>$0.50/month</strong> per hosted zone × 3 zones = $1.50<br>
+        <strong>$0.40</strong> per million queries × ~13M queries = ~$5.20<br>
+        <strong>Total: ~$7/month</strong> — one of the cheapest services. DNS is essential and nearly free.
+      </p>
+      <div class="cost-callout green">
+        <span class="price green">$7</span>
+        <span class="detail">
+          <strong>Verdict: Essential and dirt cheap.</strong> You need DNS. $7/month for a service that handles millions of lookups. No optimization needed.
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 2: CDN =========== -->
+<section class="layer" id="layer-cdn">
+  <span class="layer-badge" style="background:rgba(59,130,246,.12); color:var(--layer2); border:1px solid rgba(59,130,246,.3);">
+    <span style="font-size:1.2rem">⚡</span> Layer 2 — The Speed Boost
+  </span>
+  <h2 class="layer-title">CloudFront — Content Delivery Network</h2>
+  <p class="layer-subtitle">Instead of every request travelling 3,000km to Frankfurt, CloudFront caches your content at 400+ locations worldwide and serves it from wherever is closest to the user.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer2);"></div>
+      <h3><span class="icon">🏪</span> In Plain English</h3>
+      <p>Imagine a restaurant chain. Instead of cooking every meal at the main kitchen in Frankfurt and shipping it, you set up small kitchens (edge locations) in every city. Customers in Riyadh get their food from the Riyadh kitchen instantly. The Frankfurt kitchen only cooks when the local kitchen runs out of a dish.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer2);"></div>
+      <h3><span class="icon">📋</span> What Muvi Has — 9 Distributions</h3>
+      <ul>
+        <li><strong>api.prod.muvicinemas.com</strong> — API requests (with WAF)</li>
+        <li><strong>muvicinemas.com</strong> — Public website (with WAF)</li>
+        <li><strong>dashboard.muvicinemas.com</strong> — CMS admin (from S3)</li>
+        <li><strong>media.prod.muvicinemas.com</strong> — Film posters & images</li>
+        <li><strong>4 DR distributions</strong> — Disaster recovery (Ireland)</li>
+        <li><strong>go.muvicinemas.com</strong> — Short URL service</li>
+      </ul>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer2);"></div>
+      <h3><span class="icon">💵</span> Cost Breakdown — $3,529/month</h3>
+      <p>CloudFront charges for <strong>data transfer out</strong> (serving content to users) and <strong>HTTP requests</strong>. The more people visit and the larger the files (movie trailers, posters), the higher the cost.</p>
+      <div class="cost-callout">
+        <span class="price red">$3,529</span>
+        <span class="detail">
+          <strong>This is HIGH.</strong> They use <code>PriceClass_All</code> (all 400+ edge locations globally). Muvi's audience is 95% Saudi Arabia. 
+          Switching to <code>PriceClass_200</code> (covers Middle East, Europe, US) could <strong>save ~$500-800/month</strong> with zero impact on Saudi users.
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 3: WAF =========== -->
+<section class="layer" id="layer-waf">
+  <span class="layer-badge" style="background:rgba(6,182,212,.12); color:var(--layer3); border:1px solid rgba(6,182,212,.3);">
+    <span style="font-size:1.2rem">🛡️</span> Layer 3 — The Security Guard
+  </span>
+  <h2 class="layer-title">WAF — Web Application Firewall</h2>
+  <p class="layer-subtitle">Every request passes through 13 security rules before reaching your application. Blocks hackers, bots, DDoS attacks, and brute-force login attempts.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer3);"></div>
+      <h3><span class="icon">🚪</span> In Plain English</h3>
+      <p>Think of airport security. Every passenger (request) goes through multiple checkpoints. Metal detector (SQL injection check), ID verification (IP reputation), no-fly list (blacklisted IPs), baggage scan (bad input detection). If you fail any check, you're blocked.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer3);"></div>
+      <h3><span class="icon">📋</span> 13 Rules (In Order)</h3>
+      <ul>
+        <li><strong>Rate Limiting</strong> — Block IPs sending too many requests</li>
+        <li><strong>OTP Brute Force</strong> — Max 5 OTP attempts per minute</li>
+        <li><strong>IP Whitelist</strong> — Always allow office/monitoring IPs</li>
+        <li><strong>IP Blacklist</strong> — Always block known attackers</li>
+        <li><strong>6 AWS Managed Rules</strong> — SQL injection, XSS, bad bots, known exploits</li>
+        <li><strong>Throttling</strong> — General rate limiting per IP</li>
+      </ul>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer3);"></div>
+      <h3><span class="icon">💵</span> Cost Breakdown — $555/month</h3>
+      <p><strong>$5/month</strong> per Web ACL × 2 ACLs = $10 &nbsp;·&nbsp; <strong>$1/month</strong> per rule × 13 rules = $13 &nbsp;·&nbsp; <strong>$0.60</strong> per million requests inspected → rest of the cost.</p>
+      <div class="cost-callout green">
+        <span class="price orange">$555</span>
+        <span class="detail">
+          <strong>Reasonable for a production app handling money.</strong> You're processing payments — WAF is non-negotiable. The cost scales with traffic volume.
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 4: ALB =========== -->
+<section class="layer" id="layer-alb">
+  <span class="layer-badge" style="background:rgba(34,197,94,.12); color:var(--layer4); border:1px solid rgba(34,197,94,.3);">
+    <span style="font-size:1.2rem">🔀</span> Layer 4 — The Traffic Director
+  </span>
+  <h2 class="layer-title">ALB — Application Load Balancers</h2>
+  <p class="layer-subtitle">When thousands of users hit the API at the same time, the load balancer spreads them across your 39 containers so no single one gets overwhelmed.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer4);"></div>
+      <h3><span class="icon">🎯</span> In Plain English</h3>
+      <p>Imagine a cinema with 7 ticket counters (gateway containers). The load balancer is the person at the entrance who points you to the counter with the shortest line. If counter #3 breaks down, they stop sending people there. Nobody notices the outage.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer4);"></div>
+      <h3><span class="icon">📋</span> Muvi Has 3 Load Balancers</h3>
+      <ul>
+        <li><strong>Muvi-Prod</strong> (internet-facing) → Routes API traffic to gateway containers</li>
+        <li><strong>Website-ALB</strong> (internet-facing) → Routes website traffic to website containers</li>
+        <li><strong>Microservices-Prod</strong> (internal only) → Routes gRPC calls between microservices on ports 5002-5007. <em>Not accessible from internet.</em></li>
+      </ul>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer4);"></div>
+      <h3><span class="icon">💵</span> Cost Breakdown — $145/month</h3>
+      <p><strong>$16.20/month</strong> per ALB (fixed) × 3 = $48.60 &nbsp;·&nbsp; <strong>$5.84/month</strong> per LCU (based on traffic) × ~16 LCUs = ~$96</p>
+      <div class="cost-callout green">
+        <span class="price green">$145</span>
+        <span class="detail">
+          <strong>Very cheap for what it does.</strong> 3 load balancers distributing traffic across 39 containers with automatic health checking. The internal ALB is critical — without it, microservices can't communicate.
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 5: ECS =========== -->
+<section class="layer" id="layer-ecs">
+  <span class="layer-badge" style="background:rgba(234,179,8,.12); color:var(--layer5); border:1px solid rgba(234,179,8,.3);">
+    <span style="font-size:1.2rem">🚀</span> Layer 5 — The Application
+  </span>
+  <h2 class="layer-title">ECS Fargate — Where Your Code Actually Runs</h2>
+  <p class="layer-subtitle">9 microservices running in Docker containers. AWS manages the servers — you just say "give me 4 vCPU and 8 GB RAM" and your code runs.</p>
+
+  <div class="services-grid">
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">🚪 gateway</span>
+        <span class="svc-tasks">7 tasks</span>
+      </div>
+      <div class="svc-role">The front door. Every request enters here first. Validates who you are (JWT), limits how fast you can call (rate limiting), and routes to the right microservice.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">3001</span></span>
+        <span class="spec">Scale <span class="val">7→120</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">👤 identity-grpc</span>
+        <span class="svc-tasks">7 tasks</span>
+      </div>
+      <div class="svc-role">User accounts: registration, login, OTP verification, permissions. Called on EVERY authenticated request to validate tokens. That's why it needs 7 replicas.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">5005</span></span>
+        <span class="spec">Scale <span class="val">7→100</span></span>
+      </div>
+    </div>
+    <div class="svc-card" style="border-color:var(--orange);">
+      <div class="svc-top">
+        <span class="svc-name">🎬 main-grpc</span>
+        <span class="svc-tasks" style="background:rgba(249,115,22,.12);color:var(--orange);">7 tasks · BIGGEST</span>
+      </div>
+      <div class="svc-role">The core brain. Films, cinemas, sessions, seat maps, bookings, orders.  Gets 4× more CPU/RAM than others because seat reservation is computationally heavy (locking, Vista API calls).</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val" style="color:var(--orange);">4 vCPU</span></span>
+        <span class="spec">RAM <span class="val" style="color:var(--orange);">8 GB</span></span>
+        <span class="spec">Port <span class="val">5002</span></span>
+        <span class="spec">Scale <span class="val">7→100</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">🌐 website</span>
+        <span class="svc-tasks">5 tasks</span>
+      </div>
+      <div class="svc-role">The Next.js frontend. Server-side renders HTML for SEO and fast initial page loads. Serves muvicinemas.com pages.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">80</span></span>
+        <span class="spec">Scale <span class="val">5→100</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">💳 payment-grpc</span>
+        <span class="svc-tasks">3 tasks</span>
+      </div>
+      <div class="svc-role">Handles money: HyperPay, PayFort, Checkout.com, Tabby (buy now pay later), wallets. Isolated so payment failures never crash the booking flow.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">5003</span></span>
+        <span class="spec">Scale <span class="val">3→100</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">🍿 fb-muvi</span>
+        <span class="svc-tasks">3 tasks</span>
+      </div>
+      <div class="svc-role">Food & Beverage: popcorn menus, kiosk ordering, concession management. Separate because it uses NestJS 9.4 (others use 8.4).</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">2 vCPU</span></span>
+        <span class="spec">RAM <span class="val">4 GB</span></span>
+        <span class="spec">Port <span class="val">5004</span></span>
+        <span class="spec">Scale <span class="val">3→15</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">🎁 offer-muvi</span>
+        <span class="svc-tasks">3 tasks</span>
+      </div>
+      <div class="svc-role">Promotions, vouchers, student discounts. Written in Go (not TypeScript) for speed — promo code validation needs to be instant.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">2 vCPU</span></span>
+        <span class="spec">RAM <span class="val">4 GB</span></span>
+        <span class="spec">Port <span class="val">5006</span></span>
+        <span class="spec">Scale <span class="val">3→10</span></span>
+      </div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-top">
+        <span class="svc-name">📧 notification-grpc</span>
+        <span class="svc-tasks">2 tasks</span>
+      </div>
+      <div class="svc-role">Sends push notifications (OneSignal), emails (SendGrid), SMS (Unifonic). Only 2 tasks because sending is async — jobs queue in Redis and get processed gradually.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">5007</span></span>
+        <span class="spec">Scale <span class="val">2→25</span></span>
+      </div>
+    </div>
+    <div class="svc-card" style="border-color:var(--purple);">
+      <div class="svc-top">
+        <span class="svc-name">🎫 ticket</span>
+        <span class="svc-tasks" style="background:rgba(168,85,247,.12);color:var(--purple);">2 tasks · MYSTERY</span>
+      </div>
+      <div class="svc-role">Uses the SAME Docker image as main-grpc. Likely handles ticket validation at cinema entrance, separated so scanning traffic doesn't compete with booking traffic.</div>
+      <div class="svc-specs">
+        <span class="spec">CPU <span class="val">1 vCPU</span></span>
+        <span class="spec">RAM <span class="val">2 GB</span></span>
+        <span class="spec">Port <span class="val">5002</span></span>
+        <span class="spec">Scale <span class="val">2→100</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cost-callout mt-2">
+    <span class="price orange">$2,704</span>
+    <span class="detail">
+      <strong>Compute cost = ECS ($139) + Savings Plans ($2,395) + EC2 Other ($170).</strong>
+      They purchased Savings Plans (like pre-paying for compute at a discount). The <strong>main-grpc</strong> service alone at 7 × 4vCPU = 28 vCPU consumes ~42% of all compute. It's the elephant in the room.
+    </span>
+  </div>
+
+  <div class="insight warn mt-1">
+    <span class="icon">⚠️</span>
+    <div class="text">
+      <strong>Every container has a Datadog sidecar</strong> — a second container running alongside your code just for monitoring. That means 39 tasks = 78 containers. This likely explains why CloudWatch costs $3,766/month (Datadog agent writes verbose logs to CloudWatch even though Datadog has its own pipeline).
+    </div>
+  </div>
+</section>
+
+<!-- =========== LAYER 6: DATABASE =========== -->
+<section class="layer" id="layer-db">
+  <span class="layer-badge" style="background:rgba(249,115,22,.12); color:var(--layer6); border:1px solid rgba(249,115,22,.3);">
+    <span style="font-size:1.2rem">🏦</span> Layer 6 — The Vault
+  </span>
+  <h2 class="layer-title">Aurora PostgreSQL — The Databases</h2>
+  <p class="layer-subtitle">6 separate databases, each owned by one microservice. Nobody can access another service's data directly — they must ask via gRPC. This is the #1 cost at $5,275/month.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer6);"></div>
+      <h3><span class="icon">🏦</span> In Plain English</h3>
+      <p>Each microservice has its own bank vault. Main's vault stores film schedules and bookings. Identity's vault stores user accounts. Payment's vault stores transactions. They never peek into each other's vaults — they send formal requests (gRPC calls) when they need data from another service.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer6);"></div>
+      <h3><span class="icon">📋</span> Writer vs Reader — Why Two?</h3>
+      <p>Each database has a <strong>Writer</strong> (handles inserts, updates, deletes + reads) and a <strong>Reader</strong> (handles only read queries). Heavy reporting or search queries go to the Reader so they don't slow down booking writes on the Writer.</p>
+      <p class="mt-1">Think of it like a chef who both cooks and takes orders (writer) having an assistant who only takes orders (reader) during rush hour.</p>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer6);"></div>
+      <h3><span class="icon">📊</span> Database Inventory</h3>
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Database</th>
+            <th>What's Stored</th>
+            <th>Writer Size</th>
+            <th>Reader</th>
+            <th>RDS Proxy</th>
+            <th>~Cost/mo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="row-label">🎬 main</td>
+            <td>Films, cinemas, sessions, bookings, orders</td>
+            <td>db.r5.2xlarge<br><span class="dim">8 vCPU · 64 GB RAM</span></td>
+            <td>db.r5.2xlarge</td>
+            <td>✅ main-proxy</td>
+            <td class="highlight">~$2,200</td>
+          </tr>
+          <tr>
+            <td class="row-label">👤 identity</td>
+            <td>Users, roles, OTP logs, permissions</td>
+            <td>db.r5.xlarge<br><span class="dim">4 vCPU · 32 GB RAM</span></td>
+            <td>db.r5.xlarge</td>
+            <td>✅ identity-proxy</td>
+            <td>~$1,100</td>
+          </tr>
+          <tr>
+            <td class="row-label">💳 payment</td>
+            <td>Transactions, refunds, wallets</td>
+            <td>db.r5.xlarge<br><span class="dim">4 vCPU · 32 GB RAM</span></td>
+            <td>db.r5.xlarge</td>
+            <td>✅ payment-proxy</td>
+            <td>~$1,100</td>
+          </tr>
+          <tr>
+            <td class="row-label">🍿 fb</td>
+            <td>Menu items, F&B orders, kiosk data</td>
+            <td>db.r5.large<br><span class="dim">2 vCPU · 16 GB RAM</span></td>
+            <td>db.r5.large</td>
+            <td>✅ fb-proxy</td>
+            <td>~$350</td>
+          </tr>
+          <tr>
+            <td class="row-label">🎁 offer</td>
+            <td>Promos, vouchers, discounts</td>
+            <td>db.r5.large</td>
+            <td>db.r5.large</td>
+            <td>✅ offer-proxy</td>
+            <td>~$350</td>
+          </tr>
+          <tr>
+            <td class="row-label">📧 notification</td>
+            <td>Notification logs, templates</td>
+            <td>db.r5.large</td>
+            <td>❌ None</td>
+            <td>✅ notification-proxy</td>
+            <td>~$175</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer6);"></div>
+      <h3><span class="icon">🔗</span> RDS Proxy — The Connection Bouncer ($~650/mo extra)</h3>
+      <p>When 39 containers each open 10 database connections, that's 390 connections. Databases have a limit and each connection uses memory. <strong>RDS Proxy</strong> sits in between and pools connections — 390 app connections become ~80 actual DB connections. Saves database RAM and prevents connection exhaustion during traffic spikes.</p>
+    </div>
+  </div>
+  <div class="cost-callout">
+    <span class="price red">$5,275</span>
+    <span class="detail">
+      <strong>#1 cost item (19% of total bill).</strong> The main database alone (db.r5.2xlarge writer + reader) costs ~$2,200/month. 
+      Potential savings: <strong>switch to Graviton (r6g) for ~20% savings</strong>, or use Aurora Serverless v2 for dev/staging to only pay when queries run. 
+      Also: Identity & Payment may be over-provisioned at r5.xlarge ($1,100 each) — worth checking CPU utilization.
+    </span>
+  </div>
+</section>
+
+<!-- =========== LAYER 7: REDIS =========== -->
+<section class="layer" id="layer-redis">
+  <span class="layer-badge" style="background:rgba(239,68,68,.12); color:var(--layer7); border:1px solid rgba(239,68,68,.3);">
+    <span style="font-size:1.2rem">⚡</span> Layer 7 — The Sticky Notes
+  </span>
+  <h2 class="layer-title">ElastiCache Redis — Lightning-Fast Memory Cache</h2>
+  <p class="layer-subtitle">Redis stores temporary data in RAM (not disk). Reads happen in under 1 millisecond. Used for caching, job queues, session storage, and real-time features.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer7);"></div>
+      <h3><span class="icon">📝</span> In Plain English</h3>
+      <p>Database = filing cabinet (reliable but slow to search). Redis = sticky notes on your monitor (instant to read but you can't store everything there, and they fall off when the power goes out).</p>
+      <p class="mt-1"><strong>Real examples:</strong></p>
+      <ul>
+        <li><strong>Seat locked for 5 min</strong> — stored in Redis with auto-expiry. Faster than a DB query to check.</li>
+        <li><strong>"This IP made 99 requests this minute"</strong> — rate limit counter in Redis</li>
+        <li><strong>"Send booking confirmation email"</strong> — job sitting in a Redis queue, waiting for notification service to pick it up</li>
+      </ul>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer7);"></div>
+      <h3><span class="icon">📋</span> 9 Redis Clusters — Why So Many?</h3>
+      <ul>
+        <li><strong>Main</strong> (r5.large, 13 GB) — Seat locks + Bull job queues (the busiest)</li>
+        <li><strong>Notification</strong> (r5.large, 13 GB) — Email/push/SMS job queues</li>
+        <li><strong>Gateway</strong> (t3.medium, 3 GB) — Rate limiting counters + JWT cache</li>
+        <li><strong>Identity</strong> (t3.medium) — OTP codes (4-digit, 5-min TTL)</li>
+        <li><strong>Payment</strong> (t3.medium) — Real-time payment status events (Pub/Sub)</li>
+        <li><strong>Offer</strong> (t3.medium) — Promo code rules cache</li>
+        <li><strong>F&B</strong> (t3.medium) — Cart items, kiosk sessions</li>
+        <li><strong>Shared</strong> (t3.medium) — Cross-service config / feature flags</li>
+        <li><strong>Bulk Refund</strong> (t3.medium) — Mass refund processing queue</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cost-callout">
+    <span class="price orange">$717</span>
+    <span class="detail">
+      <strong>Reasonable.</strong> 9 clusters is a lot — but Redis is cheap. The 2 larger instances (r5.large at ~$130/mo each) handle the heaviest queues. 
+      The 7 smaller t3.medium (~$65/mo each) could potentially be <strong>consolidated to 3 shared instances</strong> to save ~$260/month with minimal risk.
+    </span>
+  </div>
+</section>
+
+<!-- =========== LAYER 8: VPC =========== -->
+<section class="layer" id="layer-vpc">
+  <span class="layer-badge" style="background:rgba(236,72,153,.12); color:var(--layer8); border:1px solid rgba(236,72,153,.3);">
+    <span style="font-size:1.2rem">🏗️</span> The Foundation — The Building
+  </span>
+  <h2 class="layer-title">VPC — Virtual Private Cloud</h2>
+  <p class="layer-subtitle">Everything above lives inside this private network. It's your rented building in the AWS data center. You control every door, window, and wall.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer8);"></div>
+      <h3><span class="icon">🏢</span> In Plain English</h3>
+      <p>Imagine a 3-story office building with security at every floor:</p>
+      <ul>
+        <li><strong>Ground Floor (Public Subnets)</strong> — The reception area. Visitors (internet traffic) can enter here. Load balancers sit here.</li>
+        <li><strong>1st Floor (NAT/App Subnets)</strong> — The offices. Your containers (ECS) work here. They can call out to the internet (via the ground-floor phone = NAT Gateway) but nobody from outside can walk in.</li>
+        <li><strong>Basement (Private Subnets)</strong> — The vault. Databases and Redis live here. No internet access at all. Only the 1st floor offices can reach the basement.</li>
+      </ul>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer8);"></div>
+      <h3><span class="icon">🏗️</span> Muvi's VPC Layout</h3>
+      <div class="diagram" style="font-size:0.75rem;">
+<span class="hl">Muvi-VPC (10.230.0.0/16)</span>                        Region: eu-central-1 (Frankfurt)
+┌───────────────────────────────────────────────────────────────────────┐
+│                                                                       │
+│  <span class="g">PUBLIC SUBNETS</span>     (Internet ↔ here)                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │ 10.230.1.0   │  │ 10.230.2.0   │  │ 10.230.3.0   │               │
+│  │    AZ-a      │  │    AZ-b      │  │    AZ-c      │               │
+│  │ <span class="c">ALBs</span>, <span class="o">NAT GW</span> │  │ <span class="c">ALBs</span>         │  │ <span class="c">ALBs</span>         │               │
+│  └──────────────┘  └──────────────┘  └──────────────┘               │
+│          │ Health traffic only           ▲ Internet outbound         │
+│          ▼                               │ (via NAT Gateway)         │
+│  <span class="y">NAT / APP SUBNETS</span>  (Outbound only)                                   │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │ 10.230.4.0   │  │ 10.230.5.0   │  │ 10.230.6.0   │               │
+│  │    AZ-a      │  │    AZ-b      │  │    AZ-c      │               │
+│  │ <span class="hl">ECS Tasks</span>    │  │ <span class="hl">ECS Tasks</span>    │  │ <span class="hl">ECS Tasks</span>    │               │
+│  └──────────────┘  └──────────────┘  └──────────────┘               │
+│          │ DB/Redis queries only                                      │
+│          ▼                                                            │
+│  <span class="r">PRIVATE SUBNETS</span>    (No internet. Period.)                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐               │
+│  │ 10.230.7.0   │  │ 10.230.8.0   │  │ 10.230.9.0   │               │
+│  │    AZ-a      │  │    AZ-b      │  │    AZ-c      │               │
+│  │ <span class="r">Aurora, Redis</span> │  │ <span class="r">Aurora, Redis</span> │  │ <span class="r">Aurora, Redis</span> │               │
+│  └──────────────┘  └──────────────┘  └──────────────┘               │
+│                                                                       │
+└───────────────────────────────────────────────────────────────────────┘</div>
+    </div>
+    <div class="explain-card full-width">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--layer8);"></div>
+      <h3><span class="icon">💵</span> Cost Breakdown — $627/month</h3>
+      <p>The VPC itself is <strong>free</strong>. What costs money:</p>
+      <ul>
+        <li><strong>NAT Gateway</strong> — $35/month fixed + $0.045 per GB of outbound data. Every time your containers call Vista API, HyperPay, SendGrid, etc., data goes through the NAT Gateway. ~$200/month in data transfer.</li>
+        <li><strong>VPC Endpoints (Datadog PrivateLink)</strong> — $8/month per endpoint × 12 Datadog endpoints = ~$96/month. These create private tunnels to Datadog so logs don't go through the NAT Gateway (which would cost even more).</li>
+        <li><strong>Elastic IPs</strong> — $3.60/month for the NAT Gateway's public IP</li>
+        <li><strong>Data transfer between AZs</strong> — $0.01/GB for traffic crossing availability zones</li>
+      </ul>
+      <div class="cost-callout">
+        <span class="price orange">$627</span>
+        <span class="detail">
+          <strong>$627 for networking is moderate.</strong> The Datadog Private Link endpoints ($96) could be removed if you switch to CloudWatch-only monitoring. 
+          The NAT Gateway data transfer is unavoidable — your services need to call external APIs (Vista, payment gateways, SMS providers).
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="insight mt-1">
+    <span class="icon">🔒</span>
+    <div class="text">
+      <strong>Security Groups (~40 of them)</strong> — Each resource has a "door lock" that only opens for specific traffic. For example, the RDS security group only allows connections from the RDS Proxy security group (port 5432). The Proxy SG only allows from ECS SGs. This chain ensures databases are unreachable from the internet even if everything else is misconfigured.
+    </div>
+  </div>
+</section>
+
+<!-- =========== STORAGE =========== -->
+<section class="layer" id="layer-storage">
+  <span class="layer-badge" style="background:rgba(6,182,212,.12); color:var(--cyan); border:1px solid rgba(6,182,212,.3);">
+    <span style="font-size:1.2rem">📁</span> Storage Layer
+  </span>
+  <h2 class="layer-title">S3 — File Storage (38 Buckets)</h2>
+  <p class="layer-subtitle">S3 is like Google Drive for your application — unlimited file storage at pennies per gigabyte. Stores everything from movie posters to build artifacts to audit logs.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--cyan);"></div>
+      <h3><span class="icon">🎬</span> Application Buckets (6) — What Users See</h3>
+      <ul>
+        <li><strong>muvi-media-prod</strong> — Film posters, banners, cinema photos. Served via CloudFront CDN at media.prod.muvicinemas.com</li>
+        <li><strong>muvi-cms-prod</strong> — The CMS dashboard (React app). Just static HTML/JS/CSS files served as a website</li>
+        <li><strong>muvi-menu-public</strong> — F&B menu item images for kiosk displays</li>
+        <li><strong>3 DR replicas</strong> in Ireland for disaster recovery</li>
+      </ul>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--cyan);"></div>
+      <h3><span class="icon">⚙️</span> Infrastructure Buckets (32) — Behind the Scenes</h3>
+      <ul>
+        <li><strong>11 CI/CD artifact buckets</strong> — Docker build outputs (gitlab-muvi-*)</li>
+        <li><strong>8 logging buckets</strong> — ALB access logs, WAF logs, CloudTrail audit trail</li>
+        <li><strong>5 infra buckets</strong> — Terraform state, CloudFormation templates</li>
+        <li><strong>8 other</strong> — Athena queries, security scans, cost reports, Datadog archives</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cost-callout">
+    <span class="price orange">$1,212</span>
+    <span class="detail">
+      <strong>Higher than expected for S3.</strong> Most of this is storage volume (media assets, DR replicas, logs accumulating over time) + S3 replication costs for DR buckets. 
+      <strong>Quick win:</strong> Add lifecycle policies to delete old build artifacts and logs after 90 days — could save $200-400/month.
+    </span>
+  </div>
+</section>
+
+<!-- =========== SERVERLESS =========== -->
+<section class="layer" id="layer-serverless">
+  <span class="layer-badge" style="background:rgba(168,85,247,.12); color:var(--purple); border:1px solid rgba(168,85,247,.3);">
+    <span style="font-size:1.2rem">⏰</span> Serverless Layer
+  </span>
+  <h2 class="layer-title">Lambda + EventBridge — The Scheduled Workers</h2>
+  <p class="layer-subtitle">32 Lambda functions run on schedules — syncing data from Vista, cleaning up expired bookings, sending birthday notifications. They only cost money when they run.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--purple);"></div>
+      <h3><span class="icon">👷</span> In Plain English</h3>
+      <p>Instead of hiring full-time employees (ECS containers running 24/7) to check the mailbox every 20 minutes, you hire day laborers (Lambda functions) who show up, do the work, and leave. You only pay for the 3 seconds they actually work.</p>
+      <p class="mt-1"><strong>EventBridge</strong> is the alarm clock that wakes them up: "Every 20 minutes, run sync-sessions."</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--purple);"></div>
+      <h3><span class="icon">📋</span> Key Functions</h3>
+      <ul>
+        <li><strong>Vista Sync (6)</strong> — Every 20-30 min, pulls films/sessions/genres from Vista and updates the database. Without these, the app shows stale data.</li>
+        <li><strong>Cleanup (7)</strong> — Midnight: delete expired orders, old sessions, old notifications. Keeps the database lean.</li>
+        <li><strong>Operations (4)</strong> — Cancel unpaid bookings (every 10 min), send "movie starts soon" reminders.</li>
+        <li><strong>Auto-Scaling (5)</strong> — Python scripts that scale ECS tasks and RDS on weekends/peak hours.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cost-callout green">
+    <span class="price green">$0.03</span>
+    <span class="detail">
+      <strong>Essentially free.</strong> Lambda is incredibly cheap for short-running scheduled tasks. 32 functions running a few seconds each, several times a day = pennies. This is one of the best cost-to-value services in the stack.
+    </span>
+  </div>
+</section>
+
+<!-- =========== CI/CD =========== -->
+<section class="layer" id="layer-cicd">
+  <span class="layer-badge" style="background:rgba(34,197,94,.12); color:var(--green); border:1px solid rgba(34,197,94,.3);">
+    <span style="font-size:1.2rem">🔄</span> Deployment Pipeline
+  </span>
+  <h2 class="layer-title">CI/CD — How Code Gets Deployed</h2>
+  <p class="layer-subtitle">9 CodePipelines automate the journey from code commit to running in production. Each has a manual approval gate so nothing goes live without a human click.</p>
+
+  <div class="flow-container">
+    <div style="text-align:center; margin-bottom:1rem; font-size:0.9rem; color:var(--muted);">What happens when a developer pushes code:</div>
+    <div class="flow-row" style="justify-content:center;">
+      <div class="flow-box" style="background:rgba(99,102,241,.1); border-color:var(--accent); color:var(--accent2);">
+        👨‍💻 Developer pushes to GitLab
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box" style="background:rgba(234,179,8,.1); border-color:var(--yellow); color:var(--yellow);">
+        ⏸️ Manual Approval<br><small style="color:var(--muted)">Human clicks "Approve"</small>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box" style="background:rgba(59,130,246,.1); border-color:var(--blue); color:var(--blue);">
+        🔨 CodeBuild<br><small style="color:var(--muted)">Build Docker image</small>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box" style="background:rgba(168,85,247,.1); border-color:var(--purple); color:var(--purple);">
+        ☁️ Azure Blob Copy<br><small style="color:var(--muted)">Backup to Azure</small>
+      </div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box" style="background:rgba(34,197,94,.1); border-color:var(--green); color:var(--green);">
+        🚀 ECS Deploy<br><small style="color:var(--muted)">Rolling update</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="cost-callout green mt-2">
+    <span class="price green">$2</span>
+    <span class="detail">
+      <strong>Almost free.</strong> CodePipeline: $1/pipeline/month (but free for the first pipeline). CodeBuild charges per minute of build time. Total: ~$2/month. The ECR storage (Docker images) costs $34/month for all 8 repos.
+    </span>
+  </div>
+</section>
+
+<!-- =========== MONITORING =========== -->
+<section class="layer" id="layer-monitoring">
+  <span class="layer-badge" style="background:rgba(234,179,8,.12); color:var(--yellow); border:1px solid rgba(234,179,8,.3);">
+    <span style="font-size:1.2rem">📊</span> Monitoring & Security
+  </span>
+  <h2 class="layer-title">CloudWatch + Datadog + Security Services</h2>
+  <p class="layer-subtitle">The monitoring stack is the 2nd highest cost after databases. CloudWatch ($3,766) + Datadog ($1,080) + GuardDuty ($985) + DevOps Guru ($128) + Inspector ($69) + Support ($1,791) = $7,819/month.</p>
+
+  <div class="layer-content">
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--yellow);"></div>
+      <h3><span class="icon">📺</span> In Plain English</h3>
+      <p>CloudWatch = CCTV system that records everything your containers do. Datadog = a fancy AI-powered security room that analyzes the footage in real-time and alerts you. GuardDuty = an alarm system that detects break-in attempts. AWS Support = having an AWS engineer on speed dial.</p>
+    </div>
+    <div class="explain-card">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:var(--yellow);"></div>
+      <h3><span class="icon">💸</span> Why Is Monitoring $7,819/mo?</h3>
+      <ul>
+        <li><strong>CloudWatch ($3,766)</strong> — This is suspiciously high. Likely caused by Datadog sidecars writing verbose logs to CloudWatch AND Datadog simultaneously (double-logging).</li>
+        <li><strong>AWS Support ($1,791)</strong> — Business Support plan (7% of monthly bill). Gives 24/7 phone access to AWS engineers.</li>
+        <li><strong>Datadog Pro ($1,080)</strong> — External monitoring tool billed through AWS Marketplace.</li>
+        <li><strong>GuardDuty ($985)</strong> — Threat detection scanning all VPC flow logs, DNS logs, CloudTrail events.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="cost-callout">
+    <span class="price red">$7,819</span>
+    <span class="detail">
+      <strong>28% of total bill is monitoring/security/support.</strong> This is too high. Quick wins:<br>
+      • Reduce CloudWatch log retention from unlimited to 30 days (saves ~$1,000/month)<br>
+      • Stop Datadog sidecars from writing to CloudWatch (pick one: Datadog OR CloudWatch, not both)<br>
+      • Review if Business Support ($1,791) is actually being used — Developer plan is $29/month
+    </span>
+  </div>
+</section>
+
+<!-- =========== UAT PLAN =========== -->
+<section class="layer" id="uat">
+  <div class="section-header">
+    <h2>UAT Replication Plan</h2>
+    <p>What it takes to recreate this in me-central-1 (UAE) for load testing</p>
+  </div>
+
+  <div class="savings-banner">
+    <div class="big">$27,873 → $650</div>
+    <p>Same architecture, right-sized for UAT. <strong>97.7% savings.</strong></p>
+  </div>
+
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Component</th>
+        <th>Production (Frankfurt)</th>
+        <th>UAT (UAE)</th>
+        <th>Savings</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="row-label">ECS Fargate</td>
+        <td>39 tasks · 66 vCPU · $2,704/mo</td>
+        <td class="highlight">8 tasks · 4.5 vCPU · ~$150/mo</td>
+        <td>$2,554 (94%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">Aurora PostgreSQL</td>
+        <td>6 clusters · 12 instances · $5,275/mo</td>
+        <td class="highlight">6 clusters · 6 instances (no readers) · ~$1,100/mo</td>
+        <td>$4,175 (79%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">RDS Proxy</td>
+        <td>6 proxies · ~$650/mo</td>
+        <td class="highlight">Skip entirely · $0</td>
+        <td>$650 (100%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">Redis</td>
+        <td>9 clusters · $717/mo</td>
+        <td class="highlight">3 clusters (shared) · ~$100/mo</td>
+        <td>$617 (86%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">CloudFront</td>
+        <td>9 distributions · $3,529/mo</td>
+        <td class="highlight">3 distributions · ~$30/mo</td>
+        <td>$3,499 (99%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">CloudWatch + Monitoring</td>
+        <td>Datadog + CloudWatch · $4,846/mo</td>
+        <td class="highlight">CloudWatch only · ~$50/mo</td>
+        <td>$4,796 (99%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">WAF</td>
+        <td>13 rules · $555/mo</td>
+        <td class="highlight">Basic rate limiting · ~$20/mo</td>
+        <td>$535 (96%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">NAT Gateway + VPC</td>
+        <td>$627/mo</td>
+        <td class="highlight">~$50/mo (less data transfer)</td>
+        <td>$577 (92%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">Support + Security</td>
+        <td>Business Support + GuardDuty · $2,776/mo</td>
+        <td class="highlight">Developer plan · ~$29/mo</td>
+        <td>$2,747 (99%)</td>
+      </tr>
+      <tr>
+        <td class="row-label">Other (Backup, S3, etc.)</td>
+        <td>$3,919/mo</td>
+        <td class="highlight">~$121/mo</td>
+        <td>$3,798 (97%)</td>
+      </tr>
+      <tr style="font-weight:800; font-size:1.05rem;">
+        <td>TOTAL</td>
+        <td style="color:var(--red);">$27,873/mo</td>
+        <td style="color:var(--green);">~$650/mo</td>
+        <td style="color:var(--green);">$27,223 saved</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="insight mt-2">
+    <span class="icon">💡</span>
+    <div class="text">
+      <strong>For a 1-week load test</strong>, the UAT cost would be approximately <strong>$650 ÷ 4 = ~$163</strong>. You can further reduce this by scaling ECS to 0 when not testing. The databases will be the main cost since they run 24/7 regardless of traffic.
+    </div>
+  </div>
+</section>
+
+<!-- =========== FOOTER =========== -->
+<footer class="footer">
+  <p>Generated from live AWS CLI discovery of production account <code>011566070219</code> · Region: eu-central-1 (Frankfurt)</p>
+  <p style="margin-top:0.5rem;">Cost data from AWS Cost Explorer · January 2026 billing period</p>
+  <p style="margin-top:1rem; color:var(--accent2);">Muvi Cinemas Infrastructure Explorer · February 2025</p>
+</footer>
+
+<script>
+// Sticky nav highlighting
+const sections = document.querySelectorAll('.layer[id], .cost-overview[id], section[id]');
+const tocLinks = document.querySelectorAll('.toc a');
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(link => link.classList.remove('active'));
+      const activeLink = document.querySelector(`.toc a[href="#${entry.target.id}"]`);
+      if (activeLink) activeLink.classList.add('active');
+    }
+  });
+}, { threshold: 0.15, rootMargin: '-80px 0px -60% 0px' });
+
+sections.forEach(section => observer.observe(section));
+
+// Smooth scrolling
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      const yOffset = -60;
+      const y = target.getBoundingClientRect().top + window.pageYOffset + yOffset;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+  });
+});
+
+// Animate cost bars on scroll
+const costBars = document.querySelectorAll('.cost-bar-fill');
+const barObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.width = entry.target.style.width;
+    }
+  });
+}, { threshold: 0.1 });
+costBars.forEach(bar => barObserver.observe(bar));
+</script>
+</body>
+</html>
