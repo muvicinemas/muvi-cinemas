@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Muvi Cinemas — UAE Clean Build Plan (Prod Mirror)</title>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d; --text: #e6edf3;
+  --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --red: #f85149;
+  --orange: #d29922; --purple: #bc8cff; --pink: #f778ba; --cyan: #39d2c0;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+.container { max-width: 1240px; margin: 0 auto; padding: 20px; }
+
+/* Hero */
+.hero { background: linear-gradient(135deg, #0a1628 0%, #102040 50%, #0a2a1a 100%); border: 2px solid var(--green); border-radius: 12px; padding: 40px; margin-bottom: 30px; text-align: center; }
+.hero h1 { font-size: 2.2em; margin-bottom: 10px; background: linear-gradient(90deg, var(--green), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.hero .subtitle { color: var(--muted); font-size: 1.1em; }
+.hero .date { color: var(--orange); margin-top: 8px; font-weight: 600; }
+
+/* Sticky progress */
+.progress-bar { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 15px 20px; margin-bottom: 25px; position: sticky; top: 10px; z-index: 100; }
+.progress-bar h3 { margin-bottom: 8px; font-size: 0.95em; }
+.bar-track { background: var(--border); border-radius: 6px; height: 22px; overflow: hidden; }
+.bar-fill { background: linear-gradient(90deg, var(--green), var(--cyan)); height: 100%; border-radius: 6px; transition: width 0.5s ease; display: flex; align-items: center; justify-content: center; font-size: 0.78em; font-weight: bold; color: #000; }
+.progress-stats { display: flex; gap: 20px; margin-top: 8px; font-size: 0.85em; color: var(--muted); }
+
+/* Architecture */
+.arch { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 25px; margin-bottom: 25px; }
+.arch h2 { color: var(--accent); margin-bottom: 12px; }
+.arch pre { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 18px; font-size: 0.72em; overflow-x: auto; line-height: 1.4; color: var(--green); }
+
+/* Phase */
+.phase { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 18px; overflow: hidden; }
+.phase-header { padding: 18px 20px; cursor: pointer; display: flex; align-items: center; gap: 14px; border-bottom: 1px solid transparent; }
+.phase-header:hover { background: rgba(88, 166, 255, 0.04); }
+.phase.open .phase-header { border-bottom-color: var(--border); }
+.phase-num { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9em; flex-shrink: 0; color: #000; }
+.num-red { background: var(--red); }
+.num-blue { background: var(--accent); }
+.num-purple { background: var(--purple); }
+.num-orange { background: var(--orange); }
+.num-green { background: var(--green); }
+.num-pink { background: var(--pink); }
+.num-cyan { background: var(--cyan); }
+.phase-header h3 { flex: 1; font-size: 1.05em; }
+.phase-meta { display: flex; gap: 14px; font-size: 0.82em; color: var(--muted); }
+.phase-chevron { color: var(--muted); transition: transform 0.3s; font-size: 0.85em; }
+.phase.open .phase-chevron { transform: rotate(90deg); }
+.phase-body { padding: 0 20px 20px; display: none; }
+.phase.open .phase-body { display: block; }
+
+/* Step */
+.step { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin: 10px 0; }
+.step-header { display: flex; align-items: flex-start; gap: 11px; }
+.cb { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 2px; transition: all 0.2s; }
+.cb:hover { border-color: var(--accent); }
+.cb.checked { background: var(--green); border-color: var(--green); }
+.cb.checked::after { content: '✓'; color: #000; font-weight: bold; font-size: 13px; }
+.step-content { flex: 1; }
+.step-title { font-weight: 600; margin-bottom: 3px; }
+.step-why { color: var(--orange); font-size: 0.83em; margin: 5px 0; font-style: italic; }
+.step-how { margin-top: 8px; }
+.step-how summary { color: var(--accent); cursor: pointer; font-size: 0.88em; font-weight: 600; }
+.step-how pre { background: #161b22; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-top: 8px; font-size: 0.8em; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+.tags { display: flex; gap: 7px; margin-top: 7px; flex-wrap: wrap; }
+.tag { font-size: 0.73em; padding: 2px 8px; border-radius: 4px; }
+.t-time { background: #1a2332; color: var(--accent); }
+.t-cost { background: #1a2e1a; color: var(--green); }
+.t-risk { background: #2e1a1a; color: var(--red); }
+.t-prereq { background: #2e2a1a; color: var(--orange); }
+
+/* Tables */
+table.t { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.9em; }
+table.t th { background: #1c2333; color: var(--accent); padding: 9px 12px; text-align: left; border: 1px solid var(--border); }
+table.t td { padding: 9px 12px; border: 1px solid var(--border); }
+table.t tr:hover { background: rgba(88,166,255,0.03); }
+
+/* Boxes */
+.warn { background: #2e1a1a; border: 1px solid var(--red); border-radius: 8px; padding: 14px; margin: 12px 0; }
+.info { background: #1a2332; border: 1px solid var(--accent); border-radius: 8px; padding: 14px; margin: 12px 0; }
+.ok { background: #0d2818; border: 1px solid var(--green); border-radius: 8px; padding: 14px; margin: 12px 0; }
+.note { background: #1a1a2e; border: 1px solid var(--purple); border-radius: 8px; padding: 14px; margin: 12px 0; }
+
+/* TOC */
+.toc { position: fixed; right: 20px; top: 70px; width: 210px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 0.78em; max-height: calc(100vh - 90px); overflow-y: auto; }
+.toc h4 { color: var(--accent); margin-bottom: 8px; }
+.toc a { color: var(--muted); text-decoration: none; display: block; padding: 3px 0; }
+.toc a:hover { color: var(--accent); }
+@media (max-width: 1500px) { .toc { display: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- HERO -->
+<div class="hero">
+  <h1>🇦🇪 UAE Clean Build Plan</h1>
+  <p class="subtitle">Demolish existing UAE clutter → Mirror Production (Account 2) as-is → Load test</p>
+  <p class="date">February 23, 2026 — Account 1 (739991759290) me-central-1</p>
+</div>
+
+<!-- WHAT WE'RE DOING -->
+<div class="arch">
+  <h2>Mission</h2>
+  <p style="margin-bottom:15px;">Build a <strong>1:1 architecture mirror</strong> of Production (Account 2, eu-central-1) inside UAE (Account 1, me-central-1) for load testing. Strip out all existing UAE clutter first. Keep existing databases if useable.</p>
+
+  <h3 style="margin:15px 0 10px; color:var(--orange);">Production Architecture to Mirror</h3>
+  <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PRODUCTION (Account 2 · eu-central-1 · $27,873/mo)                        │
+│                                                                             │
+│  CloudFront → Muvi-Prod ALB (public, :80) → Gateway TG (:80/ip)           │
+│  CloudFront → Muvi-Website-ALB (public, :80) → Website TG (:80/ip)        │
+│                                                                             │
+│  Internal ALB: Muvi-Microservices-Prod (gRPC, HTTPS)                       │
+│    :5002 → main-grpc TG        :5003 → notification-grpc TG               │
+│    :5004 → payment-grpc TG     :5005 → identity TG                        │
+│    :5006 → fb-grpc TG          :5007 → offer-grpc TG                      │
+│                                                                             │
+│  ECS Cluster: Muvi-Production (FARGATE)                                    │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ Service          │ Tasks │ CPU  │ Mem   │ Port │ Notes                │ │
+│  │──────────────────│───────│──────│───────│──────│──────────────────────│ │
+│  │ gateway          │   7   │ 1024 │ 2048  │  80  │ Public ALB           │ │
+│  │ main-grpc        │   7   │ 4096 │ 8192  │  80  │ Internal :5002       │ │
+│  │ identity-grpc    │   7   │ 1024 │ 2048  │  80  │ Internal :5005       │ │
+│  │ payment-grpc     │   3   │ 1024 │ 2048  │  80  │ Internal :5004       │ │
+│  │ fb-muvi          │   3   │ 2048 │ 4096  │  80  │ Internal :5006       │ │
+│  │ notification-grpc│   2   │ 1024 │ 2048  │  80  │ Internal :5003       │ │
+│  │ offer-muvi       │   3   │ 2048 │ 4096  │  80  │ Internal :5007       │ │
+│  │ website          │   5   │ 1024 │ 2048  │  80  │ Website ALB          │ │
+│  │ ticket           │   2   │ 1024 │ 2048  │  80  │ Internal/ticket TG   │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  Databases: 7 Aurora PostgreSQL 14.x clusters + 6 RDS Proxies             │
+│    main, identity, payment, fb, notification, offer                        │
+│  Redis: 9 clusters (dedicated per service + shared + bulk-refund)          │
+│  Cloud Map: "internal" namespace (gateway, website)                        │
+│  WAF: OTP-ACL on public ALB                                                │
+│  S3: muvi-media-prod, muvi-cms-prod, muvi-menu-public                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+  </pre>
+
+  <h3 style="margin:15px 0 10px; color:var(--green);">UAE UAT Target (What We'll Build)</h3>
+  <pre>
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  UAE UAT (Account 1 · me-central-1 · Target: ~$350-500/mo)                 │
+│                                                                             │
+│  CloudFront → Muvi-UAT ALB (public, :80) → Gateway TG (:80/ip)            │
+│  CloudFront → Muvi-Website-UAT ALB (public, :80) → Website TG (:80/ip)    │
+│                                                                             │
+│  Internal ALB: Muvi-Internal-UAT (gRPC, HTTP)                              │
+│    :5002 → main-grpc TG        :5003 → notification-grpc TG               │
+│    :5004 → payment-grpc TG     :5005 → identity TG                        │
+│    :5006 → fb-grpc TG          :5007 → offer-grpc TG                      │
+│                                                                             │
+│  ECS Cluster: Muvi-UAT (FARGATE) — 1 task each (scale up for load tests)  │
+│  ┌────────────────────────────────────────────────────────────────────────┐ │
+│  │ gateway (1024/2048)  │ main-grpc (4096/8192) │ identity (1024/2048)   │ │
+│  │ payment (1024/2048)  │ fb (2048/4096)        │ notification(1024/2048)│ │
+│  │ offer (2048/4096)    │ website (1024/2048)   │ ticket (1024/2048)     │ │
+│  └────────────────────────────────────────────────────────────────────────┘ │
+│                                                                             │
+│  PostgreSQL 14: 6 × db.t3.medium (main, identity, payment, fb, notif, offer)│
+│  Redis: 4 clusters (gateway, main, shared, fb) — cache.t3.small           │
+│  Cloud Map: uat.internal (gateway, website)                                │
+│  S3: muvi-media-uat, muvi-cms-uat                                          │
+│  WAF: OTP-ACL-UAT rate limiting                                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+  </pre>
+</div>
+
+<!-- WHAT EXISTS NOW (to demolish) -->
+<div class="arch">
+  <h2>Current UAE Inventory (What Exists Now)</h2>
+  <table class="t">
+    <tr><th>Resource</th><th>Details</th><th>Action</th></tr>
+    <tr><td>ECS Cluster</td><td><code>Muvi-Cluster</code> — 6 services, 11 tasks (gateway×2, main×2, identity×2, payment×2, notification×2, website×1)</td><td style="color:var(--red)">DELETE all services → DELETE cluster</td></tr>
+    <tr><td>ALBs</td><td>Muvi-UAT (public, internet-facing) + 3 test ALBs (agha, sample-v1, sample-v2)</td><td style="color:var(--red)">DELETE all 4 ALBs</td></tr>
+    <tr><td>Target Groups</td><td>6 TGs (muvi-gateway-tg, muvi-website-tg, agha, sample×2, targetgroup-task-aaa)</td><td style="color:var(--red)">DELETE all 6</td></tr>
+    <tr><td>Redis</td><td><code>muvi-uat-redis-uae-classic-001</code> (cache.t3.small)</td><td style="color:var(--red)">DELETE (will create fresh ones)</td></tr>
+    <tr><td>Aurora Cluster</td><td><code>uatclusterdb</code> — 2 instances (db.t3.medium)</td><td style="color:var(--orange)">KEEP — evaluate data</td></tr>
+    <tr><td>Stopped RDS</td><td>6× temp-muvi-uat-* (main 2TB!, fb 200GB, identity 200GB, payment 200GB, notification 200GB, offer 20GB)</td><td style="color:var(--orange)">EVALUATE — may have usable data</td></tr>
+    <tr><td>Cloud Map</td><td><code>uat.internal</code> (ns-jgtxuknznq3siizp) — 5 services</td><td style="color:var(--red)">DELETE services, KEEP namespace (reuse)</td></tr>
+    <tr><td>ECR Repos</td><td>8 repos (6 service + 2 test)</td><td style="color:var(--green)">KEEP service repos (reuse)</td></tr>
+    <tr><td>SSM Params</td><td>56 params in /uat/*</td><td style="color:var(--orange)">UPDATE with correct UAE values</td></tr>
+    <tr><td>Security Groups</td><td>5 SGs in main VPC</td><td style="color:var(--red)">DELETE test SGs, CREATE proper ones</td></tr>
+    <tr><td>NAT Gateways</td><td>3 (2 in main VPC, 1 in agha-vpc)</td><td style="color:var(--orange)">KEEP 1, DELETE 2 (save $66/mo)</td></tr>
+    <tr><td>VPC Peering</td><td>2 peering connections to Frankfurt eu-central-1</td><td style="color:var(--red)">DELETE (no longer needed)</td></tr>
+    <tr><td>VPCs</td><td>4 VPCs: sample-film(10.60), default(172.31), Database-vpc(10.50), agha-vpc(10.0)</td><td style="color:var(--orange)">KEEP main VPC + DB VPC, DELETE agha</td></tr>
+    <tr><td>CloudFront</td><td>12 distributions (mixed origins — Frankfurt, UAE, Ireland, US)</td><td style="color:var(--orange)">UPDATE origins to new UAE ALBs</td></tr>
+  </table>
+</div>
+
+<!-- PROGRESS BAR -->
+<div class="progress-bar" id="progressBar">
+  <h3>Overall Progress — <span id="phaseName">Not started</span></h3>
+  <div class="bar-track"><div class="bar-fill" id="progressFill" style="width:0%">0%</div></div>
+  <div class="progress-stats">
+    <span>Done: <strong id="completedCount">0</strong></span>
+    <span>Left: <strong id="remainingCount">0</strong></span>
+    <span>Total: <strong id="totalCount">0</strong></span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 1: TEARDOWN -->
+<!-- ============================================================ -->
+<div class="phase open" id="phase1">
+  <div class="phase-header" onclick="togglePhase('phase1')">
+    <div class="phase-num num-red">1</div>
+    <h3>Teardown — Remove Everything Except Databases</h3>
+    <div class="phase-meta"><span>⏱ 1-2 hours</span><span>💰 Saves ~$450/mo</span><span>⚠️ Low risk</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="warn"><strong>⚠️ Order matters!</strong> Delete in this exact order: ECS services → ALBs → Target Groups → Redis → Cloud Map services → Security Groups → NAT Gateways → VPC Peering. Databases are KEPT.</div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.1 — Scale all ECS services to 0, then delete them</div>
+      <div class="step-why">WHY: Must stop running tasks before deleting services. Deleting the service while tasks run causes drain timeout.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+# Scale all services to 0
+$svcs = @("muvi-gateway-service-mfnabtxa","muvi-identity-uat","muvi-main-uat",
+          "muvi-payment-uat","muvi-notification-uat","muvi-website-uat")
+foreach ($s in $svcs) {
+    aws ecs update-service --cluster Muvi-Cluster --service $s `
+      --desired-count 0 --region me-central-1
+    Write-Host "Scaled to 0: $s"
+}
+Write-Host "Waiting 60s for tasks to drain..."
+Start-Sleep -Seconds 60
+
+# Delete all services
+foreach ($s in $svcs) {
+    aws ecs delete-service --cluster Muvi-Cluster --service $s `
+      --force --region me-central-1
+    Write-Host "Deleted service: $s"
+}
+
+# Delete the cluster (after all services are gone)
+aws ecs delete-cluster --cluster Muvi-Cluster --region me-central-1
+Write-Host "Deleted cluster: Muvi-Cluster"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min + 60s drain</span><span class="tag t-cost">💰 Saves ~$192/mo (compute)</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.2 — Delete all 4 ALBs and their listeners</div>
+      <div class="step-why">WHY: All 4 ALBs point to the old architecture. We'll create fresh ones mirroring production's 3-ALB pattern.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$albs = @("Muvi-UAT","agha-loadbalancer","sample-film-session-alb","sample-film-session-alb-v2")
+foreach ($alb in $albs) {
+    $arn = aws elbv2 describe-load-balancers --names $alb --region me-central-1 `
+      --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>$null
+    if ($arn -and $arn -ne "None") {
+        aws elbv2 delete-load-balancer --load-balancer-arn $arn --region me-central-1
+        Write-Host "Deleted ALB: $alb"
+    }
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span><span class="tag t-cost">💰 Saves ~$72/mo (4 ALBs)</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.3 — Delete all 6 Target Groups</div>
+      <div class="step-why">WHY: Old TGs have wrong port mappings and VPC associations. Clean slate.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$tgs = aws elbv2 describe-target-groups --region me-central-1 `
+  --query 'TargetGroups[].TargetGroupArn' --output json | ConvertFrom-Json
+foreach ($tg in $tgs) {
+    aws elbv2 delete-target-group --target-group-arn $tg --region me-central-1
+    Write-Host "Deleted TG: $tg"
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 2 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-4" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.4 — Delete Redis cluster</div>
+      <div class="step-why">WHY: Single shared Redis (muvi-uat-redis-uae-classic) doesn't match prod's per-service Redis pattern. Delete and recreate properly.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+aws elasticache delete-cache-cluster --cache-cluster-id muvi-uat-redis-uae-classic-001 `
+  --region me-central-1
+Write-Host "Deleting Redis: muvi-uat-redis-uae-classic-001 (~5 min)"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span><span class="tag t-cost">💰 Saves ~$25/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-5" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.5 — Delete Cloud Map service registrations (keep namespace)</div>
+      <div class="step-why">WHY: Old service registrations point to dead ECS tasks. Keep the uat.internal namespace — we'll re-register new services in it.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$services = aws servicediscovery list-services --region me-central-1 `
+  --query 'Services[].Id' --output text
+foreach ($svc in $services.Split("`t")) {
+    # Deregister all instances first
+    $instances = aws servicediscovery list-instances --service-id $svc --region me-central-1 `
+      --query 'Instances[].Id' --output text 2>$null
+    foreach ($inst in $instances.Split("`t")) {
+        if ($inst -and $inst -ne "None") {
+            aws servicediscovery deregister-instance --service-id $svc `
+              --instance-id $inst --region me-central-1
+        }
+    }
+    aws servicediscovery delete-service --id $svc --region me-central-1
+    Write-Host "Deleted Cloud Map service: $svc"
+}
+Write-Host "Namespace uat.internal kept for reuse"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-6" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.6 — Delete VPC Peering connections to Frankfurt</div>
+      <div class="step-why">WHY: These peering connections connected UAE ECS to Frankfurt RDS. We're putting databases in UAE now, so cross-region peering is not needed.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+aws ec2 delete-vpc-peering-connection --vpc-peering-connection-id pcx-0351c9bc3f265a5e1 `
+  --region me-central-1
+aws ec2 delete-vpc-peering-connection --vpc-peering-connection-id pcx-0190f1784ee4c30f6 `
+  --region me-central-1
+Write-Host "Deleted 2 VPC peering connections to Frankfurt"
+
+# Also remove peering routes from route tables
+$rtbs = aws ec2 describe-route-tables --region me-central-1 `
+  --filters "Name=vpc-id,Values=vpc-0ab936370488229bd" `
+  --query 'RouteTables[].RouteTableId' --output text
+foreach ($rt in $rtbs.Split("`t")) {
+    aws ec2 delete-route --route-table-id $rt --destination-cidr-block 10.241.0.0/16 `
+      --region me-central-1 2>$null
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-7" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.7 — Delete agha-vpc NAT Gateway and evaluate deleting agha-vpc entirely</div>
+      <div class="step-why">WHY: agha-vpc (10.0.0.0/16) is a test VPC with its own NAT ($33/mo). If nothing depends on it, delete the whole VPC.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+# Delete NAT in agha-vpc
+aws ec2 delete-nat-gateway --nat-gateway-id nat-05a3575223ded23d0 --region me-central-1
+
+# Check if anything else uses agha-vpc
+aws ec2 describe-instances --region me-central-1 `
+  --filters "Name=vpc-id,Values=vpc-0d1b744f68bdf4ac5" `
+  --query 'Reservations[].Instances[].InstanceId' --output text
+
+# If empty, delete the VPC (must delete subnets, route tables, SGs first)
+# aws ec2 delete-vpc --vpc-id vpc-0d1b744f68bdf4ac5 --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 Saves ~$33/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-8" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.8 — Delete 1 redundant NAT Gateway from main VPC (keep 1 for HA)</div>
+      <div class="step-why">WHY: Main VPC has 2 NATs ($66/mo). For UAT, 1 NAT is sufficient. Prod has multi-AZ NATs for HA, but UAT doesn't need that.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+# Keep nat-049d83ba0d89baf5d (in public-a subnet), delete the other
+aws ec2 delete-nat-gateway --nat-gateway-id nat-045648a9c9b46d2a5 --region me-central-1
+Write-Host "Deleted redundant NAT Gateway in AZ-b"
+
+# Release the Elastic IP (check which EIP was attached)
+# aws ec2 describe-addresses --region me-central-1 --query 'Addresses[?AssociationId==null]'
+# aws ec2 release-address --allocation-id eipalloc-XXXX --region me-central-1
+
+# ⚠️ Update route table for private-b subnet to use the remaining NAT
+$rtbB = aws ec2 describe-route-tables --region me-central-1 `
+  --filters "Name=route.nat-gateway-id,Values=nat-045648a9c9b46d2a5" `
+  --query 'RouteTables[0].RouteTableId' --output text
+aws ec2 replace-route --route-table-id $rtbB --destination-cidr-block 0.0.0.0/0 `
+  --nat-gateway-id nat-049d83ba0d89baf5d --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 Saves ~$33/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="1-9" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">1.9 — Delete test ECR repos (keep 6 service repos)</div>
+      <div class="step-why">WHY: sample-film-session-service and agha-test-a-ecr are test repos. Keep the 6 real service repos for image storage.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+aws ecr delete-repository --repository-name sample-film-session-service --force --region me-central-1
+aws ecr delete-repository --repository-name agha-test-a-ecr --force --region me-central-1
+Write-Host "Deleted 2 test ECR repos. Kept: muvi-gateway-uat, muvi-main-uat, muvi-identity-uat, muvi-payment-uat, muvi-notification-uat, muvi-website-uat"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 2 min</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 1 Result:</strong> Clean slate in UAE. Only databases, the main VPC, 1 NAT, Cloud Map namespace, and 6 ECR repos remain. Saving ~$450/mo from deleted resources.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 2: DATABASE DECISION -->
+<!-- ============================================================ -->
+<div class="phase" id="phase2">
+  <div class="phase-header" onclick="togglePhase('phase2')">
+    <div class="phase-num num-orange">2</div>
+    <h3>Database Decision — Reuse or Build Fresh</h3>
+    <div class="phase-meta"><span>⏱ 2-4 hours</span><span>🎯 6 working databases</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="info">
+      <strong>Current UAE databases:</strong><br>
+      • <strong>Aurora:</strong> uatclusterdb (2 instances, db.t3.medium, RUNNING) — unknown what data it contains<br>
+      • <strong>Stopped RDS:</strong> 6× temp-muvi-uat-* — these have data from the old Frankfurt UAT snapshot. They're stopped so they can be started.<br>
+      <br>
+      <strong>Production uses:</strong> 6 separate Aurora PostgreSQL 14.x clusters (main, identity, payment, fb, notification, offer) + RDS Proxies<br>
+      <strong>UAT needs:</strong> 6 separate RDS PostgreSQL 14 instances (no Aurora needed for UAT — cheaper with standalone RDS)
+    </div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.1 — Check if stopped temp-* databases have usable data</div>
+      <div class="step-why">WHY: These already have UAT data from previous snapshots. If data is good, just start them up instead of building from scratch.</div>
+      <details class="step-how"><summary>HOW — Start one and inspect</summary><pre>
+# Start the main DB first to check (takes ~10 min)
+aws rds start-db-instance --db-instance-identifier temp-muvi-uat-main --region me-central-1
+Write-Host "Starting temp-muvi-uat-main... wait 10 min"
+
+# After it's available, check the endpoint
+aws rds describe-db-instances --db-instance-identifier temp-muvi-uat-main --region me-central-1 `
+  --query 'DBInstances[0].{Endpoint:Endpoint.Address,Status:DBInstanceStatus,Engine:EngineVersion}'
+
+# Connect and verify data exists
+# Use ECS Exec or a bastion to run:
+# psql -h &lt;endpoint&gt; -U postgres -d muvi_main -c "SELECT count(*) FROM films;"
+# psql -h &lt;endpoint&gt; -U postgres -c "\l"  -- list databases
+
+# If data looks good, start the rest:
+$dbs = @("temp-muvi-uat-fb","temp-muvi-uat-idetity","temp-muvi-uat-payment",
+         "temp-muvi-uat-notification","temp-muvi-uat-offer")
+foreach ($db in $dbs) {
+    aws rds start-db-instance --db-instance-identifier $db --region me-central-1
+    Write-Host "Starting $db..."
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min (start + verify)</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.2 — Option A: Reuse temp DBs → rename and resize</div>
+      <div class="step-why">WHY: If data is good, rename from temp-* to muvi-uat-* and downsize the main DB from db.t3.micro to db.t3.medium, and convert gp2→gp3.</div>
+      <details class="step-how"><summary>HOW — Rename and optimize</summary><pre>
+# You cannot rename RDS instances directly, but you can modify class and storage
+
+# Upgrade temp instances from db.t3.micro → db.t3.medium (except fb which is already medium)
+$upgrades = @("temp-muvi-uat-main","temp-muvi-uat-idetity","temp-muvi-uat-payment",
+              "temp-muvi-uat-notification","temp-muvi-uat-offer")
+foreach ($db in $upgrades) {
+    aws rds modify-db-instance --db-instance-identifier $db `
+      --db-instance-class db.t3.medium --storage-type gp3 `
+      --apply-immediately --region me-central-1
+    Write-Host "Upgrading $db → db.t3.medium + gp3"
+}
+
+# ⚠️ Note: temp-muvi-uat-main has 2TB storage (gp2, $200+/mo!)
+# Cannot shrink RDS storage. Options:
+#   a) Live with 2TB gp3 (~$160/mo) — wasteful but works
+#   b) Create new smaller RDS, pg_dump/pg_restore data, delete old — best
+#   c) If data isn't needed, delete and create fresh 50GB instance</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1 hour</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.3 — Option B: Create 6 fresh RDS instances (if temp data is bad/stale)</div>
+      <div class="step-why">WHY: If the temp databases have stale data, it's cleaner to create fresh instances with the right names and sizes from the start.</div>
+      <details class="step-how"><summary>HOW — Create fresh databases</summary><pre>
+# First, get or create a DB subnet group in the main VPC
+aws rds create-db-subnet-group --db-subnet-group-name muvi-uat-db-subnets `
+  --db-subnet-group-description "UAT DB subnets" `
+  --subnet-ids subnet-06cf3baf8b1c5ac1b subnet-0e5716831a6f2dcf8 `
+  --region me-central-1
+
+# Create a security group for RDS
+$sgId = aws ec2 create-security-group --group-name muvi-uat-rds-sg `
+  --description "UAT RDS security group" --vpc-id vpc-0ab936370488229bd `
+  --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $sgId `
+  --protocol tcp --port 5432 --cidr 10.60.0.0/16 --region me-central-1
+
+# Create 6 databases matching Production structure
+$databases = @(
+  @{id="muvi-uat-main";       storage=50;  class="db.t3.medium"},
+  @{id="muvi-uat-identity";   storage=20;  class="db.t3.medium"},
+  @{id="muvi-uat-payment";    storage=20;  class="db.t3.medium"},
+  @{id="muvi-uat-fb";         storage=20;  class="db.t3.medium"},
+  @{id="muvi-uat-notification";storage=20; class="db.t3.medium"},
+  @{id="muvi-uat-offer";      storage=20;  class="db.t3.small"}
+)
+
+foreach ($db in $databases) {
+    aws rds create-db-instance `
+      --db-instance-identifier $db.id `
+      --db-instance-class $db.class `
+      --engine postgres --engine-version "14.17" `
+      --allocated-storage $db.storage `
+      --storage-type gp3 `
+      --master-username postgres `
+      --master-user-password "CHANGE_ME_STRONG_PASSWORD_32CHARS" `
+      --vpc-security-group-ids $sgId `
+      --db-subnet-group-name muvi-uat-db-subnets `
+      --no-publicly-accessible `
+      --backup-retention-period 7 `
+      --region me-central-1
+    Write-Host "Creating: $($db.id) ($($db.class), $($db.storage)GB)"
+}
+# Takes ~10-15 min for all to become available</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min create + 10 min wait</span><span class="tag t-cost">💰 ~$175/mo for all 6</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-4" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.4 — Delete Aurora cluster (uatclusterdb) and unneeded temp DBs</div>
+      <div class="step-why">WHY: After choosing Option A or B, clean up the unused databases. Aurora cluster costs ~$110/mo for no value.</div>
+      <details class="step-how"><summary>HOW — Cleanup</summary><pre>
+# Delete Aurora instances first
+aws rds delete-db-instance --db-instance-identifier uatclusterdb-instance-1 `
+  --skip-final-snapshot --region me-central-1
+aws rds delete-db-instance --db-instance-identifier uatclusterdb-instance-1-me-central-1b `
+  --skip-final-snapshot --region me-central-1
+# Wait for instances to delete...
+aws rds delete-db-cluster --db-cluster-identifier uatclusterdb `
+  --skip-final-snapshot --region me-central-1
+
+# If using fresh DBs (Option B), delete all temp instances too:
+$temps = @("temp-muvi-uat-main","temp-muvi-uat-fb","temp-muvi-uat-idetity",
+           "temp-muvi-uat-payment","temp-muvi-uat-notification","temp-muvi-uat-offer")
+foreach ($db in $temps) {
+    aws rds delete-db-instance --db-instance-identifier $db `
+      --skip-final-snapshot --region me-central-1
+    Write-Host "Deleting: $db"
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 Saves ~$110+/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-5" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.5 — Store database credentials in Secrets Manager</div>
+      <div class="step-why">WHY: Following production pattern — DB credentials live in Secrets Manager, referenced by ECS task definitions. Never hardcode passwords.</div>
+      <details class="step-how"><summary>HOW — Create secrets</summary><pre>
+$dbs = @("main","identity","payment","fb","notification","offer")
+foreach ($name in $dbs) {
+    aws secretsmanager create-secret --name "uat/$name/rds" `
+      --secret-string "{`"username`":`"postgres`",`"password`":`"GENERATED_PASSWORD`",`"host`":`"muvi-uat-$name.xxxx.me-central-1.rds.amazonaws.com`",`"port`":`"5432`",`"dbname`":`"muvi_$name`"}" `
+      --region me-central-1
+    Write-Host "Created secret: uat/$name/rds"
+}
+# ⚠️ Replace GENERATED_PASSWORD with the actual passwords used during RDS creation
+# ⚠️ Replace xxxx with actual RDS endpoint prefix</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="2-6" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">2.6 — Run database migrations (create tables/schemas)</div>
+      <div class="step-why">WHY: If using fresh databases (Option B), they have no tables. Need to run Sequelize migrations for each service to create the schema.</div>
+      <details class="step-how"><summary>HOW — Run migrations</summary><pre>
+# For each NestJS service, run migrations against the corresponding DB
+# This requires a machine with DB access and Node.js
+
+# Option 1: Use ECS Exec (after deploying services in Phase 5)
+# Option 2: Use a bastion EC2 instance
+# Option 3: Run from your local machine via SSH tunnel
+
+# For each service:
+cd main-backend-microservices/alpha-muvi-main-main
+npx sequelize-cli db:migrate --url postgres://postgres:PASSWORD@HOST:5432/muvi_main
+
+cd ../alpha-muvi-identity-main
+npx sequelize-cli db:migrate --url postgres://postgres:PASSWORD@HOST:5432/muvi_identity
+
+# ... repeat for payment, fb, notification
+# Offer service (Go) uses GORM AutoMigrate — runs on startup automatically</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span><span class="tag t-prereq">Needs network access to RDS</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 2 Result:</strong> 6 PostgreSQL databases running in UAE, with proper credentials in Secrets Manager and schemas created.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 3: NETWORKING -->
+<!-- ============================================================ -->
+<div class="phase" id="phase3">
+  <div class="phase-header" onclick="togglePhase('phase3')">
+    <div class="phase-num num-purple">3</div>
+    <h3>Networking — ALBs, Security Groups, Target Groups</h3>
+    <div class="phase-meta"><span>⏱ 2-3 hours</span><span>🎯 3 ALBs mirroring prod</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="info"><strong>Production pattern:</strong> 3 ALBs — Public API (gateway :80), Internal gRPC (6 listeners: :5002-:5007 HTTPS), Website (:80). All target groups are type <code>ip</code>, port <code>80</code>, protocol <code>HTTP</code> in one VPC.</div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="3-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">3.1 — Create Security Groups</div>
+      <div class="step-why">WHY: Need proper SGs before creating ALBs: ALB-SG (allow 80/443 from internet), ECS-SG (allow traffic from ALB-SG), RDS-SG (allow 5432 from ECS-SG), Redis-SG (allow 6379 from ECS-SG).</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$vpc = "vpc-0ab936370488229bd"
+
+# ALB Security Group (public)
+$albSg = aws ec2 create-security-group --group-name muvi-uat-alb-sg `
+  --description "UAT ALB - allows HTTP/HTTPS from internet" `
+  --vpc-id $vpc --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $albSg --protocol tcp --port 80 --cidr 0.0.0.0/0 --region me-central-1
+aws ec2 authorize-security-group-ingress --group-id $albSg --protocol tcp --port 443 --cidr 0.0.0.0/0 --region me-central-1
+Write-Host "ALB SG: $albSg"
+
+# Internal ALB Security Group (only from VPC)
+$intAlbSg = aws ec2 create-security-group --group-name muvi-uat-internal-alb-sg `
+  --description "UAT Internal ALB - allows traffic from ECS tasks" `
+  --vpc-id $vpc --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $intAlbSg --protocol tcp --port 5002 --source-group $ecsSg --region me-central-1
+# ... repeat for 5003-5007
+
+# ECS Security Group
+$ecsSg = aws ec2 create-security-group --group-name muvi-uat-ecs-sg `
+  --description "UAT ECS tasks" `
+  --vpc-id $vpc --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $ecsSg --protocol tcp --port 80 --source-group $albSg --region me-central-1
+aws ec2 authorize-security-group-ingress --group-id $ecsSg --protocol tcp --port 80 --source-group $intAlbSg --region me-central-1
+# Allow ECS tasks to talk to each other
+aws ec2 authorize-security-group-ingress --group-id $ecsSg --protocol tcp --port 0-65535 --source-group $ecsSg --region me-central-1
+Write-Host "ECS SG: $ecsSg"
+
+# RDS Security Group
+$rdsSg = aws ec2 create-security-group --group-name muvi-uat-rds-sg `
+  --description "UAT RDS - allows 5432 from ECS" `
+  --vpc-id $vpc --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $rdsSg --protocol tcp --port 5432 --source-group $ecsSg --region me-central-1
+Write-Host "RDS SG: $rdsSg"
+
+# Redis Security Group
+$redisSg = aws ec2 create-security-group --group-name muvi-uat-redis-sg-new `
+  --description "UAT Redis - allows 6379 from ECS" `
+  --vpc-id $vpc --region me-central-1 --query 'GroupId' --output text
+aws ec2 authorize-security-group-ingress --group-id $redisSg --protocol tcp --port 6379 --source-group $ecsSg --region me-central-1
+Write-Host "Redis SG: $redisSg"
+
+Write-Host "`nSave these IDs! ALB=$albSg InternalALB=$intAlbSg ECS=$ecsSg RDS=$rdsSg Redis=$redisSg"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="3-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">3.2 — Create 9 Target Groups (matching prod exactly)</div>
+      <div class="step-why">WHY: Production has 9 target groups (all type=ip, port=80, protocol=HTTP). We mirror this exactly.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$vpc = "vpc-0ab936370488229bd"
+$tgs = @(
+    "muvi-gateway-tg", "muvi-main-grpc", "muvi-identity-tg",
+    "muvi-payment-grpc", "muvi-fb-grpc-tg", "muvi-notification-grpc",
+    "muvi-offer-grpc", "muvi-ticket-tg", "muvi-website-tg"
+)
+foreach ($tg in $tgs) {
+    aws elbv2 create-target-group --name $tg --protocol HTTP --port 80 `
+      --target-type ip --vpc-id $vpc `
+      --health-check-protocol HTTP --health-check-path "/heartbeat" `
+      --health-check-interval-seconds 30 --healthy-threshold-count 2 `
+      --unhealthy-threshold-count 3 --region me-central-1
+    Write-Host "Created TG: $tg"
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="3-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">3.3 — Create Public API ALB (Muvi-UAT)</div>
+      <div class="step-why">WHY: Mirrors Muvi-Prod — internet-facing, port 80, forwards to gateway target group. CloudFront sits in front.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$pubSubnets = "subnet-0a32676266f055c12 subnet-0db9f7a15cf982a46"  # public subnets
+
+aws elbv2 create-load-balancer --name Muvi-UAT `
+  --scheme internet-facing --type application `
+  --subnets $pubSubnets.Split(" ") `
+  --security-groups $albSg --region me-central-1
+
+# Get ALB ARN
+$uatAlbArn = aws elbv2 describe-load-balancers --names Muvi-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].LoadBalancerArn' --output text
+
+# Create listener :80 → gateway TG
+$gwTgArn = aws elbv2 describe-target-groups --names muvi-gateway-tg --region me-central-1 `
+  --query 'TargetGroups[0].TargetGroupArn' --output text
+aws elbv2 create-listener --load-balancer-arn $uatAlbArn `
+  --protocol HTTP --port 80 `
+  --default-actions "Type=forward,TargetGroupArn=$gwTgArn" `
+  --region me-central-1
+Write-Host "Created Muvi-UAT ALB with listener :80 → gateway"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 ~$18/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="3-4" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">3.4 — Create Internal ALB (Muvi-Internal-UAT) with 6 gRPC listeners</div>
+      <div class="step-why">WHY: This is the CRITICAL piece — mirrors Muvi-Microservices-Prod. Gateway talks to all backend services via this ALB. Each service gets a dedicated port (5002-5007).</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$privSubnets = "subnet-06cf3baf8b1c5ac1b subnet-0e5716831a6f2dcf8"  # private subnets
+
+aws elbv2 create-load-balancer --name Muvi-Internal-UAT `
+  --scheme internal --type application `
+  --subnets $privSubnets.Split(" ") `
+  --security-groups $intAlbSg --region me-central-1
+
+$intAlbArn = aws elbv2 describe-load-balancers --names Muvi-Internal-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].LoadBalancerArn' --output text
+
+# Create 6 listeners — one per gRPC service (matching prod's port mapping)
+# Production uses HTTPS on these ports — we use HTTP for UAT (no certs needed)
+$listeners = @(
+    @{Port=5002; TG="muvi-main-grpc"},
+    @{Port=5003; TG="muvi-notification-grpc"},
+    @{Port=5004; TG="muvi-payment-grpc"},
+    @{Port=5005; TG="muvi-identity-tg"},
+    @{Port=5006; TG="muvi-fb-grpc-tg"},
+    @{Port=5007; TG="muvi-offer-grpc"}
+)
+foreach ($l in $listeners) {
+    $tgArn = aws elbv2 describe-target-groups --names $l.TG --region me-central-1 `
+      --query 'TargetGroups[0].TargetGroupArn' --output text
+    aws elbv2 create-listener --load-balancer-arn $intAlbArn `
+      --protocol HTTP --port $l.Port `
+      --default-actions "Type=forward,TargetGroupArn=$tgArn" `
+      --region me-central-1
+    Write-Host "Internal listener :$($l.Port) → $($l.TG)"
+}
+Write-Host "Created Internal ALB with 6 gRPC listeners"
+
+# ⚠️ IMPORTANT: Note the Internal ALB DNS name!
+aws elbv2 describe-load-balancers --names Muvi-Internal-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].DNSName' --output text
+# This DNS goes into SSM params for service discovery</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span><span class="tag t-cost">💰 ~$18/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="3-5" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">3.5 — Create Website ALB (Muvi-Website-UAT)</div>
+      <div class="step-why">WHY: Mirrors Muvi-Website-ALB in prod — separate ALB for the Next.js website frontend.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+aws elbv2 create-load-balancer --name Muvi-Website-UAT `
+  --scheme internet-facing --type application `
+  --subnets $pubSubnets.Split(" ") `
+  --security-groups $albSg --region me-central-1
+
+$webAlbArn = aws elbv2 describe-load-balancers --names Muvi-Website-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].LoadBalancerArn' --output text
+
+$webTgArn = aws elbv2 describe-target-groups --names muvi-website-tg --region me-central-1 `
+  --query 'TargetGroups[0].TargetGroupArn' --output text
+aws elbv2 create-listener --load-balancer-arn $webAlbArn `
+  --protocol HTTP --port 80 `
+  --default-actions "Type=forward,TargetGroupArn=$webTgArn" `
+  --region me-central-1
+Write-Host "Created Muvi-Website-UAT ALB with listener :80 → website"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span><span class="tag t-cost">💰 ~$18/mo</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 3 Result:</strong> 3 ALBs created (public, internal, website) with 9 target groups, exactly mirroring production's networking layer.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 4: REDIS -->
+<!-- ============================================================ -->
+<div class="phase" id="phase4">
+  <div class="phase-header" onclick="togglePhase('phase4')">
+    <div class="phase-num num-cyan">4</div>
+    <h3>Redis Clusters</h3>
+    <div class="phase-meta"><span>⏱ 30 min</span><span>💰 ~$50/mo</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="info"><strong>Production has 9 Redis clusters</strong> (per-service dedicated). For UAT, we consolidate to 4 clusters matching the role separation: gateway, main+shared, fb, and one for offer/payment/identity/notification.</div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="4-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">4.1 — Create Redis subnet group</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+aws elasticache create-cache-subnet-group `
+  --cache-subnet-group-name muvi-uat-redis-subnets `
+  --cache-subnet-group-description "UAT Redis subnets" `
+  --subnet-ids subnet-06cf3baf8b1c5ac1b subnet-0e5716831a6f2dcf8 `
+  --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="4-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">4.2 — Create 4 Redis clusters</div>
+      <div class="step-why">WHY: Prod has 9 but UAT can consolidate. We keep 4 to match the distinct cache patterns: gateway caching, main service, F&B menu caching, and a shared cache.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$clusters = @(
+    @{id="muvi-uat-gateway"; type="cache.t3.small"},
+    @{id="muvi-uat-main";    type="cache.t3.small"},
+    @{id="muvi-uat-fb";      type="cache.t3.small"},
+    @{id="muvi-uat-shared";  type="cache.t3.small"}
+)
+foreach ($c in $clusters) {
+    aws elasticache create-cache-cluster `
+      --cache-cluster-id $c.id `
+      --cache-node-type $c.type `
+      --engine redis --engine-version "7.0" `
+      --num-cache-nodes 1 `
+      --cache-subnet-group-name muvi-uat-redis-subnets `
+      --security-group-ids $redisSg `
+      --region me-central-1
+    Write-Host "Creating Redis: $($c.id) ($($c.type))"
+}
+# Takes 5-10 min to become available</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 ~$50/mo for 4 clusters</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 4 Result:</strong> 4 Redis clusters ready. Note down their endpoints for SSM configuration.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 5: ECS + ECR -->
+<!-- ============================================================ -->
+<div class="phase" id="phase5">
+  <div class="phase-header" onclick="togglePhase('phase5')">
+    <div class="phase-num num-blue">5</div>
+    <h3>ECS Cluster, ECR Images & Services</h3>
+    <div class="phase-meta"><span>⏱ 3-4 hours</span><span>🎯 9 services running</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.1 — Create ECR repos for missing services (fb, offer, ticket)</div>
+      <div class="step-why">WHY: UAE has 6 ECR repos but is missing muvi-fb-uat, muvi-offer-uat, and muvi-ticket-uat.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+foreach ($repo in @("muvi-fb-uat","muvi-offer-uat","muvi-ticket-uat")) {
+    aws ecr create-repository --repository-name $repo --region me-central-1
+    Write-Host "Created ECR: $repo"
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 2 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.2 — Build and push Docker images for all 9 services</div>
+      <div class="step-why">WHY: Need fresh images in UAE ECR. Build from the monorepo source code.</div>
+      <details class="step-how"><summary>HOW — Build and push all services</summary><pre>
+$acctId = "739991759290"
+$region = "me-central-1"
+
+# Login to ECR
+aws ecr get-login-password --region $region | docker login --username AWS `
+  --password-stdin "$acctId.dkr.ecr.$region.amazonaws.com"
+
+# Build and push each service
+$services = @(
+    @{dir="alpha-muvi-gateway-main";     repo="muvi-gateway-uat"},
+    @{dir="alpha-muvi-main-main";        repo="muvi-main-uat"},
+    @{dir="alpha-muvi-identity-main";    repo="muvi-identity-uat"},
+    @{dir="alpha-muvi-payment-main";     repo="muvi-payment-uat"},
+    @{dir="alpha-muvi-fb-main";          repo="muvi-fb-uat"},
+    @{dir="alpha-muvi-notification-main";repo="muvi-notification-uat"},
+    @{dir="alpha-muvi-offer";            repo="muvi-offer-uat"},
+    @{dir="alpha-muvi-website-main";     repo="muvi-website-uat"}
+    # ticket — need to find the source or use Frankfurt ECR image
+)
+foreach ($s in $services) {
+    $path = "main-backend-microservices/$($s.dir)"
+    $tag = "latest"
+    $uri = "$acctId.dkr.ecr.$region.amazonaws.com/$($s.repo):$tag"
+    
+    Write-Host "Building $($s.repo)..." -ForegroundColor Cyan
+    docker build -t "$($s.repo):$tag" $path
+    docker tag "$($s.repo):$tag" $uri
+    docker push $uri
+    Write-Host "Pushed: $uri" -ForegroundColor Green
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1-2 hours (build time)</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.3 — Create ECS Cluster</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+aws ecs create-cluster --cluster-name Muvi-UAT `
+  --capacity-providers FARGATE --default-capacity-provider-strategy "capacityProvider=FARGATE,weight=1" `
+  --setting "name=containerInsights,value=enabled" `
+  --region me-central-1
+Write-Host "Created ECS cluster: Muvi-UAT"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-4" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.4 — Update SSM Parameters with correct UAE values</div>
+      <div class="step-why">WHY: SSM params currently point to Frankfurt (eu-central-1) resources. Must update ALL service hosts, DB endpoints, Redis endpoints to UAE.</div>
+      <details class="step-how"><summary>HOW — Key parameters to update</summary><pre>
+# Get Internal ALB DNS (from Phase 3.4)
+$intAlbDns = aws elbv2 describe-load-balancers --names Muvi-Internal-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].DNSName' --output text
+
+# Service discovery — these are the CRITICAL ones
+# In prod, services use the Internal ALB with port-based routing
+# So service hosts point to the Internal ALB DNS
+$params = @{
+    "/uat/MAIN_SERVICE_HOST" = $intAlbDns
+    "/uat/MAIN_SERVICE_PORT" = "5002"
+    "/uat/IDENTITY_SERVICE_HOST" = $intAlbDns
+    "/uat/IDENTITY_SERVICE_PORT" = "5005"
+    "/uat/PAYMENT_SERVICE_HOST" = $intAlbDns
+    "/uat/PAYMENT_SERVICE_PORT" = "5004"
+    "/uat/NOTIFICATION_SERVICE_HOST" = $intAlbDns
+    "/uat/NOTIFICATION_SERVICE_PORT" = "5003"
+    "/uat/FB_SERVICE_HOST" = $intAlbDns
+    "/uat/FB_SERVICE_PORT" = "5006"
+    # DB config
+    "/uat/DB_DIALECT" = "postgres"
+    "/uat/DB_PORT" = "5432"
+    # Redis (get endpoints from Phase 4)
+    "/uat/REDIS_PORT" = "6379"
+    # S3
+    "/uat/S3_REGION" = "me-central-1"
+    "/uat/S3_BUCKET" = "muvi-media-uat"
+}
+
+foreach ($entry in $params.GetEnumerator()) {
+    aws ssm put-parameter --name $entry.Key --value $entry.Value `
+      --type String --overwrite --region me-central-1
+    Write-Host "Updated: $($entry.Key) = $($entry.Value)"
+}
+
+# ⚠️ ALSO need to set DB_HOST for each service in the task definition
+# (or via Secrets Manager references)
+# ⚠️ Redis HOST params need the actual Redis cluster endpoints from Phase 4</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-5" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.5 — Create Task Definitions for all 9 services</div>
+      <div class="step-why">WHY: Each service needs a task definition with correct CPU/memory, ECR image, environment variables (from SSM/Secrets), and port mappings.</div>
+      <details class="step-how"><summary>HOW — Task Definition Template</summary><pre>
+# Example for Gateway (repeat with correct values for each service)
+# Production sizes are used as reference — UAT runs at same sizes to test realistically
+
+$taskDef = @'
+{
+    "family": "muvi-gateway-uat",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "1024",
+    "memory": "2048",
+    "executionRoleArn": "arn:aws:iam::739991759290:role/ecsTaskExecutionRole",
+    "taskRoleArn": "arn:aws:iam::739991759290:role/ecsTaskRole",
+    "containerDefinitions": [{
+        "name": "gateway",
+        "image": "739991759290.dkr.ecr.me-central-1.amazonaws.com/muvi-gateway-uat:latest",
+        "portMappings": [{"containerPort": 80, "protocol": "tcp"}],
+        "essential": true,
+        "logConfiguration": {
+            "logDriver": "awslogs",
+            "options": {
+                "awslogs-group": "/ecs/muvi-gateway-uat",
+                "awslogs-region": "me-central-1",
+                "awslogs-stream-prefix": "ecs"
+            }
+        },
+        "secrets": [
+            {"name": "DB_HOST", "valueFrom": "arn:aws:secretsmanager:me-central-1:739991759290:secret:uat/main/rds:host::"},
+            {"name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:me-central-1:739991759290:secret:uat/main/rds:password::"}
+        ],
+        "environment": [
+            {"name": "NODE_ENV", "value": "uat"},
+            {"name": "PORT", "value": "80"}
+        ]
+    }]
+}
+'@
+
+# Register each task definition
+# Save to file, then register
+$taskDef | Out-File -Path "gateway-taskdef.json" -Encoding utf8
+aws ecs register-task-definition --cli-input-json file://gateway-taskdef.json --region me-central-1
+
+# SERVICE SIZES (matching production):
+# gateway:      1024 CPU / 2048 Mem
+# main-grpc:    4096 CPU / 8192 Mem  ← BIGGEST
+# identity:     1024 CPU / 2048 Mem
+# payment:      1024 CPU / 2048 Mem
+# fb:           2048 CPU / 4096 Mem
+# notification: 1024 CPU / 2048 Mem
+# offer:        2048 CPU / 4096 Mem
+# website:      1024 CPU / 2048 Mem
+# ticket:       1024 CPU / 2048 Mem
+
+# ⚠️ Create CloudWatch log groups first:
+foreach ($svc in @("gateway","main","identity","payment","fb","notification","offer","website","ticket")) {
+    aws logs create-log-group --log-group-name "/ecs/muvi-$svc-uat" --region me-central-1 2>$null
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1-2 hours</span><span class="tag t-prereq">Most complex step — do carefully</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-6" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.6 — Create all 9 ECS Services</div>
+      <div class="step-why">WHY: Services wire task definitions to target groups and manage desired count.</div>
+      <details class="step-how"><summary>HOW — Commands</summary><pre>
+$privSubnets = @("subnet-06cf3baf8b1c5ac1b","subnet-0e5716831a6f2dcf8")
+
+# Gateway — attached to public ALB
+$gwTgArn = aws elbv2 describe-target-groups --names muvi-gateway-tg --region me-central-1 `
+  --query 'TargetGroups[0].TargetGroupArn' --output text
+aws ecs create-service --cluster Muvi-UAT --service-name gateway `
+  --task-definition muvi-gateway-uat --desired-count 1 --launch-type FARGATE `
+  --network-configuration "awsvpcConfiguration={subnets=[$($privSubnets -join ',')],securityGroups=[$ecsSg],assignPublicIp=DISABLED}" `
+  --load-balancers "targetGroupArn=$gwTgArn,containerName=gateway,containerPort=80" `
+  --region me-central-1
+
+# Internal services (main, identity, payment, fb, notification, offer)
+$internalServices = @(
+    @{name="main-grpc";    td="muvi-main-uat";    tg="muvi-main-grpc";         container="main"},
+    @{name="identity-grpc";td="muvi-identity-uat"; tg="muvi-identity-tg";       container="identity"},
+    @{name="payment-grpc"; td="muvi-payment-uat";  tg="muvi-payment-grpc";      container="payment"},
+    @{name="fb-muvi";      td="muvi-fb-uat";       tg="muvi-fb-grpc-tg";        container="fb"},
+    @{name="notification-grpc"; td="muvi-notification-uat"; tg="muvi-notification-grpc"; container="notification"},
+    @{name="offer-muvi";   td="muvi-offer-uat";    tg="muvi-offer-grpc";        container="offer"},
+    @{name="ticket";       td="muvi-ticket-uat";   tg="muvi-ticket-tg";         container="ticket"}
+)
+foreach ($s in $internalServices) {
+    $tgArn = aws elbv2 describe-target-groups --names $s.tg --region me-central-1 `
+      --query 'TargetGroups[0].TargetGroupArn' --output text
+    aws ecs create-service --cluster Muvi-UAT --service-name $s.name `
+      --task-definition $s.td --desired-count 1 --launch-type FARGATE `
+      --network-configuration "awsvpcConfiguration={subnets=[$($privSubnets -join ',')],securityGroups=[$ecsSg],assignPublicIp=DISABLED}" `
+      --load-balancers "targetGroupArn=$tgArn,containerName=$($s.container),containerPort=80" `
+      --region me-central-1
+    Write-Host "Created service: $($s.name)"
+}
+
+# Website — attached to website ALB
+$webTgArn = aws elbv2 describe-target-groups --names muvi-website-tg --region me-central-1 `
+  --query 'TargetGroups[0].TargetGroupArn' --output text
+aws ecs create-service --cluster Muvi-UAT --service-name website `
+  --task-definition muvi-website-uat --desired-count 1 --launch-type FARGATE `
+  --network-configuration "awsvpcConfiguration={subnets=[$($privSubnets -join ',')],securityGroups=[$ecsSg],assignPublicIp=DISABLED}" `
+  --load-balancers "targetGroupArn=$webTgArn,containerName=website,containerPort=80" `
+  --region me-central-1
+
+Write-Host "All 9 services created! Waiting for tasks to start..."</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min + 5 min startup</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="5-7" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">5.7 — Verify all services are running and healthy</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# Check all services
+aws ecs describe-services --cluster Muvi-UAT --region me-central-1 `
+  --services gateway main-grpc identity-grpc payment-grpc fb-muvi notification-grpc offer-muvi website ticket `
+  --query 'services[].{Name:serviceName,Running:runningCount,Desired:desiredCount,Health:healthCheckGracePeriodSeconds}' --output table
+
+# Test gateway health
+$albDns = aws elbv2 describe-load-balancers --names Muvi-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].DNSName' --output text
+curl -s "http://$albDns/heartbeat"
+
+# Check CloudWatch logs for errors
+foreach ($svc in @("gateway","main","identity","payment","fb","notification","offer","website")) {
+    Write-Host "`n=== $svc errors ===" -ForegroundColor Yellow
+    aws logs filter-log-events --log-group-name "/ecs/muvi-$svc-uat" `
+      --filter-pattern "ERROR" `
+      --start-time ([DateTimeOffset]::Now.AddMinutes(-15).ToUnixTimeMilliseconds()) `
+      --region me-central-1 --query 'events[].message' --output text 2>$null | Select-Object -First 3
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 5 Result:</strong> All 9 ECS services running in UAE, connected to local databases and Redis, with proper ALB routing.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 6: S3 + CLOUDFRONT -->
+<!-- ============================================================ -->
+<div class="phase" id="phase6">
+  <div class="phase-header" onclick="togglePhase('phase6')">
+    <div class="phase-num num-orange">6</div>
+    <h3>S3, CloudFront & DNS</h3>
+    <div class="phase-meta"><span>⏱ 1-2 hours</span><span>🎯 End-to-end reachability</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="6-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">6.1 — Create S3 buckets in UAE</div>
+      <div class="step-why">WHY: Media files, CMS assets need local S3 in me-central-1 for low latency.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+aws s3 mb s3://muvi-media-uat-uae --region me-central-1
+aws s3 mb s3://muvi-cms-uat-uae --region me-central-1
+
+# Copy sample media from existing UAT bucket (if any)
+# aws s3 sync s3://muvi-media-uat s3://muvi-media-uat-uae --region me-central-1
+
+# Update SSM
+aws ssm put-parameter --name /uat/S3_BUCKET --value "muvi-media-uat-uae" --type String --overwrite --region me-central-1
+aws ssm put-parameter --name /uat/S3_REGION --value "me-central-1" --type String --overwrite --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="6-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">6.2 — Update CloudFront distributions to point to UAE ALBs</div>
+      <div class="step-why">WHY: Current distributions point to Frankfurt ALBs. Must update origins to new UAE ALBs for api.uat, app.uat, and cms.uat.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# Key distributions to update:
+# api.uat.muvicinemas.com → origin from Frankfurt ALB → UAE Muvi-UAT ALB
+# app.uat.muvicinemas.com → origin from Frankfurt Website ALB → UAE Muvi-Website-UAT ALB
+# cms.uat.muvicinemas.com → origin from Frankfurt S3 → keep or update if CMS deployed to UAE
+
+# Get new ALB DNS names
+$apiAlbDns = aws elbv2 describe-load-balancers --names Muvi-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].DNSName' --output text
+$webAlbDns = aws elbv2 describe-load-balancers --names Muvi-Website-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].DNSName' --output text
+
+Write-Host "Update CloudFront origins via console:"
+Write-Host "  api.uat.muvicinemas.com (E32MPHWJYP7ZBL) → $apiAlbDns"
+Write-Host "  app.uat.muvicinemas.com (E3HO948RWOJ2ZQ) → $webAlbDns"
+
+# Or via CLI (complex — need to get full config, modify, update):
+# aws cloudfront get-distribution-config --id E32MPHWJYP7ZBL ...
+# Modify .Origins.Items[0].DomainName → $apiAlbDns
+# aws cloudfront update-distribution --id E32MPHWJYP7ZBL --distribution-config ... --if-match ...</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="6-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">6.3 — Add WAF rate limiting</div>
+      <div class="step-why">WHY: Prod has OTP-ACL WAF. Add basic rate limiting to UAT ALB to prevent runaway load tests from causing issues.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+aws wafv2 create-web-acl --name "UAT-Rate-Limit" --scope REGIONAL `
+  --region me-central-1 --default-action '{"Allow":{}}' `
+  --visibility-config '{"SampledRequestsEnabled":true,"CloudWatchMetricsEnabled":true,"MetricName":"UATRateLimit"}' `
+  --rules '[{"Name":"RateLimit","Priority":1,"Statement":{"RateBasedStatement":{"Limit":500,"AggregateKeyType":"IP"}},"Action":{"Block":{}},"VisibilityConfig":{"SampledRequestsEnabled":true,"CloudWatchMetricsEnabled":true,"MetricName":"RateLimit"}}]'
+
+# Associate with public ALB
+$wafArn = aws wafv2 list-web-acls --scope REGIONAL --region me-central-1 `
+  --query 'WebACLs[?Name==`UAT-Rate-Limit`].ARN' --output text
+$albArn = aws elbv2 describe-load-balancers --names Muvi-UAT --region me-central-1 `
+  --query 'LoadBalancers[0].LoadBalancerArn' --output text
+aws wafv2 associate-web-acl --web-acl-arn $wafArn --resource-arn $albArn --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span><span class="tag t-cost">💰 ~$6/mo</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 6 Result:</strong> S3 buckets created, CloudFront pointing to UAE, WAF protecting the public ALB. UAT is reachable via *.uat.muvicinemas.com.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 7: CI/CD -->
+<!-- ============================================================ -->
+<div class="phase" id="phase7">
+  <div class="phase-header" onclick="togglePhase('phase7')">
+    <div class="phase-num num-green">7</div>
+    <h3>CI/CD Pipelines</h3>
+    <div class="phase-meta"><span>⏱ 1 day</span><span>🎯 Push → Auto-deploy</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="info"><strong>Production uses 18 CodePipelines</strong> (Source→Build→Deploy per service). We'll set up GitHub Actions for UAE since we control the repo and it's more portable.</div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="7-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">7.1 — Create IAM user for CI/CD with least-privilege</div>
+      <div class="step-why">WHY: GitHub Actions needs AWS credentials. Create a dedicated user that can ONLY push to ECR and update ECS services.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# Create CI/CD policy
+aws iam create-policy --policy-name muvi-uat-cicd-policy --policy-document '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:PutImage",
+        "ecr:InitiateLayerUpload",
+        "ecr:UploadLayerPart",
+        "ecr:CompleteLayerUpload"
+      ],
+      "Resource": "arn:aws:ecr:me-central-1:739991759290:repository/muvi-*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ecr:GetAuthorizationToken",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ecs:UpdateService",
+        "ecs:DescribeServices",
+        "ecs:RegisterTaskDefinition",
+        "ecs:DescribeTaskDefinition"
+      ],
+      "Resource": "*",
+      "Condition": {"StringEquals": {"aws:RequestedRegion": "me-central-1"}}
+    },
+    {
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::739991759290:role/ecsTaskExecutionRole",
+        "arn:aws:iam::739991759290:role/ecsTaskRole"
+      ]
+    }
+  ]
+}'
+
+# Create user and attach policy
+aws iam create-user --user-name muvi-uat-cicd
+aws iam attach-user-policy --user-name muvi-uat-cicd `
+  --policy-arn "arn:aws:iam::739991759290:policy/muvi-uat-cicd-policy"
+aws iam create-access-key --user-name muvi-uat-cicd
+# ⚠️ Save the AccessKeyId and SecretAccessKey — add to GitHub Secrets</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="7-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">7.2 — Add AWS credentials to GitHub Secrets</div>
+      <div class="step-why">WHY: GitHub Actions workflows need these to authenticate with AWS.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# In GitHub → Settings → Secrets and variables → Actions:
+# Add these repository secrets:
+#   AWS_ACCESS_KEY_ID     = (from step 7.1)
+#   AWS_SECRET_ACCESS_KEY = (from step 7.1)
+#   AWS_REGION            = me-central-1
+#   AWS_ACCOUNT_ID        = 739991759290</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 5 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="7-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">7.3 — Create GitHub Actions workflow for each service</div>
+      <div class="step-why">WHY: Automated deploy pipeline — push to develop branch → build Docker → push ECR → update ECS.</div>
+      <details class="step-how"><summary>HOW — Reusable workflow</summary><pre>
+# .github/workflows/deploy-uat.yml
+name: Deploy to UAT (UAE)
+on:
+  push:
+    branches: [develop]
+    
+env:
+  AWS_REGION: me-central-1
+  ECR_REGISTRY: 739991759290.dkr.ecr.me-central-1.amazonaws.com
+  ECS_CLUSTER: Muvi-UAT
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      gateway: ${{ steps.filter.outputs.gateway }}
+      main: ${{ steps.filter.outputs.main }}
+      # ... etc for all services
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            gateway:
+              - 'main-backend-microservices/alpha-muvi-gateway-main/**'
+            main:
+              - 'main-backend-microservices/alpha-muvi-main-main/**'
+            identity:
+              - 'main-backend-microservices/alpha-muvi-identity-main/**'
+            payment:
+              - 'main-backend-microservices/alpha-muvi-payment-main/**'
+            fb:
+              - 'main-backend-microservices/alpha-muvi-fb-main/**'
+            notification:
+              - 'main-backend-microservices/alpha-muvi-notification-main/**'
+            offer:
+              - 'main-backend-microservices/alpha-muvi-offer/**'
+            website:
+              - 'web/alpha-muvi-website-main/**'
+
+  deploy-gateway:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.gateway == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: me-central-1
+      - uses: aws-actions/amazon-ecr-login@v2
+      - run: |
+          cd main-backend-microservices/alpha-muvi-gateway-main
+          docker build -t muvi-gateway-uat .
+          docker tag muvi-gateway-uat:latest $ECR_REGISTRY/muvi-gateway-uat:${{ github.sha }}
+          docker tag muvi-gateway-uat:latest $ECR_REGISTRY/muvi-gateway-uat:latest
+          docker push $ECR_REGISTRY/muvi-gateway-uat:${{ github.sha }}
+          docker push $ECR_REGISTRY/muvi-gateway-uat:latest
+      - run: |
+          aws ecs update-service --cluster $ECS_CLUSTER --service gateway \
+            --force-new-deployment --region me-central-1
+
+  # Repeat deploy-gateway pattern for each service...
+  # (or use a reusable workflow with matrix strategy)</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 2-4 hours</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 7 Result:</strong> Push to develop → automatic build, push to ECR, and ECS service update. Full CI/CD.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 8: SECURITY & ACCOUNT MGMT -->
+<!-- ============================================================ -->
+<div class="phase" id="phase8">
+  <div class="phase-header" onclick="togglePhase('phase8')">
+    <div class="phase-num num-pink">8</div>
+    <h3>Security & Sandbox Account Rotation</h3>
+    <div class="phase-meta"><span>⏱ Half day</span><span>🔒 Proper access control</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="8-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">8.1 — Audit IAM users and rotate all access keys</div>
+      <div class="step-why">WHY: Keys may have been shared with the vendor. Rotating locks them out and establishes YOUR control.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# List all users and key ages
+aws iam list-users --query 'Users[].UserName' --output text | ForEach-Object {
+    $user = $_.Trim()
+    $keys = aws iam list-access-keys --user-name $user --query 'AccessKeyMetadata[].{Id:AccessKeyId,Created:CreateDate,Status:Status}' --output json | ConvertFrom-Json
+    foreach ($k in $keys) {
+        $age = ((Get-Date) - [DateTime]$k.Created).Days
+        Write-Host "$user | $($k.Id) | ${age}d old | $($k.Status)"
+    }
+}
+
+# Rotate your key:
+# 1. Create new key
+aws iam create-access-key --user-name rehan.tariq@muvicinemas.com
+# 2. Update ~/.aws/credentials with new key
+# 3. Test: aws sts get-caller-identity
+# 4. Deactivate old key
+# 5. Delete old key after 24h</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="8-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">8.2 — Rotate database passwords</div>
+      <div class="step-why">WHY: If using existing temp databases, passwords may be known to the vendor. Change all DB passwords and update Secrets Manager.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# For each database:
+$dbs = @("muvi-uat-main","muvi-uat-identity","muvi-uat-payment","muvi-uat-fb","muvi-uat-notification","muvi-uat-offer")
+foreach ($db in $dbs) {
+    $newPass = -join ((65..90)+(97..122)+(48..57) | Get-Random -Count 32 | ForEach-Object {[char]$_})
+    
+    # Update RDS password
+    aws rds modify-db-instance --db-instance-identifier $db `
+      --master-user-password $newPass --apply-immediately --region me-central-1
+    
+    # Update Secrets Manager
+    $name = $db -replace 'muvi-uat-',''
+    aws secretsmanager update-secret --secret-id "uat/$name/rds" `
+      --secret-string "{`"username`":`"postgres`",`"password`":`"$newPass`"}" --region me-central-1
+    
+    Write-Host "Rotated: $db"
+}
+# Force new ECS deployments to pick up new passwords
+aws ecs update-service --cluster Muvi-UAT --service gateway --force-new-deployment --region me-central-1
+# ... repeat for all services</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 1 hour</span><span class="tag t-risk">⚠️ Test each service after rotation</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="8-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">8.3 — Enable CloudTrail for audit logging</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+aws s3 mb s3://muvi-uat-cloudtrail-logs --region me-central-1
+# Add bucket policy allowing CloudTrail to write
+aws cloudtrail create-trail --name muvi-uat-audit `
+  --s3-bucket-name muvi-uat-cloudtrail-logs `
+  --is-multi-region-trail --region me-central-1
+aws cloudtrail start-logging --name muvi-uat-audit --region me-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="8-4" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">8.4 — Set up key rotation schedule (every 90 days)</div>
+      <div class="step-why">WHY: AWS best practice is 90-day rotation. Set up AWS Config rule to alert on old keys.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# AWS Config rule to detect old access keys
+aws configservice put-config-rule --config-rule '{
+  "ConfigRuleName": "access-keys-rotated",
+  "Source": {"Owner":"AWS","SourceIdentifier":"ACCESS_KEYS_ROTATED"},
+  "InputParameters": "{\"maxAccessKeyAge\":\"90\"}"
+}' --region me-central-1
+
+# Calendar reminder: Every 90 days, rotate:
+# 1. Your personal AWS access keys (Account 1 + Account 2)
+# 2. muvi-uat-cicd access keys (GitHub Secrets)
+# 3. Database passwords (Secrets Manager + RDS)
+# 4. Any API keys stored in SSM (Vista, Unifonic, SendGrid etc.)</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 15 min</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 8 Result:</strong> All credentials rotated. Audit trail enabled. Key rotation policy in place.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- PHASE 9: DECOMMISSION FRANKFURT -->
+<!-- ============================================================ -->
+<div class="phase" id="phase9">
+  <div class="phase-header" onclick="togglePhase('phase9')">
+    <div class="phase-num num-red">9</div>
+    <h3>Decommission Frankfurt UAT (Account 1, eu-central-1)</h3>
+    <div class="phase-meta"><span>⏱ 1 hour</span><span>💰 Saves ~$650-800/mo</span><span>⚠️ After UAE is verified!</span></div>
+    <span class="phase-chevron">▶</span>
+  </div>
+  <div class="phase-body">
+    <div class="warn"><strong>⚠️ ONLY do this after UAE UAT is fully working and verified for at least 48 hours.</strong></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="9-1" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">9.1 — Take final RDS snapshots of all Frankfurt databases</div>
+      <div class="step-why">WHY: Safety net. Keep snapshots for 30 days before permanent deletion.</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+$dbs = @("muvi-uat-main","muvi-uat-identity","muvi-uat-payment","muvi-uat-fb","muvi-uat-notification","muvi-uat-offer")
+foreach ($db in $dbs) {
+    aws rds create-db-snapshot --db-instance-identifier $db `
+      --db-snapshot-identifier "$db-final-20260223" --region eu-central-1
+    Write-Host "Snapshotting: $db"
+}</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="9-2" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">9.2 — Delete all Frankfurt ECS services and cluster</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# Scale to 0 then delete
+$cluster = "Muvi-UAT"
+$svcs = aws ecs list-services --cluster $cluster --region eu-central-1 --query 'serviceArns' --output json | ConvertFrom-Json
+foreach ($s in $svcs) {
+    $name = $s.Split("/")[-1]
+    aws ecs update-service --cluster $cluster --service $name --desired-count 0 --region eu-central-1
+    Start-Sleep 2
+    aws ecs delete-service --cluster $cluster --service $name --force --region eu-central-1
+    Write-Host "Deleted: $name"
+}
+Start-Sleep 60
+aws ecs delete-cluster --cluster $cluster --region eu-central-1</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 10 min</span><span class="tag t-cost">💰 Saves ~$150/mo</span></div>
+    </div></div></div>
+
+    <div class="step"><div class="step-header"><div class="cb" data-step="9-3" onclick="toggle(this)"></div><div class="step-content">
+      <div class="step-title">9.3 — Delete Frankfurt ALBs, Redis, RDS, CloudMap, CodePipelines</div>
+      <details class="step-how"><summary>HOW</summary><pre>
+# ALBs
+foreach ($alb in @("Muvi-UAT","Muvi-Internal-UAT","Muvi-Website-UAT")) {
+    $arn = aws elbv2 describe-load-balancers --names $alb --region eu-central-1 --query 'LoadBalancers[0].LoadBalancerArn' --output text 2>$null
+    if ($arn -ne "None") { aws elbv2 delete-load-balancer --load-balancer-arn $arn --region eu-central-1 }
+}
+
+# Redis clusters
+foreach ($r in @("ccds-redis-uat-001","fb-redis-001","muvi-uat-001","shared-redis-001")) {
+    aws elasticache delete-cache-cluster --cache-cluster-id $r --region eu-central-1 2>$null
+}
+
+# RDS instances
+foreach ($db in @("muvi-uat-main","muvi-uat-identity","muvi-uat-payment","muvi-uat-fb","muvi-uat-notification","muvi-uat-offer","temp")) {
+    aws rds delete-db-instance --db-instance-identifier $db --skip-final-snapshot --region eu-central-1 2>$null
+}
+
+# CodePipelines
+$pipes = aws codepipeline list-pipelines --region eu-central-1 --query 'pipelines[].name' --output text
+foreach ($p in $pipes.Split("`t")) {
+    aws codepipeline delete-pipeline --name $p --region eu-central-1
+}
+
+# Cloud Map — delete services then namespaces
+# ECR repos — can keep or delete
+
+Write-Host "Frankfurt cleanup complete!"</pre></details>
+      <div class="tags"><span class="tag t-time">⏱ 30 min</span><span class="tag t-cost">💰 Saves ~$500-650/mo</span></div>
+    </div></div></div>
+
+    <div class="ok"><strong>Phase 9 Result:</strong> Frankfurt UAT fully decommissioned. Only UAE UAT remains. Saving $650-800/month.</div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TIMELINE -->
+<!-- ============================================================ -->
+<div class="arch">
+  <h2>📅 Overall Timeline</h2>
+  <table class="t">
+    <tr><th>Phase</th><th>Duration</th><th>Cost Impact</th><th>What You Get</th></tr>
+    <tr><td><strong>1:</strong> Teardown UAE</td><td>1-2 hours</td><td>Save $450/mo immediately</td><td>Clean slate</td></tr>
+    <tr><td><strong>2:</strong> Databases</td><td>2-4 hours</td><td>~$175/mo (6 RDS)</td><td>6 working databases</td></tr>
+    <tr><td><strong>3:</strong> Networking</td><td>2-3 hours</td><td>~$54/mo (3 ALBs)</td><td>3 ALBs mirroring prod</td></tr>
+    <tr><td><strong>4:</strong> Redis</td><td>30 min</td><td>~$50/mo (4 Redis)</td><td>Caching layer ready</td></tr>
+    <tr><td><strong>5:</strong> ECS + ECR</td><td>3-4 hours</td><td>~$200/mo (9 services × 1 task)</td><td>9 services running</td></tr>
+    <tr><td><strong>6:</strong> S3 + CloudFront</td><td>1-2 hours</td><td>~$10/mo</td><td>End-to-end reachability</td></tr>
+    <tr><td><strong>7:</strong> CI/CD</td><td>1 day</td><td>Free (GitHub Actions)</td><td>Push → auto-deploy</td></tr>
+    <tr><td><strong>8:</strong> Security</td><td>Half day</td><td>—</td><td>Rotated keys, audit trail</td></tr>
+    <tr><td><strong>9:</strong> Decommission Frankfurt</td><td>1 hour</td><td>Save ~$650-800/mo</td><td>Single consolidated UAT</td></tr>
+    <tr style="background:rgba(63,185,80,0.1);font-weight:bold;">
+      <td>TOTAL (Phases 1-8)</td><td>~3-4 days</td><td>~$490/mo</td><td>Full prod mirror in UAE with CI/CD</td></tr>
+    <tr style="background:rgba(63,185,80,0.15);font-weight:bold;">
+      <td>TOTAL after Phase 9</td><td>+1 hour (after 48h verification)</td><td>~$490/mo (was ~$1,400)</td><td>$910/mo saved = $10,920/year</td></tr>
+  </table>
+</div>
+
+<!-- COST COMPARISON -->
+<div class="arch">
+  <h2>💰 Cost Comparison</h2>
+  <table class="t">
+    <tr><th>Scenario</th><th>Monthly</th><th>Annual</th></tr>
+    <tr><td>Current (Frankfurt + UAE UATs both running)</td><td>~$1,400</td><td>~$16,800</td></tr>
+    <tr style="background:rgba(63,185,80,0.1)"><td><strong>After migration (UAE only, 1 task/service)</strong></td><td><strong>~$490</strong></td><td><strong>~$5,880</strong></td></tr>
+    <tr><td>During load tests (scaled up temporarily)</td><td>~$600-800</td><td>N/A (temporary)</td></tr>
+    <tr><td>With stop/start automation (run 10h/day)</td><td>~$250</td><td>~$3,000</td></tr>
+  </table>
+</div>
+
+</div><!-- /container -->
+
+<!-- TOC -->
+<div class="toc">
+  <h4>Navigation</h4>
+  <a href="#phase1">Phase 1: Teardown</a>
+  <a href="#phase2">Phase 2: Databases</a>
+  <a href="#phase3">Phase 3: Networking</a>
+  <a href="#phase4">Phase 4: Redis</a>
+  <a href="#phase5">Phase 5: ECS + ECR</a>
+  <a href="#phase6">Phase 6: S3 + CloudFront</a>
+  <a href="#phase7">Phase 7: CI/CD</a>
+  <a href="#phase8">Phase 8: Security</a>
+  <a href="#phase9">Phase 9: Decommission Frankfurt</a>
+</div>
+
+<script>
+function togglePhase(id){document.getElementById(id).classList.toggle('open')}
+function toggle(el){
+  el.classList.toggle('checked');
+  const s=JSON.parse(localStorage.getItem('uaeCleanBuild')||'{}');
+  s[el.dataset.step]=el.classList.contains('checked');
+  localStorage.setItem('uaeCleanBuild',JSON.stringify(s));
+  updateProgress()
+}
+function updateProgress(){
+  const all=document.querySelectorAll('.cb'),done=document.querySelectorAll('.cb.checked');
+  const pct=all.length?Math.round(done.length/all.length*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressFill').textContent=pct+'%';
+  document.getElementById('completedCount').textContent=done.length;
+  document.getElementById('remainingCount').textContent=all.length-done.length;
+  document.getElementById('totalCount').textContent=all.length;
+  // Update phase name
+  const phases=['Teardown','Databases','Networking','Redis','ECS + ECR','S3 + CF','CI/CD','Security','Decommission'];
+  if(pct>=100)document.getElementById('phaseName').textContent='Complete!';
+  else{
+    let current=0;
+    for(let i=1;i<=9;i++){
+      const phaseSteps=document.querySelectorAll(`[data-step^="${i}-"]`);
+      const phaseDone=document.querySelectorAll(`[data-step^="${i}-"].checked`);
+      if(phaseDone.length<phaseSteps.length){current=i;break;}
+    }
+    if(current>0)document.getElementById('phaseName').textContent='Phase '+current+': '+phases[current-1];
+  }
+}
+window.addEventListener('load',()=>{
+  const s=JSON.parse(localStorage.getItem('uaeCleanBuild')||'{}');
+  Object.entries(s).forEach(([k,v])=>{if(v){const el=document.querySelector(`[data-step="${k}"]`);if(el)el.classList.add('checked')}});
+  updateProgress()
+})
+</script>
+</body>
+</html>

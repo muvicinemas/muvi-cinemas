@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CIO Update — UAE UAT Environment Build Plan</title>
+<style>
+:root{--bg:#0d1117;--s:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--a:#58a6ff;--g:#3fb950;--r:#f85149;--o:#d29922;--p:#bc8cff;--c:#39d2c0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);line-height:1.7;padding:40px 20px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:1.9em;margin-bottom:6px;background:linear-gradient(90deg,var(--a),var(--c));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{color:var(--a);margin:30px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--b)}
+h3{color:var(--p);margin:18px 0 8px}
+.meta{color:var(--m);font-size:.92em;margin-bottom:25px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:22px;margin:14px 0}
+.hero{text-align:center;padding:35px 20px;background:linear-gradient(135deg,#0a1628,#102040 60%,#0a2a1a);border:2px solid var(--g);border-radius:12px;margin-bottom:30px}
+.hero .tag{display:inline-block;background:rgba(63,185,80,.15);color:var(--g);padding:4px 14px;border-radius:20px;font-size:.85em;margin-top:10px;font-weight:600}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.92em}
+th{background:#1c2333;color:var(--a);padding:10px 12px;text-align:left;border:1px solid var(--b)}
+td{padding:10px 12px;border:1px solid var(--b)}
+tr:hover{background:rgba(88,166,255,.03)}
+.ok{background:#0d2818;border:1px solid var(--g);border-radius:8px;padding:14px;margin:12px 0}
+.warn{background:#2e1a1a;border:1px solid var(--r);border-radius:8px;padding:14px;margin:12px 0}
+.info{background:#1a2332;border:1px solid var(--a);border-radius:8px;padding:14px;margin:12px 0}
+.note{background:#1a1a2e;border:1px solid var(--p);border-radius:8px;padding:14px;margin:12px 0}
+pre{background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:16px;font-size:.78em;overflow-x:auto;line-height:1.5;color:var(--g)}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.78em;font-weight:600}
+.b-green{background:rgba(63,185,80,.15);color:var(--g)}
+.b-red{background:rgba(248,81,73,.15);color:var(--r)}
+.b-orange{background:rgba(210,153,34,.15);color:var(--o)}
+.b-blue{background:rgba(88,166,255,.15);color:var(--a)}
+.savings{font-size:2em;font-weight:800;color:var(--g);text-align:center;margin:15px 0}
+.timeline{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+.tl-item{flex:1;min-width:140px;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:12px;text-align:center}
+.tl-item .day{font-size:.78em;color:var(--m);margin-bottom:4px}
+.tl-item .what{font-size:.85em;font-weight:600}
+@media print{body{background:#fff;color:#000}table,th,td{border-color:#ccc}th{background:#f0f0f0;color:#000}.card{border-color:#ccc;background:#fafafa}h1,h2{-webkit-text-fill-color:unset;background:none;color:#0366d6}pre{background:#f6f6f6;color:#333}.badge{border:1px solid #ccc}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hero">
+  <h1>UAE UAT Environment Build Plan</h1>
+  <p style="color:var(--m);margin:8px 0">CIO Update — February 23, 2026</p>
+  <p style="color:var(--t)">Prepared by: Rehan Tariq</p>
+  <div class="tag">READY TO EXECUTE — PENDING APPROVAL</div>
+</div>
+
+<!-- OBJECTIVE -->
+<h2>Objective</h2>
+<div class="card">
+  <p>Build a <strong>production-mirror UAT environment</strong> in <strong>UAE (me-central-1)</strong> for load testing. Strip the existing UAE clutter, replicate the exact production architecture, and decommission the redundant Frankfurt UAT.</p>
+  <div class="ok" style="margin-top:12px;text-align:center;font-size:1.1em">
+    <strong>Strategy:</strong> Clean UAE → Mirror Prod → Load Test → Kill Frankfurt
+  </div>
+</div>
+
+<!-- CURRENT STATE -->
+<h2>Current State</h2>
+<table>
+  <tr><th>Environment</th><th>Location</th><th>Status</th><th>Monthly Cost</th></tr>
+  <tr>
+    <td>Production (Account 2)</td>
+    <td>Frankfurt, eu-central-1</td>
+    <td><span class="badge b-green">Running — 9 services, 39 tasks</span></td>
+    <td>$27,873</td>
+  </tr>
+  <tr>
+    <td>Frankfurt UAT (Account 1)</td>
+    <td>Frankfurt, eu-central-1</td>
+    <td><span class="badge b-orange">Running — unused, legacy</span></td>
+    <td>$650–800</td>
+  </tr>
+  <tr>
+    <td>UAE (Account 1)</td>
+    <td>UAE, me-central-1</td>
+    <td><span class="badge b-red">Broken — ECS → Frankfurt DBs (150ms latency)</span></td>
+    <td>$450</td>
+  </tr>
+</table>
+<div class="warn">
+  <strong>Problem:</strong> UAE ECS tasks route to Frankfurt databases cross-region (~100-150ms per query). Frankfurt UAT is a second redundant environment. Combined waste: <strong>$1,100–1,250/month</strong>.
+</div>
+
+<!-- EXECUTION PLAN -->
+<h2>Execution Plan & ETA</h2>
+<table>
+  <tr><th style="width:50px">#</th><th>Phase</th><th>ETA</th><th>Cost Impact</th></tr>
+  <tr><td>1</td><td>Tear down UAE clutter (keep DBs for evaluation)</td><td>Day 1 (2 hrs)</td><td><span class="badge b-green">Save $450/mo</span></td></tr>
+  <tr><td>2</td><td>Set up 6 PostgreSQL databases in UAE</td><td>Day 1 (3 hrs)</td><td>+$188/mo</td></tr>
+  <tr><td>3</td><td>Create networking (3 ALBs, 9 target groups, security groups)</td><td>Day 2 (3 hrs)</td><td>+$54/mo</td></tr>
+  <tr><td>4</td><td>Create Redis cache clusters (4 clusters)</td><td>Day 2 (30 min)</td><td>+$50/mo</td></tr>
+  <tr><td>5</td><td>Deploy all 9 microservices on ECS Fargate</td><td>Day 2–3 (4 hrs)</td><td>+$200/mo</td></tr>
+  <tr><td>6</td><td>Configure S3, CloudFront, WAF</td><td>Day 3 (1 hr)</td><td>+$16/mo</td></tr>
+  <tr><td>7</td><td>Wire config: 56 SSM params, 6 DB secrets, 25 integrations</td><td>Day 3 (3 hrs)</td><td>—</td></tr>
+  <tr><td>8</td><td>Set up CI/CD pipeline (CodePipeline + CodeBuild — same as prod)</td><td>Day 4 (4 hrs)</td><td>~$10/mo</td></tr>
+  <tr><td>9</td><td>Obtain/verify sandbox credentials for 25 third-party services</td><td>Day 4–5</td><td>—</td></tr>
+  <tr><td>10</td><td>End-to-end verification + smoke tests</td><td>Day 5</td><td>—</td></tr>
+  <tr><td>11</td><td>Decommission Frankfurt UAT (after 48h stable)</td><td>Day 7</td><td><span class="badge b-green">Save $650–800/mo</span></td></tr>
+</table>
+
+<div class="info" style="text-align:center">
+  <strong>Total: ~5 working days</strong> to operational UAT + 2 days buffer for Frankfurt decommission
+</div>
+
+<!-- TIMELINE VISUAL -->
+<h3>Week at a Glance</h3>
+<div class="timeline">
+  <div class="tl-item"><div class="day">MON</div><div class="what">Teardown + Databases</div></div>
+  <div class="tl-item"><div class="day">TUE</div><div class="what">Networking + Redis</div></div>
+  <div class="tl-item"><div class="day">WED</div><div class="what">Deploy 9 Services</div></div>
+  <div class="tl-item"><div class="day">THU</div><div class="what">Config + CI/CD</div></div>
+  <div class="tl-item"><div class="day">FRI</div><div class="what">Credentials + Testing</div></div>
+  <div class="tl-item" style="border-color:var(--g)"><div class="day">NEXT TUE</div><div class="what" style="color:var(--g)">Kill Frankfurt</div></div>
+</div>
+
+<!-- ARCHITECTURE -->
+<h2>Architecture Being Built</h2>
+<div class="card">
+<pre>
+CloudFront (CDN) → Public ALB → Gateway (NestJS, Fargate)
+                                    ↓ gRPC via Internal ALB (ports 5002-5007)
+                 ┌──────────┬───────────┬──────────┬─────────┬──────────────┬──────────┐
+                Main     Identity   Payment     F&B    Notification    Offer      Website
+                 ↓          ↓          ↓         ↓          ↓            ↓
+             Postgres   Postgres   Postgres  Postgres   Postgres     Postgres
+                 ↓          ↓          ↓         ↓          ↓            ↓
+             Redis      Redis(shared) ...     Redis      Redis(shared)  ...
+
+9 ECS Fargate services  ·  6 PostgreSQL databases  ·  4 Redis clusters
+3 ALBs (public + internal gRPC + website)  ·  25 third-party integrations
+</pre>
+</div>
+
+<!-- THIRD-PARTY -->
+<h2>Third-Party Integrations (25 Total)</h2>
+<table>
+  <tr><th>Tier</th><th>Integrations</th><th>Sandbox Status</th></tr>
+  <tr>
+    <td><span class="badge b-red">CRITICAL</span></td>
+    <td><strong>Vista Entertainment</strong> (cinema mgmt, 15 vars), <strong>SendGrid</strong> (email), <strong>AWS S3/CF</strong></td>
+    <td>UAT endpoints available via config</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-orange">PAYMENTS</span></td>
+    <td><strong>HyperPay</strong>, <strong>Checkout.com</strong>, <strong>PayFort</strong>, <strong>Tabby</strong> (BNPL), <strong>NearPay</strong> (kiosk)</td>
+    <td>All have sandbox URLs — need test API keys</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-blue">AUTH/COMMS</span></td>
+    <td><strong>Unifonic</strong> (SMS), <strong>Taqnyat</strong> (SMS alt), <strong>OneSignal</strong> (push), <strong>Braze</strong> (engagement)</td>
+    <td>Test mode available — need UAT app IDs</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-green">OPTIONAL</span></td>
+    <td>Apple Pay/Wallet, Google reCAPTCHA, Maps, Freshdesk, Avius, Unipal, ZATCA, Huawei</td>
+    <td>Skip or use test keys — not blocking</td>
+  </tr>
+  <tr>
+    <td style="color:var(--m)">OBSERVABILITY</td>
+    <td>Datadog, Sentry</td>
+    <td>Use same API keys with env=uat tag</td>
+  </tr>
+</table>
+<div class="note">
+  <strong>130+ environment variables</strong> mapped across all services. Existing SSM params from previous UAT may already have valid sandbox keys — will audit first.
+</div>
+
+<!-- CI/CD -->
+<h2>CI/CD Pipeline</h2>
+<div class="card">
+  <h3 style="margin-top:0">AWS CodePipeline + CodeBuild (Same as Production)</h3>
+  <p>Production uses <strong>9 CodePipelines</strong> connected to <strong>GitHub via CodeStar Connection</strong> (OAuth, no SSH). We replicate the exact same pattern for UAT.</p>
+  <h3>Production Pipeline Flow</h3>
+  <pre>GitHub push → CodePipeline trigger → Manual Approval → CodeBuild (Docker build → ECR push) → ECS Deploy</pre>
+  <table>
+    <tr><th>Benefit</th><th>Detail</th></tr>
+    <tr><td>Security</td><td><strong>No SSH keys</strong> — CodeStar Connection uses OAuth app auth to GitHub. IAM roles only, no credentials in code.</td></tr>
+    <tr><td>Consistency</td><td>Exact same pipeline structure, buildspec, and deploy pattern as production</td></tr>
+    <tr><td>Build</td><td>CodeBuild <code>standard:6.0</code> image, <code>MEDIUM</code> compute — Docker builds with BuildKit caching</td></tr>
+    <tr><td>Cost</td><td>~$10/mo (100 build-minutes/mo free tier, $0.005/min after)</td></tr>
+  </table>
+  <h3>What We Create</h3>
+  <table>
+    <tr><th>Resource</th><th>Count</th><th>Config</th></tr>
+    <tr><td>CodeStar Connection</td><td>1</td><td>Link Account 1 to same GitHub org (separate connection)</td></tr>
+    <tr><td>CodeBuild Project</td><td>1</td><td>Clone prod buildspec — change ECR repo URI + cluster name to UAE</td></tr>
+    <tr><td>CodePipeline</td><td>9</td><td>One per service — Source → Approval → Build → Deploy</td></tr>
+    <tr><td>IAM Roles</td><td>3</td><td>Pipeline role, Build role, Deploy role</td></tr>
+  </table>
+</div>
+
+<!-- FINANCIAL IMPACT -->
+<h2>Financial Impact</h2>
+<table>
+  <tr><th>Metric</th><th>Before</th><th>After</th><th>Change</th></tr>
+  <tr><td>UAE monthly spend</td><td>$450 (broken)</td><td>$559 (working)</td><td>+$109</td></tr>
+  <tr><td>Frankfurt UAT monthly</td><td>$650–800</td><td>$0 (decommissioned)</td><td style="color:var(--g);font-weight:bold">−$650–800</td></tr>
+  <tr style="background:rgba(63,185,80,.08)"><td><strong>Net monthly change</strong></td><td><strong>$1,100–1,250</strong></td><td><strong>$559</strong></td><td style="color:var(--g);font-weight:bold"><strong>−$541–691/mo</strong></td></tr>
+</table>
+<div class="savings">Annual Savings: $6,492 – $8,292</div>
+<div class="ok" style="text-align:center">
+  With stop/start automation (10 hrs/day): <strong>~$290/mo</strong> → saving <strong>$9,720–11,520/yr</strong>
+</div>
+
+<!-- DECISIONS -->
+<h2>Decisions Needed</h2>
+<table>
+  <tr><th>#</th><th>Decision</th><th>Recommendation</th></tr>
+  <tr><td>1</td><td>Database strategy (reuse stopped DBs vs create fresh)</td><td><span class="badge b-green">Create fresh</span> — saves $120/mo on oversized storage</td></tr>
+  <tr><td>2</td><td>CI/CD platform</td><td><span class="badge b-green">CodePipeline + CodeBuild</span> — same as prod, no SSH, OAuth-only</td></tr>
+  <tr><td>3</td><td>Decommission Frankfurt UAT after 48h stable</td><td><span class="badge b-green">Yes</span> — $650–800/mo savings</td></tr>
+</table>
+
+<!-- RISKS -->
+<h2>Risks</h2>
+<table>
+  <tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr>
+  <tr><td>Third-party sandbox keys expired</td><td>Medium</td><td>Audit existing SSM params first; most should be valid</td></tr>
+  <tr><td>Docker builds fail (private packages)</td><td>Low</td><td>Pre-test local builds before ECR push</td></tr>
+  <tr><td>Vista UAT endpoint changed</td><td>High</td><td>Verify connectivity during Phase 10 before cutting Frankfurt</td></tr>
+</table>
+
+</div>
+</body>
+</html>

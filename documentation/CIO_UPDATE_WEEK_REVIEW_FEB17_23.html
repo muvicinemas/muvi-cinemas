@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Week Review — Feb 17–23, 2026</title>
+<style>
+:root{--bg:#0d1117;--s:#161b22;--b:#30363d;--t:#e6edf3;--m:#8b949e;--a:#58a6ff;--g:#3fb950;--r:#f85149;--o:#d29922;--p:#bc8cff;--c:#39d2c0}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);line-height:1.7;padding:40px 20px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:1.8em;margin-bottom:4px;background:linear-gradient(90deg,var(--a),var(--c));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{color:var(--a);margin:28px 0 10px;padding-bottom:5px;border-bottom:1px solid var(--b);font-size:1.15em}
+.meta{color:var(--m);font-size:.9em;margin-bottom:24px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:20px;margin:12px 0}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.9em}
+th{background:#1c2333;color:var(--a);padding:9px 12px;text-align:left;border:1px solid var(--b)}
+td{padding:9px 12px;border:1px solid var(--b)}
+tr:hover{background:rgba(88,166,255,.03)}
+.badge{display:inline-block;padding:2px 9px;border-radius:12px;font-size:.76em;font-weight:600}
+.b-green{background:rgba(63,185,80,.15);color:var(--g)}
+.b-blue{background:rgba(88,166,255,.15);color:var(--a)}
+.b-orange{background:rgba(210,153,34,.15);color:var(--o)}
+.b-purple{background:rgba(188,140,255,.15);color:var(--p)}
+.stats{display:flex;gap:14px;flex-wrap:wrap;margin:14px 0}
+.stat{flex:1;min-width:120px;background:var(--bg);border:1px solid var(--b);border-radius:8px;padding:14px;text-align:center}
+.stat .v{font-size:1.6em;font-weight:800}
+.stat .l{color:var(--m);font-size:.8em;margin-top:2px}
+.hash{font-family:monospace;color:var(--p);font-size:.85em}
+.files{color:var(--m);font-size:.82em}
+.ok{background:#0d2818;border:1px solid var(--g);border-radius:8px;padding:12px;margin:10px 0}
+@media print{body{background:#fff;color:#000}table,th,td{border-color:#ccc}th{background:#f0f0f0;color:#000}.card{border-color:#ccc;background:#fafafa}h1,h2{-webkit-text-fill-color:unset;background:none;color:#0366d6}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Week Review — Feb 17–23, 2026</h1>
+<p class="meta">Rehan Tariq &middot; CIO Update &middot; Based on git history</p>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat"><div class="v" style="color:var(--a)">8</div><div class="l">Commits</div></div>
+  <div class="stat"><div class="v" style="color:var(--g)">+14,457</div><div class="l">Lines Added</div></div>
+  <div class="stat"><div class="v" style="color:var(--r)">−19</div><div class="l">Lines Removed</div></div>
+  <div class="stat"><div class="v" style="color:var(--o)">54</div><div class="l">Files Changed</div></div>
+</div>
+
+<!-- COMMIT LOG -->
+<h2>Commit Log</h2>
+<table>
+  <tr><th>Date</th><th>Hash</th><th>Description</th><th>Impact</th></tr>
+  <tr>
+    <td>Feb 23</td>
+    <td class="hash">b9220c9</td>
+    <td>Terraform: fill all gaps from comprehensive AWS audit</td>
+    <td class="files">12 files, +1,322</td>
+  </tr>
+  <tr>
+    <td>Feb 19</td>
+    <td class="hash">0ba7966</td>
+    <td>Complete Terraform IaC for all production AWS resources</td>
+    <td class="files">33 files, +6,640</td>
+  </tr>
+  <tr>
+    <td>Feb 19</td>
+    <td class="hash">673465e</td>
+    <td>Prod infrastructure report, AWS crash course, interactive cost explorer</td>
+    <td class="files">3 files, +4,239</td>
+  </tr>
+  <tr>
+    <td>Feb 18</td>
+    <td class="hash">a921047</td>
+    <td>Comprehensive load testing strategy document</td>
+    <td class="files">1 file, +2,085</td>
+  </tr>
+  <tr>
+    <td>Feb 18</td>
+    <td class="hash">f05ecf4</td>
+    <td>AI assistant (Copilot) setup for all developers</td>
+    <td class="files">2 files, +82</td>
+  </tr>
+  <tr>
+    <td>Feb 17</td>
+    <td class="hash">3a723df</td>
+    <td>Cross-platform instructions to README</td>
+    <td class="files">1 file, +3</td>
+  </tr>
+  <tr>
+    <td>Feb 17</td>
+    <td class="hash">1625d3e</td>
+    <td>Fix PowerShell 5.1 compatibility (Join-Path, Start-Process)</td>
+    <td class="files">1 file, +3 −3</td>
+  </tr>
+  <tr>
+    <td>Feb 17</td>
+    <td class="hash">ce4f141</td>
+    <td>Add retry logic for git clone (transient network failures)</td>
+    <td class="files">1 file, +83 −6</td>
+  </tr>
+</table>
+
+<!-- SUMMARY BY CATEGORY -->
+<h2>Summary by Category</h2>
+<div class="card">
+<table>
+  <tr><th>Category</th><th>Commits</th><th>What Was Done</th></tr>
+  <tr>
+    <td><span class="badge b-purple">Infrastructure</span></td>
+    <td>2</td>
+    <td>36 Terraform files covering all production AWS resources (ECS, RDS, ALB, Redis, S3, CloudFront, WAF, IAM, Lambda, Route53, etc.) + import script</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-blue">Documentation</span></td>
+    <td>3</td>
+    <td>Production infra report, AWS crash course for team onboarding, interactive cost explorer, load testing strategy</td>
+  </tr>
+  <tr>
+    <td><span class="badge b-green">DevOps / DX</span></td>
+    <td>3</td>
+    <td>Bootstrap script hardened (retry logic, PS 5.1 compat, cross-platform), Copilot instructions for team</td>
+  </tr>
+</table>
+</div>
+
+<!-- KEY FINDINGS -->
+<h2>Key Findings This Week</h2>
+<div class="card">
+<table>
+  <tr><th>Finding</th><th>Detail</th></tr>
+  <tr><td>Production cost</td><td><strong>$27,873/mo</strong> across 30+ AWS services (9 ECS, 7 Aurora, 9 Redis)</td></tr>
+  <tr><td>Waste identified</td><td><strong>$1,100–1,250/mo</strong> — Frankfurt UAT ($650–800) + broken UAE ($450)</td></tr>
+  <tr><td>Third-party integrations</td><td><strong>25 services</strong>, ~130 env vars mapped across 7 microservices</td></tr>
+  <tr><td>Ireland DR</td><td>Dormant disaster recovery in Account 2 — not needed</td></tr>
+</table>
+</div>
+
+<!-- NEXT WEEK -->
+<h2>Next Week</h2>
+<div class="ok">
+  <strong>Priority:</strong> Execute UAE UAT environment build (pending approval) — 5-day plan to mirror production into UAE, decommission Frankfurt UAT, save $550–700/mo.
+</div>
+
+</div>
+</body>
+</html>

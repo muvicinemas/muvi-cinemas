@@ -25,3 +25,6 @@ Thumbs.db
 
 # Node
 node_modules/
+
+# Task definition snapshots (contain secrets)
+documentation/*-taskdef.json
