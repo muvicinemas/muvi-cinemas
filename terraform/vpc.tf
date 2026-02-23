@@ -195,15 +195,18 @@ resource "aws_network_acl_rule" "private_egress_allow_all" {
 }
 
 # ==================== VPC PEERING ====================
-resource "aws_vpc_peering_connection" "uat" {
-  vpc_id      = aws_vpc.muvi.id
-  peer_vpc_id = "vpc-0a1b2c3d4e5f67890" # UAT VPC — update after UAT build
-  auto_accept = true
 
-  tags = { Name = "Prod-to-UAT-Peering" }
+# Cross-account peering with account 739991759290 (Bespin/previous vendor)
+# Requester VPC: vpc-04056649658133bf4 (10.241.0.0/16) in account 739991759290
+# Accepter VPC: vpc-078c1286f49e3383e (10.230.0.0/16) in this account
+resource "aws_vpc_peering_connection_accepter" "cross_account" {
+  vpc_peering_connection_id = "pcx-0940f66b46dc58225"
+  auto_accept               = true
+
+  tags = { Name = "CrossAccount-739991759290-Peering" }
 
   lifecycle {
-    ignore_changes = [peer_vpc_id]
+    ignore_changes = [vpc_peering_connection_id]
   }
 }
 

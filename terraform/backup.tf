@@ -152,3 +152,38 @@ resource "aws_iam_role_policy_attachment" "backup_s3_restore" {
   role       = aws_iam_role.backup.name
   policy_arn = "arn:aws:iam::aws:policy/AWSBackupServiceRolePolicyForS3Restore"
 }
+
+# ==================== BACKUP SELECTIONS ====================
+
+# S3-Backup → targets muvi-cms-prod bucket
+resource "aws_backup_selection" "cms" {
+  name         = "CMS-Resource-Assignment"
+  plan_id      = aws_backup_plan.s3_backup.id
+  iam_role_arn = aws_iam_role.backup.arn
+
+  resources = [
+    aws_s3_bucket.buckets["muvi-cms-prod"].arn
+  ]
+}
+
+# Media-Backup → targets muvi-media-prod bucket
+resource "aws_backup_selection" "media" {
+  name         = "Media-Resource-Assignment"
+  plan_id      = aws_backup_plan.media_backup.id
+  iam_role_arn = aws_iam_role.backup.arn
+
+  resources = [
+    aws_s3_bucket.buckets["muvi-media-prod"].arn
+  ]
+}
+
+# RDS-DR-To-Ireland-1 → targets all RDS clusters
+resource "aws_backup_selection" "all_dbs" {
+  name         = "All-DBs-Backups"
+  plan_id      = aws_backup_plan.rds_dr_ireland_1.id
+  iam_role_arn = aws_iam_role.backup.arn
+
+  resources = [
+    "arn:aws:rds:*:*:cluster:*"
+  ]
+}

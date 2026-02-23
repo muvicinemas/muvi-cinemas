@@ -655,6 +655,172 @@ terraform import aws_cloudwatch_dashboard.db_health_summary muvi-prod-main-write
 echo "============================================"
 echo "Import complete — $(date)"
 echo "============================================"
+
+# ============================================================
+# GAP-FILL IMPORTS — Added by audit pass
+# ============================================================
+
+# ==================== GuardDuty ====================
+echo "--- GuardDuty ---"
+terraform import aws_guardduty_detector.main b8c186144026815125b8c32fb2103117
+
+# ==================== AWS Config ====================
+echo "--- AWS Config ---"
+terraform import aws_config_configuration_recorder.main default
+terraform import aws_config_delivery_channel.main default
+terraform import aws_config_configuration_recorder_status.main default
+
+# ==================== Inspector v2 ====================
+echo "--- Inspector v2 ---"
+terraform import aws_inspector2_enabler.main ${ACCOUNT}
+
+# ==================== VPC Peering (Cross-Account) ====================
+echo "--- VPC Peering ---"
+terraform import aws_vpc_peering_connection_accepter.cross_account pcx-0940f66b46dc58225
+
+# ==================== IAM Users ====================
+echo "--- IAM Users ---"
+terraform import 'aws_iam_user.users["ahmad.almudhi"]' ahmad.almudhi
+terraform import 'aws_iam_user.users["ahmad.dd"]' ahmad.dd
+terraform import 'aws_iam_user.users["Fareed.AbdulHameed"]' Fareed.AbdulHameed
+terraform import 'aws_iam_user.users["Gitlab-User"]' Gitlab-User
+terraform import 'aws_iam_user.users["lokesh.ramesh@muvicinemas.com"]' lokesh.ramesh@muvicinemas.com
+terraform import 'aws_iam_user.users["m.elsherif"]' m.elsherif
+terraform import 'aws_iam_user.users["m.hamdy"]' m.hamdy
+terraform import 'aws_iam_user.users["m.wehbe"]' m.wehbe
+terraform import 'aws_iam_user.users["manar.almalki"]' manar.almalki
+terraform import 'aws_iam_user.users["mohammed.shaker"]' mohammed.shaker
+terraform import 'aws_iam_user.users["muhammad.faisal@muvicinemas.com"]' muhammad.faisal@muvicinemas.com
+terraform import 'aws_iam_user.users["parameter-store-readonly"]' parameter-store-readonly
+terraform import 'aws_iam_user.users["poc@muvicinemas.com"]' poc@muvicinemas.com
+terraform import 'aws_iam_user.users["rehan.tariq@muvicinemas.com"]' rehan.tariq@muvicinemas.com
+terraform import 'aws_iam_user.users["s3"]' s3
+terraform import 'aws_iam_user.users["Saad.Taqieddin"]' Saad.Taqieddin
+terraform import 'aws_iam_user.users["shahriyar.agha@muvicinemas.com"]' shahriyar.agha@muvicinemas.com
+terraform import 'aws_iam_user.users["subs.account@muvicinemas.com"]' subs.account@muvicinemas.com
+terraform import 'aws_iam_user.users["syed.faheem@muvicinemas.com"]' syed.faheem@muvicinemas.com
+terraform import 'aws_iam_user.users["syed.mansoor@muvicinemas.com"]' syed.mansoor@muvicinemas.com
+terraform import 'aws_iam_user.users["Usman.Malik"]' Usman.Malik
+terraform import 'aws_iam_user.users["wilfredo.perez"]' wilfredo.perez
+terraform import 'aws_iam_user.users["zeeshan.mehboob@muvicinemas.com"]' zeeshan.mehboob@muvicinemas.com
+
+# ==================== IAM Groups ====================
+echo "--- IAM Groups ---"
+terraform import aws_iam_group.admins Admins
+terraform import aws_iam_group.gitlab Gitlab
+terraform import aws_iam_group.readonly ReadOnly
+terraform import aws_iam_group.s3_admins S3-Admins
+terraform import aws_iam_group.subs_account subs.account
+terraform import aws_iam_group.zeroand1 ZeroAnd1
+
+# ==================== IAM Policies ====================
+echo "--- IAM Custom Policies ---"
+terraform import aws_iam_policy.force_mfa "arn:aws:iam::${ACCOUNT}:policy/Force-MFA"
+terraform import aws_iam_policy.mfa_access "arn:aws:iam::${ACCOUNT}:policy/MFA_Access"
+terraform import aws_iam_policy.parameter_store_readonly "arn:aws:iam::${ACCOUNT}:policy/parameter-store-ReadOnly"
+terraform import aws_iam_policy.athena_access "arn:aws:iam::${ACCOUNT}:policy/AthenaAccess"
+
+# ==================== S3 Replication IAM Roles ====================
+echo "--- S3 Replication Roles ---"
+terraform import aws_iam_role.s3crr_media s3crr_role_for_muvi-media-prod
+terraform import aws_iam_role.s3crr_cms s3crr_role_for_muvi-cms-prod_1
+
+# ==================== S3 Bucket Policies ====================
+echo "--- S3 Bucket Policies ---"
+terraform import aws_s3_bucket_policy.media_public muvi-media-prod
+terraform import aws_s3_bucket_policy.cms_public muvi-cms-prod
+
+# ==================== S3 CORS ====================
+echo "--- S3 CORS ---"
+terraform import aws_s3_bucket_cors_configuration.media muvi-media-prod
+
+# ==================== S3 Replication ====================
+echo "--- S3 Replication ---"
+terraform import aws_s3_bucket_replication_configuration.media_dr muvi-media-prod
+terraform import aws_s3_bucket_replication_configuration.cms_dr muvi-cms-prod
+
+# ==================== CloudFront OAIs ====================
+echo "--- CloudFront OAIs ---"
+terraform import aws_cloudfront_origin_access_identity.media_prod E1ZLDHOONDCUA0
+terraform import aws_cloudfront_origin_access_identity.media_dr E2CWUP9F7ZIMCF
+
+# ==================== ElastiCache Extra Subnet Group ====================
+echo "--- ElastiCache Extra ---"
+terraform import aws_elasticache_subnet_group.bulk_refund bulk-refund-booking-redis-sg
+terraform import aws_elasticache_parameter_group.redis7_secondary muvi-redis-pg
+
+# ==================== Backup Selections ====================
+echo "--- Backup Selections ---"
+terraform import aws_backup_selection.cms "6b81efd2-43e0-446f-8bf2-c98eeba90426|641f52a1-6071-4c3c-89e7-f10accd0b867"
+terraform import aws_backup_selection.media "409cda05-aca6-4c58-85c8-71840f0ad2f1|8edf1b2d-7e5a-4521-8b4a-629c06cfee41"
+terraform import aws_backup_selection.all_dbs "739402fa-b3bf-405a-b862-0f7cb248b098|08058368-7eb5-4135-8305-f17b3a619182"
+
+# ==================== Route53 Records ====================
+echo "--- Route53 Records (public zone) ---"
+# Format: terraform import aws_route53_record.<name> <zone_id>_<record_name>_<type>
+terraform import aws_route53_record.root_a Z10403533MKYDXAOE9HLV_muvicinemas.com_A
+terraform import aws_route53_record.www Z10403533MKYDXAOE9HLV_www.muvicinemas.com_CNAME
+terraform import aws_route53_record.api_prod Z10403533MKYDXAOE9HLV_api.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.app_prod Z10403533MKYDXAOE9HLV_app.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.cms_prod Z10403533MKYDXAOE9HLV_cms.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.media_prod Z10403533MKYDXAOE9HLV_media.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.api_gateway_prod Z10403533MKYDXAOE9HLV_api-gateway.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.api_dr_prod Z10403533MKYDXAOE9HLV_api-dr.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.app_dr_prod Z10403533MKYDXAOE9HLV_app-dr.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.cms_dr_prod Z10403533MKYDXAOE9HLV_cms-dr.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.media_dr_prod Z10403533MKYDXAOE9HLV_media-dr.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.dashboard Z10403533MKYDXAOE9HLV_dashboard.muvicinemas.com_CNAME
+terraform import aws_route53_record.partners Z10403533MKYDXAOE9HLV_partners.muvicinemas.com_CNAME
+terraform import aws_route53_record.rewards_prod Z10403533MKYDXAOE9HLV_rewards.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.rewards Z10403533MKYDXAOE9HLV_rewards.muvicinemas.com_CNAME
+terraform import aws_route53_record.go Z10403533MKYDXAOE9HLV_go.muvicinemas.com_CNAME
+terraform import aws_route53_record.cdp_prod Z10403533MKYDXAOE9HLV_cdp.prod.muvicinemas.com_CNAME
+terraform import aws_route53_record.sendgrid_dkim_s1 Z10403533MKYDXAOE9HLV_s1._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.sendgrid_dkim_s2 Z10403533MKYDXAOE9HLV_s2._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.sendgrid_em5401 Z10403533MKYDXAOE9HLV_em5401.muvicinemas.com_CNAME
+terraform import aws_route53_record.sendgrid_10072790 Z10403533MKYDXAOE9HLV_10072790.muvicinemas.com_CNAME
+terraform import aws_route53_record.sendgrid_url8960 Z10403533MKYDXAOE9HLV_url8960.muvicinemas.com_CNAME
+terraform import aws_route53_record.freshdesk_fd Z10403533MKYDXAOE9HLV_fd._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.freshdesk_fd2 Z10403533MKYDXAOE9HLV_fd2._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.freshdesk_fdm Z10403533MKYDXAOE9HLV_fdm._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.help Z10403533MKYDXAOE9HLV_help.muvicinemas.com_CNAME
+terraform import aws_route53_record.autodiscover Z10403533MKYDXAOE9HLV_autodiscover.muvicinemas.com_CNAME
+terraform import aws_route53_record.lyncdiscover Z10403533MKYDXAOE9HLV_lyncdiscover.muvicinemas.com_CNAME
+terraform import aws_route53_record.sip Z10403533MKYDXAOE9HLV_sip.muvicinemas.com_CNAME
+terraform import aws_route53_record.selector1_dkim Z10403533MKYDXAOE9HLV_selector1._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.selector2_dkim Z10403533MKYDXAOE9HLV_selector2._domainkey.muvicinemas.com_CNAME
+terraform import aws_route53_record.enterprise_enrollment Z10403533MKYDXAOE9HLV_enterpriseenrollment.muvicinemas.com_CNAME
+terraform import aws_route53_record.enterprise_registration Z10403533MKYDXAOE9HLV_enterpriseregistration.muvicinemas.com_CNAME
+terraform import aws_route53_record.apiprod Z10403533MKYDXAOE9HLV_apiprod.muvicinemas.com_CNAME
+terraform import aws_route53_record.prod_kiosks Z10403533MKYDXAOE9HLV_prod-kiosks.muvicinemas.com_CNAME
+terraform import aws_route53_record.purchase Z10403533MKYDXAOE9HLV_purchase.muvicinemas.com_CNAME
+terraform import aws_route53_record.vpn Z10403533MKYDXAOE9HLV_vpn.muvicinemas.com_A
+terraform import aws_route53_record.fivetran Z10403533MKYDXAOE9HLV_fivetran.muvicinemas.com_A
+terraform import aws_route53_record.kayanhr Z10403533MKYDXAOE9HLV_kayanhr.muvicinemas.com_A
+terraform import aws_route53_record.tags Z10403533MKYDXAOE9HLV_tags.muvicinemas.com_CNAME
+terraform import aws_route53_record.landing Z10403533MKYDXAOE9HLV_landing.muvicinemas.com_CNAME
+terraform import aws_route53_record.cdp Z10403533MKYDXAOE9HLV_cdp.muvicinemas.com_CNAME
+terraform import aws_route53_record.emailsvc Z10403533MKYDXAOE9HLV_emailsvc.muvicinemas.com_CNAME
+
+echo "--- Route53 Records (microservices internal zone) ---"
+terraform import aws_route53_record.identity_db_writer Z10239253816QBQDWXQHN_identity-db-writer.prod.microservices.internal_CNAME
+terraform import aws_route53_record.identity_db_reader Z10239253816QBQDWXQHN_identity-db-reader.prod.microservices.internal_CNAME
+terraform import aws_route53_record.main_db_writer Z10239253816QBQDWXQHN_main-db-writer.prod.microservices.internal_CNAME
+terraform import aws_route53_record.main_db_reader Z10239253816QBQDWXQHN_main-db-reader.prod.microservices.internal_CNAME
+terraform import aws_route53_record.notification_db_writer Z10239253816QBQDWXQHN_notification-db-writer.prod.microservices.internal_CNAME
+terraform import aws_route53_record.notification_db_reader Z10239253816QBQDWXQHN_notification-db-reader.prod.microservices.internal_CNAME
+terraform import aws_route53_record.payment_db_writer Z10239253816QBQDWXQHN_payment-db-writer.prod.microservices.internal_CNAME
+terraform import aws_route53_record.payment_db_reader Z10239253816QBQDWXQHN_payment-db-reader.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_shared Z10239253816QBQDWXQHN_redis.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_gateway Z10239253816QBQDWXQHN_getway.redis.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_identity Z10239253816QBQDWXQHN_identity.redis.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_main Z10239253816QBQDWXQHN_main.redis.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_notification Z10239253816QBQDWXQHN_notification.redis.prod.microservices.internal_CNAME
+terraform import aws_route53_record.redis_payment Z10239253816QBQDWXQHN_paymnet.redis.prod.microservices.internal_CNAME
+
+echo "============================================"
+echo "GAP-FILL Import complete — $(date)"
+echo "============================================"
 echo ""
 echo "NEXT STEPS:"
 echo "  1. Review import.log for any errors"

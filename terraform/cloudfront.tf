@@ -3,12 +3,12 @@
 # ============================================================
 
 # CloudFront OAIs
-resource "aws_cloudfront_origin_access_identity" "oai_1" {
-  comment = "CloudFront OAI for S3 origins"
+resource "aws_cloudfront_origin_access_identity" "media_prod" {
+  comment = "muvi-media-prod.s3.eu-central-1.amazonaws.com"
 }
 
-resource "aws_cloudfront_origin_access_identity" "oai_2" {
-  comment = "CloudFront OAI for S3 origins (secondary)"
+resource "aws_cloudfront_origin_access_identity" "media_dr" {
+  comment = "muvi-media-prod-dr.s3.eu-west-1.amazonaws.com"
 }
 
 # ---------- API CloudFront ----------

@@ -13,6 +13,11 @@ resource "aws_elasticache_subnet_group" "secondary" {
   subnet_ids = aws_subnet.private[*].id
 }
 
+resource "aws_elasticache_subnet_group" "bulk_refund" {
+  name       = "bulk-refund-booking-redis-sg"
+  subnet_ids = aws_subnet.private[*].id
+}
+
 # ---------- Parameter Groups ----------
 resource "aws_elasticache_parameter_group" "redis7" {
   name   = "muvi-prod-redis-pg"

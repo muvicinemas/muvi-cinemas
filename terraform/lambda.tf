@@ -520,3 +520,132 @@ data "archive_file" "lambda_placeholder" {
     filename = "index.js"
   }
 }
+
+# ============================================================
+# Lambda Permissions (Resource-Based Policies)
+# ============================================================
+# These allow EventBridge, SNS, and API Gateway to invoke Lambda functions.
+
+# ---------- EventBridge → Lambda Permissions ----------
+
+resource "aws_lambda_permission" "eventbridge_film_sync" {
+  statement_id  = "AllowEventBridgeFilmSync"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sync_films.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.film_sync.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_person_sync" {
+  statement_id  = "AllowEventBridgePersonSync"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sync_person.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.person_sync.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_sync_cinemas" {
+  statement_id  = "AllowEventBridgeSyncCinemas"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sync_cinema.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.sync_cinemas.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_sync_genres" {
+  statement_id  = "AllowEventBridgeSyncGenres"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sync_genres.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.sync_genres.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_sync_sessions" {
+  statement_id  = "AllowEventBridgeSyncSessions"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.sync_sessions.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.sync_sessions.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_cron_cancel_expired" {
+  statement_id  = "AllowEventBridgeCronCancelExpired"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cron_cancel_expired.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cron_cancel_expired.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_cron_reminder" {
+  statement_id  = "AllowEventBridgeCronReminder"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cron_reminder.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cron_reminder_order.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_cron_check_stock" {
+  statement_id  = "AllowEventBridgeCronCheckStock"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cron_check_stock.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cron_check_stock.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_birthday_notification" {
+  statement_id  = "AllowEventBridgeBirthdayNotification"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.birthday_notification.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.birthday_notification.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_user_anniversary" {
+  statement_id  = "AllowEventBridgeUserAnniversary"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.user_anniversary.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.user_anniversary.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_cron_survey_email" {
+  statement_id  = "AllowEventBridgeCronSurveyEmail"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.survey_email.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.cron_survey_email.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_clean_orders" {
+  statement_id  = "AllowEventBridgeCleanOrders"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.clean_orders_production.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.clean_orders_production.arn
+}
+
+resource "aws_lambda_permission" "eventbridge_terminate_sync" {
+  statement_id  = "AllowEventBridgeTerminateSync"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.terminate_pending_sync.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.terminate_pending_sync.arn
+}
+
+# ---------- SNS → Lambda Permission ----------
+resource "aws_lambda_permission" "sns_lambda_stepfunction" {
+  statement_id  = "AllowSNSInvokeLambdaStepFunction"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_to_stepfunction.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = aws_sns_topic.trigger_lambda_sf.arn
+}
+
+# ---------- API Gateway → Lambda Permission ----------
+resource "aws_lambda_permission" "apigateway_cron_cancel_expired" {
+  statement_id  = "AllowAPIGatewayInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.cron_cancel_expired.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "arn:aws:execute-api:${var.aws_region}:${var.account_id}:${aws_api_gateway_rest_api.main.id}/*/GET/*"
+}

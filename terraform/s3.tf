@@ -108,3 +108,101 @@ resource "aws_s3_bucket_public_access_block" "secure" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# ==================== BUCKET POLICIES ====================
+
+# muvi-media-prod — Public read access (used by CloudFront/CDN)
+resource "aws_s3_bucket_policy" "media_public" {
+  bucket = aws_s3_bucket.buckets["muvi-media-prod"].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid       = "S3PublicAccess"
+      Effect    = "Allow"
+      Principal = "*"
+      Action    = "s3:GetObject"
+      Resource  = "${aws_s3_bucket.buckets["muvi-media-prod"].arn}/*"
+    }]
+  })
+}
+
+# muvi-cms-prod — Public read + GetBucketCORS access
+resource "aws_s3_bucket_policy" "cms_public" {
+  bucket = aws_s3_bucket.buckets["muvi-cms-prod"].id
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "Statement1"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.buckets["muvi-cms-prod"].arn}/*"
+      },
+      {
+        Sid       = "Stmt1652362285864"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = "s3:GetBucketCORS"
+        Resource  = aws_s3_bucket.buckets["muvi-cms-prod"].arn
+      }
+    ]
+  })
+}
+
+# ==================== CORS ====================
+
+# muvi-media-prod CORS — Allow GET/HEAD from all origins
+resource "aws_s3_bucket_cors_configuration" "media" {
+  bucket = aws_s3_bucket.buckets["muvi-media-prod"].id
+
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["GET", "HEAD"]
+    allowed_origins = ["*"]
+  }
+}
+
+# ==================== S3 REPLICATION ====================
+
+# Media bucket → DR bucket (eu-west-1 Ireland)
+resource "aws_s3_bucket_replication_configuration" "media_dr" {
+  bucket = aws_s3_bucket.buckets["muvi-media-prod"].id
+  role   = aws_iam_role.s3crr_media.arn
+
+  rule {
+    id     = "Media-DR-Replication"
+    status = "Enabled"
+
+    destination {
+      bucket = aws_s3_bucket.buckets["muvi-media-prod-dr"].arn
+    }
+
+    delete_marker_replication {
+      status = "Disabled"
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.media]
+}
+
+# CMS bucket → DR bucket (eu-west-1 Ireland)
+resource "aws_s3_bucket_replication_configuration" "cms_dr" {
+  bucket = aws_s3_bucket.buckets["muvi-cms-prod"].id
+  role   = aws_iam_role.s3crr_cms.arn
+
+  rule {
+    id     = "DR-Replication"
+    status = "Enabled"
+
+    destination {
+      bucket = aws_s3_bucket.buckets["muvi-cms-prod-dr"].arn
+    }
+
+    delete_marker_replication {
+      status = "Disabled"
+    }
+  }
+
+  depends_on = [aws_s3_bucket_versioning.cms]
+}
