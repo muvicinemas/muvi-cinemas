@@ -106,8 +106,8 @@ services:
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_identity_service
       DB_PORT: 5432
       # Redis → point to redis container
@@ -214,8 +214,8 @@ services:
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_main_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -341,8 +341,8 @@ services:
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_payment_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -467,8 +467,8 @@ services:
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_fb_db
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -553,8 +553,8 @@ services:
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_notification_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -638,11 +638,11 @@ services:
       DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_PORT: 5432
       DB_READ_USER: postgres
-      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_READ_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_WRITE_PORT: 5432
       DB_WRITE_USER: postgres
-      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$$OyqREGo0-BlupVueo
       DB_NAME: muvi_offer_service
       # Redis
       REDIS_HOST: redis
