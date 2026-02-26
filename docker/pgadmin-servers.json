@@ -61,16 +61,66 @@
       "PassFile": "/tmp/pgpass"
     },
     "7": {
-      "Name": "UAE - UAT Cluster (All Databases)",
+      "Name": "UAE UAT - Main",
       "Group": "UAE UAT",
       "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
       "Port": 5432,
-      "MaintenanceDB": "postgres",
+      "MaintenanceDB": "muvi_main_service",
       "Username": "postgres",
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
     "8": {
+      "Name": "UAE UAT - Identity",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_identity_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "9": {
+      "Name": "UAE UAT - Payment",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_payment_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "10": {
+      "Name": "UAE UAT - F&B",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_fb_db",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "11": {
+      "Name": "UAE UAT - Notification",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_notification_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "12": {
+      "Name": "UAE UAT - Offer",
+      "Group": "UAE UAT",
+      "Host": "uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com",
+      "Port": 5432,
+      "MaintenanceDB": "muvi_offer_service",
+      "Username": "postgres",
+      "SSLMode": "prefer",
+      "PassFile": "/tmp/pgpass"
+    },
+    "13": {
       "Name": "Frankfurt UAT - Identity",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
@@ -80,7 +130,7 @@
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
-    "9": {
+    "14": {
       "Name": "Frankfurt UAT - Main",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
@@ -90,7 +140,7 @@
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
-    "10": {
+    "15": {
       "Name": "Frankfurt UAT - Payment",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
@@ -100,7 +150,7 @@
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
-    "11": {
+    "16": {
       "Name": "Frankfurt UAT - F&B",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
@@ -110,7 +160,7 @@
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
-    "12": {
+    "17": {
       "Name": "Frankfurt UAT - Notification",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",
@@ -120,7 +170,7 @@
       "SSLMode": "prefer",
       "PassFile": "/tmp/pgpass"
     },
-    "13": {
+    "18": {
       "Name": "Frankfurt UAT - Offer",
       "Group": "Frankfurt UAT",
       "Host": "muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com",

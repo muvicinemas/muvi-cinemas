@@ -1,25 +1,59 @@
-# Muvi Cinemas — UAE Clean Build Execution Runbook
+# Muvi Cinemas — UAE UAT Build Execution Runbook
 
-> **Status:** AWAITING APPROVAL  
+> **Status:** IN PROGRESS — Phase 4 (Redis Clusters)  
 > **Author:** GitHub Copilot (AI Assistant)  
-> **Date:** February 23, 2026  
+> **Created:** February 23, 2026  
+> **Last Updated:** February 26, 2026  
 > **Target:** Account 1 (`739991759290`) — `me-central-1` (UAE)  
-> **Source:** Account 2 (`011566070219`) — `eu-central-1` (Production, READ-ONLY)  
+> **Source of Truth:** Account 2 (`011566070219`) — `eu-central-1` (Production) — **READ-ONLY, NEVER WRITE**  
+> **Goal:** Mirror production architecture into UAE for load testing and penetration testing  
 
 ---
 
-## Approval Gate
+## CRITICAL RULES
 
-| # | Decision | Your Answer |
-|---|----------|-------------|
-| 1 | Approve teardown of all non-DB UAE resources? | ⬜ YES / ⬜ NO |
-| 2 | Database strategy: Reuse temp-* DBs or create fresh? | ⬜ REUSE / ⬜ FRESH |
-| 3 | Delete Aurora cluster `uatclusterdb`? | ⬜ YES / ⬜ NO |
-| 4 | CI/CD: GitHub Actions or AWS CodePipeline? | ⬜ GITHUB / ⬜ CODEPIPELINE |
-| 5 | Approve decommission of Frankfurt UAT (after 48h verify)? | ⬜ YES / ⬜ LATER |
-| 6 | Do you have sandbox credentials for third-party services? | ⬜ YES / ⬜ NEED TO CREATE |
+| # | Rule | Enforcement |
+|---|------|-------------|
+| 1 | **NEVER write to Account 2 (prod)** | Only `describe-*`, `list-*`, `get-*` on `--profile muvi-prod` |
+| 2 | **Source of truth = PROD** | UAE UAT mirrors prod architecture, config, and patterns |
+| 3 | **Every action logged** | Each phase has its own `UAE_PHASEn_EXECUTION_LOG.md` |
+| 4 | **Runbook updated after every action** | Status table below reflects real-time progress |
+| 5 | **VERIFY every write operation** | After every create/modify/delete, run a separate `describe`/`get` call to confirm the change actually applied. NEVER assume success from the CLI command alone. If verification fails, STOP and report — do not proceed. Added Feb 25 after Phase 2 incident where a `modify-db-instance` call returned `InvalidDBInstanceStateFault` but was mistakenly logged as successful. |
 
-**Once you say "approved" or answer the above, I will begin executing phase by phase.**
+---
+
+## Decisions Made
+
+| # | Decision | Answer | Date |
+|---|----------|--------|------|
+| 1 | Teardown of junk UAE resources? | ✅ YES — Phase 1 complete | Feb 23 |
+| 2 | Database strategy? | ✅ Keep Aurora `uatclusterdb`, migrate Frankfurt UAT data into it | Feb 24 |
+| 3 | Delete Aurora cluster? | ❌ NO — reusing it (6 DBs with schemas already exist) | Feb 24 |
+| 4 | CI/CD approach? | ✅ CodePipeline + CodeBuild (matching Frankfurt pattern) | Feb 23 |
+| 5 | Decommission Frankfurt UAT? | ⏳ LATER — after UAE is verified stable 48h | Pending |
+| 6 | Third-party sandbox credentials? | ⏳ Will audit existing SSM params first | Pending |
+| 7 | DB Ecosystem — RDS Proxies? | ✅ YES — 6 proxies + 6 read-only endpoints + VPC peering | Feb 24 |
+| 8 | Aurora public access fix? | ✅→↩️ Set PubliclyAccessible=False in Phase 2B, reverted to True on Feb 26 (UAT convenience) | Feb 24→26 |
+| 9 | Bastion for developer DB access? | ❌ REMOVED — bastion EC2 + key pair + SG destroyed after reverting to public access | Feb 26 |
+
+---
+
+## Phase Progress
+
+| Phase | Description | Status | Log File | Savings/Cost |
+|-------|-------------|--------|----------|-------------|
+| 1 | UAE Cleanup & Teardown | ✅ COMPLETE | `UAE_PHASE1_EXECUTION_LOG.md` | Saved ~$691/mo |
+| 2 | Databases (migrate data to UAE Aurora) | ✅ COMPLETE | `UAE_PHASE2_EXECUTION_LOG.md` | ~$0.02 |
+| 2B | DB Ecosystem (RDS Proxies, VPC Peering, Security) | ✅ COMPLETE | `UAE_PHASE2B_EXECUTION_LOG.md` | ~$265/mo |
+| 3 | Networking (ALBs, SGs, TGs) | ✅ COMPLETE | `UAE_PHASE3_EXECUTION_LOG.md` | ~$54/mo |
+| 4 | Redis Clusters | ⬜ NOT STARTED | — | ~$50/mo |
+| 5 | ECS + ECR (task defs, services, images) | ⬜ NOT STARTED | — | ~$200/mo |
+| 6 | S3, CloudFront, WAF | ⬜ NOT STARTED | — | ~$10/mo |
+| 7 | SSM Parameters + Secrets Manager | ⬜ NOT STARTED | — | ~$3/mo |
+| 8 | CI/CD Pipeline (CodePipeline + CodeBuild) | ⬜ NOT STARTED | — | ~$9/mo |
+| 9 | Third-Party Sandbox Accounts | ⬜ NOT STARTED | — | — |
+| 10 | Verification & Load Testing | ⬜ NOT STARTED | — | — |
+| 11 | Decommission Frankfurt | ⬜ NOT STARTED | — | Save ~$650-800/mo |
 
 ---
 
@@ -28,7 +62,8 @@
 1. [How I Will Execute This](#1-how-i-will-execute-this)
 2. [Phase 1: Teardown](#2-phase-1-teardown--clean-slate-uae)
 3. [Phase 2: Databases](#3-phase-2-databases)
-4. [Phase 3: Networking](#4-phase-3-networking--albs--sgs--tgs)
+4. [Phase 2B: DB Ecosystem (RDS Proxies + VPC Peering)](#3b-phase-2b-db-ecosystem)
+5. [Phase 3: Networking](#4-phase-3-networking--albs--sgs--tgs)
 5. [Phase 4: Redis](#5-phase-4-redis-clusters)
 6. [Phase 5: ECS + ECR](#6-phase-5-ecs-cluster--ecr-images--services)
 7. [Phase 6: S3, CloudFront, WAF](#7-phase-6-s3-cloudfront-waf)
@@ -155,64 +190,78 @@ Step 1.11: aws ec2 delete-security-group --group-id <id>
 
 ## 3. Phase 2: Databases
 
-**Duration:** 2-4 hours | **Decision Required** | **Cost:** ~$175/month
+**Duration:** 2-3 hours | **Status:** 🔄 IN PROGRESS | **Log:** `UAE_PHASE2_EXECUTION_LOG.md`
 
-### Decision Point: Database Strategy
+### Strategy: Reuse UAE Aurora + Migrate Frankfurt UAT Data
 
-**Option A: Reuse existing temp-* databases**
-- Pros: Already have data (Vista snapshots), no migration needed
-- Cons: `temp-muvi-uat-main` has 2TB storage ($160/mo alone!), can't shrink RDS
-- Risk: Data may be stale (weeks/months old)
+**Decision:** Keep existing Aurora cluster `uatclusterdb` in UAE. It already has 6 databases with correct schemas (created by previous team). Migrate real test data from Frankfurt UAT standalone RDS instances into UAE Aurora via pg_dump → pg_restore pipe.
 
-**Option B: Create fresh RDS instances (RECOMMENDED)**
-- Pros: Right-sized (50GB main, 20GB others = ~$40/mo storage total), clean schema
-- Cons: Need to run migrations, seed data from Vista
-- Risk: None — migrations are well-defined in each service's `database/migrations/`
+### UAE Aurora Cluster (Target)
 
-**Option C: Hybrid — pg_dump from temp DBs, restore into smaller fresh instances**
-- Pros: Get the data AND right-sized storage
-- Cons: Takes longer, need temp network access
+| Property | Value |
+|----------|-------|
+| Cluster | `uatclusterdb` |
+| Endpoint | `uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| Engine | Aurora PostgreSQL 14.17 |
+| Instances | 2 × db.t3.medium (writer + reader) |
+| Master | postgres / `HR)q0Cpn?D$OyqREGo0-BlupVueo` |
+| VPC | Database-vpc (`vpc-05e2e9c2e88029d4d`) |
+| ⚠️ Security | **Publicly accessible, 0.0.0.0/0 on 5432** — MUST FIX in Phase 3 |
 
-### What I Will Do (based on your choice)
+### Frankfurt UAT DBs (Source — Account 1, eu-central-1)
 
-#### If Option B (Fresh — Recommended):
+| DB | Host | Tables | Rows | Size |
+|----|------|--------|------|------|
+| muvi_main_service | muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 39 | 13,394 | 11 GB |
+| muvi_identity_service | muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 22 | 2,785 | 15 MB |
+| muvi_payment_service | muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 7 | 4,217 | 13 MB |
+| muvi_fb_db | muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 20 | 28 | 14 MB |
+| muvi_notification_service | muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 6 | 0 | 11 MB |
+| muvi_offer_service | muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com | 6 | 26,364,608 | 7,553 MB |
+
+### Execution Plan
 
 ```
-Step 2.1: Create DB subnet group in main VPC
-          aws rds create-db-subnet-group --db-subnet-group-name muvi-uat-db-subnets ...
-
-Step 2.2: Create RDS security group
-          aws ec2 create-security-group --group-name muvi-uat-rds-sg ...
-          aws ec2 authorize-security-group-ingress (allow 5432 from ECS SG)
-
-Step 2.3: Create 6 RDS instances:
-          muvi-uat-main         — db.t3.medium, 50GB gp3, PostgreSQL 14.17
-          muvi-uat-identity     — db.t3.medium, 20GB gp3, PostgreSQL 14.17
-          muvi-uat-payment      — db.t3.medium, 20GB gp3, PostgreSQL 14.17
-          muvi-uat-fb           — db.t3.medium, 20GB gp3, PostgreSQL 14.17
-          muvi-uat-notification — db.t3.medium, 20GB gp3, PostgreSQL 14.17
-          muvi-uat-offer        — db.t3.small,  20GB gp3, PostgreSQL 14.17
-
-Step 2.4: Store credentials in Secrets Manager (6 secrets)
-
-Step 2.5: Delete Aurora cluster (uatclusterdb) — saves ~$110/mo
-          Delete temp-* RDS instances — saves storage costs
-
-Step 2.6: Run Sequelize migrations for each NestJS service
-          Run GORM AutoMigrate for Go offer service (auto on startup)
+Step 2.1: Audit prod DB architecture (READ-ONLY on Account 2) — compare with UAE Aurora schemas
+Step 2.2: Launch temp EC2 in Frankfurt VPC (has access to all 6 RDS instances)
+Step 2.3: Install PostgreSQL client tools on EC2
+Step 2.4: For each DB: pg_dump from Frankfurt RDS → pipe to UAE Aurora (drop existing + restore)
+Step 2.5: Verify row counts match in UAE Aurora
+Step 2.6: Terminate EC2
+Step 2.7: Update this runbook + Phase 2 log
 ```
 
-### Database Sizing (Prod vs UAT)
+### ⚠️ Post-Phase-2: Compare UAE schemas with PROD
 
-| Service | Prod Type | Prod Storage | UAT Type | UAT Storage | UAT Cost |
-|---------|-----------|-------------|----------|-------------|----------|
-| Main | Aurora r5.large | ~500GB | db.t3.medium | 50GB gp3 | ~$42/mo |
-| Identity | Aurora r5.large | ~100GB | db.t3.medium | 20GB gp3 | ~$32/mo |
-| Payment | Aurora r5.large | ~200GB | db.t3.medium | 20GB gp3 | ~$32/mo |
-| FB | Aurora r5.large | ~50GB | db.t3.medium | 20GB gp3 | ~$32/mo |
-| Notification | Aurora r5.large | ~50GB | db.t3.medium | 20GB gp3 | ~$32/mo |
-| Offer | Aurora t3.medium | ~20GB | db.t3.small | 20GB gp3 | ~$18/mo |
-| **Total** | | | | | **~$188/mo** |
+After data is migrated, we'll READ-ONLY audit prod (Account 2) database schemas to ensure UAE Aurora tables match prod structure. If schemas differ, we run the necessary migrations in UAE only.
+
+---
+
+## 3B. Phase 2B: DB Ecosystem
+
+**Duration:** ~30 minutes | **Status:** ✅ COMPLETE | **Cost:** ~$265/month | **Log:** `UAE_PHASE2B_EXECUTION_LOG.md`
+
+### What Was Done
+
+Mimicked prod DB ecosystem by creating:
+1. **VPC Peering** (`pcx-015fcde392996ef5d`) — Main VPC ↔ Database VPC with routes in all 9 route tables
+2. **6 RDS Proxies** with matching pool config (MaxConn=100%, MaxIdle=50%, BorrowTimeout=120s)
+3. **6 Read-Only Proxy Endpoints** for read/write split (matching prod pattern)
+4. **6 Secrets Manager Secrets** (one per DB, for proxy auth)
+5. **IAM Role** (`muvi-uat-rds-proxy-role`) + SecretsManagerAccess policy
+6. **Security Group** (`sg-06c22a1a4cdce43b0`) for proxies
+7. **Security hardening** — Aurora PubliclyAccessible set to False
+
+### UAE DB Endpoint Map (for ECS task definitions)
+
+| Service | DB_WRITE_HOST | DB_READ_HOST |
+|---------|--------------|-------------|
+| main | `uat-main-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-main-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| identity | `uat-identity-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-identity-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| payment | `uat-payment-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-payment-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| fb | `uat-fb-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-fb-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| notification | `uat-notification-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-notification-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
+| offer | `uat-offer-proxy.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` | `uat-offer-proxy-read-only.endpoint.proxy-cwyxrbeukelc.me-central-1.rds.amazonaws.com` |
 
 ---
 
@@ -260,14 +309,14 @@ Step 2.6: Run Sequelize migrations for each NestJS service
 
 | Port | Protocol | → Target Group | Service |
 |------|----------|---------------|---------|
-| 5002 | HTTP | muvi-uat-main-grpc | Main |
-| 5003 | HTTP | muvi-uat-notification-grpc | Notification |
-| 5004 | HTTP | muvi-uat-payment-grpc | Payment |
-| 5005 | HTTP | muvi-uat-identity-tg | Identity |
-| 5006 | HTTP | muvi-uat-fb-grpc-tg | F&B |
-| 5007 | HTTP | muvi-uat-offer-grpc | Offer |
+| 5002 | HTTPS | muvi-uat-main-grpc | Main |
+| 5003 | HTTPS | muvi-uat-notification-grpc | Notification |
+| 5004 | HTTPS | muvi-uat-payment-grpc | Payment |
+| 5005 | HTTPS | muvi-uat-identity-tg | Identity |
+| 5006 | HTTPS | muvi-uat-fb-grpc-tg | F&B |
+| 5007 | HTTPS | muvi-uat-offer-grpc | Offer |
 
-> **Note:** Prod uses HTTPS on these ports. UAT uses HTTP (no certs needed for internal traffic).
+> **Note:** Prod uses HTTPS with real ACM cert. UAT uses HTTPS with self-signed cert (`arn:aws:acm:me-central-1:739991759290:certificate/6f56edba-845d-4680-b058-d610d25b365c`). GRPC target groups require HTTPS listeners.
 
 #### ALB 3: `Muvi-Website-UAT` (Frontend)
 - Scheme: internet-facing

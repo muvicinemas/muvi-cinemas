@@ -101,13 +101,13 @@ services:
       IDENTITY_SERVICE_HOST: 0.0.0.0
       IDENTITY_SERVICE_PORT: 5001
       SERVER_HTTP_PORT: "6001"
-      # DB → Frankfurt UAT RDS
-      DB_READ_HOST: muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
-      DB_WRITE_HOST: muvi-uat-identity.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: yjBjtYRhpbbwhHoNH0H7
-      DB_WRITE_PASSWORD: yjBjtYRhpbbwhHoNH0H7
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_identity_service
       DB_PORT: 5432
       # Redis → point to redis container
@@ -209,12 +209,13 @@ services:
       MAIN_SERVICE_PORT: 5002
       SERVER_HTTP_PORT: "6002"
       SERVER_HOST: 0.0.0.0
-      DB_READ_HOST: muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
-      DB_WRITE_HOST: muvi-uat-main.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: 8Jm5b6mPB5eJitDhCgR2
-      DB_WRITE_PASSWORD: 8Jm5b6mPB5eJitDhCgR2
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_main_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -335,12 +336,13 @@ services:
       PAYMENT_SERVICE_PORT: 5003
       SERVER_HTTP_PORT: "6003"
       SERVER_HOST: 0.0.0.0
-      DB_READ_HOST: muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
-      DB_WRITE_HOST: muvi-uat-payment.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: 12mGGVdrTOO4bdV4DvU5
-      DB_WRITE_PASSWORD: 12mGGVdrTOO4bdV4DvU5
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_payment_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -460,12 +462,13 @@ services:
       FB_SERVICE_PORT: 5004
       SERVER_HTTP_PORT: "6004"
       SERVER_HOST: 0.0.0.0
-      DB_READ_HOST: muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
-      DB_WRITE_HOST: muvi-uat-fb.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: AEZmOiL4q7DWQYm9a2g2
-      DB_WRITE_PASSWORD: AEZmOiL4q7DWQYm9a2g2
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_fb_db
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -545,12 +548,13 @@ services:
       NOTIFICATION_SERVICE_PORT: 5005
       SERVER_HTTP_PORT: "6005"
       SERVER_HOST: 0.0.0.0
-      DB_READ_HOST: muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
-      DB_WRITE_HOST: muvi-uat-notification.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_USERNAME: postgres
       DB_WRITE_USERNAME: postgres
-      DB_READ_PASSWORD: fHOohyG91vpi1rXSnuVM
-      DB_WRITE_PASSWORD: fHOohyG91vpi1rXSnuVM
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_DATABASE: muvi_notification_service
       DB_PORT: 5432
       REDIS_HOST: redis
@@ -630,15 +634,15 @@ services:
       SERVICE_NAME: offer-service
       GRPC_HOST: 0.0.0.0
       GRPC_PORT: 5006
-      # DB — Go service uses different var names
-      DB_READ_HOST: muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      # DB — Go service uses different var names → UAE Aurora (me-central-1)
+      DB_READ_HOST: uatclusterdb.cluster-ro-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_READ_PORT: 5432
       DB_READ_USER: postgres
-      DB_READ_PASSWORD: 3irkuEqCBpTMPTUtNeBr
-      DB_WRITE_HOST: muvi-uat-offer.c5xohmlnlthz.eu-central-1.rds.amazonaws.com
+      DB_READ_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
+      DB_WRITE_HOST: uatclusterdb.cluster-cwyxrbeukelc.me-central-1.rds.amazonaws.com
       DB_WRITE_PORT: 5432
       DB_WRITE_USER: postgres
-      DB_WRITE_PASSWORD: 3irkuEqCBpTMPTUtNeBr
+      DB_WRITE_PASSWORD: HR)q0Cpn?D$OyqREGo0-BlupVueo
       DB_NAME: muvi_offer_service
       # Redis
       REDIS_HOST: redis
