@@ -28,3 +28,14 @@ node_modules/
 
 # Task definition snapshots (contain secrets)
 documentation/*-taskdef.json
+
+# Sensitive files
+*.pem
+ssm-params.json
+terraform.tfstate
+terraform.tfstate.backup
+documentation/_ssm-migrate-*.json
+
+# Submodule repos (cloned separately)
+main-backend-microservices/
+web/
