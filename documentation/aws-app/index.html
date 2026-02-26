@@ -17,6 +17,10 @@
       <span class="top-bar__env">UAT PROD</span>
     </div>
     <div class="top-bar__right">
+      <div class="top-bar__live" id="liveIndicator" title="Dashboard connection status">
+        <span class="pulse pulse--gray" id="livePulse"></span>
+        <span id="liveLabel">OFFLINE</span>
+      </div>
       <div class="top-bar__region">
         <span class="pulse pulse--green"></span>
         <span>me-central-1 (UAE)</span>
@@ -66,7 +70,7 @@
   <!-- ─── FOOTER ─── -->
   <footer class="footer">
     <span>Muvi Cinemas — UAE UAT Infrastructure Dashboard</span>
-    <span>Auto-updated after each phase · Data file: <code>js/data.js</code></span>
+    <span id="footerSource">Static mode · Data file: <code>js/data.js</code></span>
   </footer>
 
   <script src="js/data.js"></script>
