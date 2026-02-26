@@ -931,6 +931,77 @@ async function handleECSStart() {
   return { message: `${results.length} services scaled back up.`, results };
 }
 
+// ─── MASTER SWITCH: ALL STOP / ALL START ───
+// Stop order:  ECS first (fastest, stops traffic) → RDS Proxies → Redis → Aurora (last)
+// Start order: Aurora first (dependencies) → Redis → RDS Proxies → ECS last (needs everything up)
+
+async function handleAllStop() {
+  console.log('  ⚡ MASTER STOP: Shutting down ALL switchable resources...');
+  const results = { steps: [], errors: [] };
+
+  const steps = [
+    { name: 'ecs',         label: 'ECS Services',   handler: handleECSStop },
+    { name: 'rds-proxies', label: 'RDS Proxies',    handler: handleProxiesStop },
+    { name: 'redis',       label: 'Redis Clusters',  handler: handleRedisStop },
+    { name: 'aurora',      label: 'Aurora Database', handler: handleAuroraStop },
+  ];
+
+  for (const step of steps) {
+    try {
+      console.log(`\n  ── Step: Stopping ${step.label}...`);
+      const r = await step.handler();
+      results.steps.push({ resource: step.name, status: 'success', message: r.message });
+      console.log(`  ✓ ${step.label} stopped: ${r.message}`);
+    } catch (err) {
+      results.steps.push({ resource: step.name, status: 'error', error: err.message });
+      results.errors.push(`${step.label}: ${err.message}`);
+      console.error(`  ✗ ${step.label} failed: ${err.message}`);
+      // Continue with remaining resources — don't abort the chain
+    }
+  }
+
+  const success = results.steps.filter(s => s.status === 'success').length;
+  const failed = results.errors.length;
+  const msg = failed === 0
+    ? `All 4 resources stopped successfully. Total saving: ~$1,193/mo.`
+    : `${success}/4 resources stopped. ${failed} failed: ${results.errors.join('; ')}`;
+
+  return { message: msg, results };
+}
+
+async function handleAllStart() {
+  console.log('  ⚡ MASTER START: Waking ALL switchable resources...');
+  const results = { steps: [], errors: [] };
+
+  const steps = [
+    { name: 'aurora',      label: 'Aurora Database', handler: handleAuroraStart },
+    { name: 'redis',       label: 'Redis Clusters',  handler: handleRedisStart },
+    { name: 'rds-proxies', label: 'RDS Proxies',    handler: handleProxiesStart },
+    { name: 'ecs',         label: 'ECS Services',   handler: handleECSStart },
+  ];
+
+  for (const step of steps) {
+    try {
+      console.log(`\n  ── Step: Starting ${step.label}...`);
+      const r = await step.handler();
+      results.steps.push({ resource: step.name, status: 'success', message: r.message });
+      console.log(`  ✓ ${step.label} started: ${r.message}`);
+    } catch (err) {
+      results.steps.push({ resource: step.name, status: 'error', error: err.message });
+      results.errors.push(`${step.label}: ${err.message}`);
+      console.error(`  ✗ ${step.label} failed: ${err.message}`);
+    }
+  }
+
+  const success = results.steps.filter(s => s.status === 'success').length;
+  const failed = results.errors.length;
+  const msg = failed === 0
+    ? `All 4 resources started successfully. Total cost: ~$1,193/mo.`
+    : `${success}/4 resources started. ${failed} failed: ${results.errors.join('; ')}`;
+
+  return { message: msg, results };
+}
+
 const ACTION_MAP = {
   'aurora/stop': handleAuroraStop,
   'aurora/start': handleAuroraStart,
@@ -940,6 +1011,8 @@ const ACTION_MAP = {
   'redis/start': handleRedisStart,
   'ecs/stop': handleECSStop,
   'ecs/start': handleECSStart,
+  'all/stop': handleAllStop,
+  'all/start': handleAllStart,
 };
 
 // ─── HTTP SERVER ───

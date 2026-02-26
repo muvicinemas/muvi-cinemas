@@ -13,6 +13,7 @@ let pollTimer = null;
 let consecutiveErrors = 0;
 let switchableMeta = null;     // switchable resource definitions from server
 let pendingConfirm = null;     // { resource, action } waiting for user confirm
+const SWITCHABLE_IDS = ['aurora', 'rds-proxies', 'redis', 'ecs'];
 
 document.addEventListener('DOMContentLoaded', () => {
   renderClock();
@@ -102,6 +103,7 @@ function renderAll() {
   renderPhaseBar();
   renderCostStrip();
   renderGrid();
+  updateMasterSwitch();
 }
 
 /* ─── CLOCK ─── */
@@ -420,7 +422,27 @@ function closeConfirmModal() {
 
 /* ─── EXECUTE ACTION ─── */
 async function executeAction(resource, action) {
-  showToast(`Initiating ${action} for ${switchableMeta[resource]?.label || resource}...`, 'info');
+  const isMaster = resource === 'all';
+  const label = isMaster
+    ? (action === 'stop' ? 'SLEEP ALL' : 'WAKE ALL')
+    : (switchableMeta[resource]?.label || resource);
+
+  showToast(`Initiating ${action} for ${label}...`, 'info');
+
+  // Set master button to busy state while action runs
+  if (isMaster) {
+    const btn = document.getElementById('masterBtn');
+    const lbl = document.getElementById('masterLabel');
+    const ico = document.getElementById('masterIcon');
+    const stat = document.getElementById('masterStatus');
+    if (btn) {
+      btn.className = 'master-switch__btn master-switch__btn--busy';
+      btn.disabled = true;
+      lbl.textContent = action === 'stop' ? 'SLEEPING…' : 'WAKING…';
+      ico.textContent = '⏳';
+      if (stat) stat.textContent = 'Action in progress…';
+    }
+  }
 
   try {
     const res = await fetch(`/api/action/${resource}/${action}`, {
@@ -465,3 +487,133 @@ function showToast(message, type = 'info') {
     setTimeout(() => toast.remove(), 300);
   }, 6000);
 }
+
+/* ─── MASTER SWITCH ─── */
+function getMasterState() {
+  if (!currentData || !switchableMeta) return { allOn: false, allOff: true, mixed: false, onCount: 0, offCount: 0 };
+  let onCount = 0, offCount = 0;
+  for (const id of SWITCHABLE_IDS) {
+    const card = currentData.cards.find(c => c.id === id);
+    if (!card) { offCount++; continue; }
+    if (card.status === 'available' || card.status === 'creating') onCount++;
+    else offCount++;
+  }
+  return {
+    allOn: onCount === SWITCHABLE_IDS.length,
+    allOff: offCount === SWITCHABLE_IDS.length,
+    mixed: onCount > 0 && offCount > 0,
+    onCount,
+    offCount,
+  };
+}
+
+function updateMasterSwitch() {
+  const btn = document.getElementById('masterBtn');
+  const icon = document.getElementById('masterIcon');
+  const label = document.getElementById('masterLabel');
+  const cost = document.getElementById('masterCost');
+  const status = document.getElementById('masterStatus');
+  if (!btn) return;
+
+  // If not in live mode, keep disabled
+  if (!isLive || !switchableMeta) {
+    btn.disabled = true;
+    status.textContent = 'Offline';
+    return;
+  }
+
+  btn.disabled = false;
+  const state = getMasterState();
+  const totalCost = SWITCHABLE_IDS.reduce((sum, id) => sum + (switchableMeta[id]?.cost || 0), 0);
+
+  if (state.allOn) {
+    btn.className = 'master-switch__btn master-switch__btn--stop';
+    icon.textContent = '⏻';
+    label.textContent = 'SLEEP ALL';
+    cost.textContent = `~$${totalCost}/mo`;
+    status.textContent = `${state.onCount}/${SWITCHABLE_IDS.length} running`;
+    btn.title = 'Stop all switchable resources to save money';
+  } else if (state.allOff) {
+    btn.className = 'master-switch__btn master-switch__btn--start';
+    icon.textContent = '⏻';
+    label.textContent = 'WAKE ALL';
+    cost.textContent = `~$${totalCost}/mo`;
+    status.textContent = `All stopped`;
+    btn.title = 'Start all switchable resources';
+  } else {
+    btn.className = 'master-switch__btn master-switch__btn--mixed';
+    icon.textContent = '◑';
+    label.textContent = state.onCount > state.offCount ? 'SLEEP ALL' : 'WAKE ALL';
+    cost.textContent = `${state.onCount} on / ${state.offCount} off`;
+    status.textContent = 'Mixed state';
+    btn.title = 'Some resources are on, some off — click to toggle all';
+  }
+}
+
+function onMasterSwitch() {
+  if (!isLive || !switchableMeta || !currentData) return;
+
+  const state = getMasterState();
+  // If all on or mixed w/ majority on → stop all. If all off or mixed w/ majority off → start all.
+  const action = state.allOff ? 'start' : 'stop';
+  const isStop = action === 'stop';
+
+  const totalCost = SWITCHABLE_IDS.reduce((sum, id) => sum + (switchableMeta[id]?.cost || 0), 0);
+
+  // Build a combined warning list from all resources
+  const allWarnings = [];
+  for (const id of SWITCHABLE_IDS) {
+    const meta = switchableMeta[id];
+    if (!meta) continue;
+    const warns = isStop ? meta.stopWarnings : meta.startWarnings;
+    if (warns && warns.length) {
+      allWarnings.push({ label: meta.label, warnings: warns });
+    }
+  }
+
+  // Use the existing confirmation modal but with combined info
+  pendingConfirm = { resource: 'all', action };
+
+  const overlay = document.getElementById('confirmOverlay');
+  const iconEl = document.getElementById('confirmIcon');
+  const title = document.getElementById('confirmTitle');
+  const desc = document.getElementById('confirmDesc');
+  const warnings = document.getElementById('confirmWarnings');
+  const costEl = document.getElementById('confirmCost');
+  const proceedBtn = document.getElementById('confirmProceed');
+  const proceedText = document.getElementById('confirmProceedText');
+
+  iconEl.textContent = isStop ? '🛑' : '🟢';
+  title.textContent = isStop ? 'SLEEP ALL Resources?' : 'WAKE ALL Resources?';
+  desc.textContent = isStop
+    ? `This will stop ALL ${SWITCHABLE_IDS.length} switchable resources: Aurora, RDS Proxies, Redis, and ECS. The entire UAT environment will go offline.`
+    : `This will start ALL ${SWITCHABLE_IDS.length} switchable resources: Aurora first, then Redis, RDS Proxies, and ECS. Full boot takes ~15-20 minutes.`;
+
+  // Show grouped warnings
+  let warningHTML = '';
+  for (const group of allWarnings) {
+    warningHTML += `<div class="confirm-warning-group"><strong>${group.label}</strong></div>`;
+    warningHTML += group.warnings.map(w =>
+      `<div class="confirm-warning">
+         <span class="confirm-warning__icon">${isStop ? '⚠️' : 'ℹ️'}</span>
+         <span>${w}</span>
+       </div>`
+    ).join('');
+  }
+  warnings.innerHTML = warningHTML;
+
+  if (isStop) {
+    costEl.innerHTML = `<span class="confirm-cost__saving">💰 Total monthly saving: <strong>~$${totalCost}/mo</strong></span>`;
+    proceedBtn.className = 'confirm-btn confirm-btn--danger';
+    proceedText.textContent = '🛑 SLEEP ALL';
+  } else {
+    costEl.innerHTML = `<span class="confirm-cost__adding">📊 Total monthly cost: <strong>~$${totalCost}/mo</strong></span>`;
+    proceedBtn.className = 'confirm-btn confirm-btn--start';
+    proceedText.textContent = '🟢 WAKE ALL';
+  }
+
+  overlay.classList.add('confirm-overlay--open');
+}
+
+// Expose globally for inline onclick
+window.onMasterSwitch = onMasterSwitch;

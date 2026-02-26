@@ -42,6 +42,7 @@
 31. [Configuration Management — SSM & Secrets (All Values)](#31-configuration-management--ssm--secrets-all-values)
 32. [ECS Task Definitions — Complete Reference](#32-ecs-task-definitions--complete-reference)
 33. [Known Architectural Issues & Technical Debt](#33-known-architectural-issues--technical-debt)
+34. [AWS Ecosystem Dashboard & Control Panel](#34-aws-ecosystem-dashboard--control-panel)
 
 ---
 
@@ -2677,5 +2678,99 @@ foreach ($db in $dbs) {
 
 ---
 
-*Document updated: February 23, 2026 — Contains data from all documentation files + actual AWS infrastructure discovery across both accounts (739991759290 + 011566070219)*
+## 34. AWS Ecosystem Dashboard & Control Panel
+
+### Overview
+
+A live-polling web dashboard at `documentation/aws-app/` that shows all UAE UAT infrastructure in real-time with ON/OFF control for switchable resources.
+
+**Run:** `cd documentation/aws-app && node server.js` → opens at http://localhost:8888
+
+### Architecture
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Server | `server.js` | Node.js HTTP server, polls AWS CLI every 30s, serves REST API + static files |
+| Dashboard UI | `index.html` | Top bar (master switch), phase bar, cost strip, card grid, detail overlay, confirmation modal |
+| Styles | `css/dashboard.css` | Dark terminal theme, toggle switches, master switch variants, responsive |
+| Live Logic | `js/dashboard.js` | Polling, card rendering, toggle handlers, master switch state, toasts |
+| Static Fallback | `js/data.js` | Pre-built INFRA object — renders immediately while server boots |
+
+### Master Switch (Top Bar)
+
+A big button in the top bar that stops or starts ALL 4 switchable resources at once:
+
+| State | Button | Color | Action |
+|-------|--------|-------|--------|
+| All running | SLEEP ALL | Red | Stops ECS → Proxies → Redis → Aurora (dependency order) |
+| All stopped | WAKE ALL | Green | Starts Aurora → Redis → Proxies → ECS (dependency order) |
+| Mixed | SLEEP/WAKE ALL | Amber | Toggles based on majority state |
+| In progress | SLEEPING…/WAKING… | Blue pulse | Animated, disabled during action |
+
+### Switchable Resources (~$1,193/mo total)
+
+| Resource | Cost | Stop Method | Start Method |
+|----------|------|-------------|-------------|
+| `aurora` | $188/mo | `stop-db-cluster` | `start-db-cluster` |
+| `rds-proxies` | $265/mo | Save config → `delete-db-proxy` ×6 | Recreate from `.saved-configs.json` |
+| `redis` | $540/mo | Snapshot → `delete-replication-group` ×9 | Restore from snapshots |
+| `ecs` | $200/mo | `update-service --desired-count 0` | Scale back to saved counts |
+
+### API Endpoints
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/api/infra` | Live infrastructure data + switchable metadata |
+| GET | `/api/actions` | Recent action log |
+| POST | `/api/action/:resource/:action` | Trigger start/stop for a single resource |
+| POST | `/api/action/all/stop` | Master SLEEP ALL — chains all 4 stops |
+| POST | `/api/action/all/start` | Master WAKE ALL — chains all 4 starts |
+
+### ⚠️ IMPORTANT: Updating the Dashboard When Adding New Phases
+
+When a new infrastructure phase is completed (e.g., Phase 5 ECS, Phase 6 CI/CD, etc.), the dashboard **MUST** be updated to reflect the new resources. Here's what to update:
+
+#### 1. Static Data — `js/data.js`
+
+Update the `INFRA` object:
+- **`phases` array** — mark the completed phase as `status: 'complete'` with its date
+- **`cards` array** — update the relevant card's `status`, `stats`, `table.rows`, and `detail` sections
+- **`summary`** — update `totalCost`, `activeResources`, `pendingPhases` counts
+
+#### 2. Live Polling — `server.js`
+
+- **`pollAWS()` function** — add AWS CLI queries for new resources (e.g., new ECS services, new target groups)
+- **`buildCards()` function** — update card-building logic to include new resource data
+- **`SWITCHABLE` object** — if the new phase adds switchable resources, add them with label, cost, descriptions, and warnings
+- **`ACTION_MAP`** — add start/stop handler functions for any new switchable resources
+- **Batch grouping** — add new AWS queries to the appropriate Promise.all batch (Batch 1 or Batch 2) for parallel polling
+
+#### 3. Dashboard UI — `js/dashboard.js`
+
+- **`SWITCHABLE_IDS` array** — add new resource IDs if they're switchable
+- **`getMasterState()`** — automatically picks up new IDs from `SWITCHABLE_IDS`
+- **`updateMasterSwitch()`** — total cost auto-calculates from switchableMeta
+
+#### 4. Phase Bar
+
+The phase bar auto-renders from `data.phases` — just update the status in `js/data.js` and the server's phase-building logic.
+
+#### Quick Checklist for Each New Phase
+
+```
+□ Update js/data.js — phases array (status → 'complete', add date)
+□ Update js/data.js — cards array (new stats, table rows, detail sections)
+□ Update js/data.js — summary totals (cost, active count, pending count)
+□ Update server.js — pollAWS() with new AWS CLI queries
+□ Update server.js — buildCards() with new card data
+□ Update server.js — SWITCHABLE + ACTION_MAP (if resource is switchable)
+□ Update dashboard.js — SWITCHABLE_IDS (if resource is switchable)
+□ Test: node server.js → verify card appears with correct live data
+□ Test: toggle switch works (if switchable)
+□ Test: master switch still shows correct count and total cost
+```
+
+---
+
+*Document updated: February 26, 2026 — Contains data from all documentation files + actual AWS infrastructure discovery across both accounts (739991759290 + 011566070219)*
 *Total infrastructure verified: 2 accounts, 3 regions, 15 ECS services, 24+ databases, 10 Redis clusters, 7 ALBs, 21+ CloudFront distributions, 55+ S3 buckets, 51 SSM parameters, ~30 secrets*
