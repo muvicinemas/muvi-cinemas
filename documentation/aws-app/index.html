@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muvi UAE — AWS Ecosystem Dashboard</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- ─── TOP BAR ─── -->
+  <header class="top-bar">
+    <div class="top-bar__left">
+      <span class="top-bar__logo">🎬</span>
+      <h1 class="top-bar__title">Muvi UAE — AWS Ecosystem</h1>
+      <span class="top-bar__env">UAT PROD</span>
+    </div>
+    <div class="top-bar__right">
+      <div class="top-bar__region">
+        <span class="pulse pulse--green"></span>
+        <span>me-central-1 (UAE)</span>
+      </div>
+      <div class="top-bar__account">Account: 739991759290</div>
+      <div class="top-bar__clock" id="clock"></div>
+    </div>
+  </header>
+
+  <!-- ─── PHASE PROGRESS BAR ─── -->
+  <section class="phase-bar">
+    <div class="phase-bar__inner" id="phaseBar"></div>
+  </section>
+
+  <!-- ─── COST STRIP ─── -->
+  <section class="cost-strip">
+    <div class="cost-strip__item">
+      <span class="cost-strip__label">Monthly Estimate</span>
+      <span class="cost-strip__value" id="totalCost">—</span>
+    </div>
+    <div class="cost-strip__item">
+      <span class="cost-strip__label">Active Resources</span>
+      <span class="cost-strip__value" id="activeResources">—</span>
+    </div>
+    <div class="cost-strip__item">
+      <span class="cost-strip__label">Pending Phases</span>
+      <span class="cost-strip__value" id="pendingPhases">—</span>
+    </div>
+    <div class="cost-strip__item">
+      <span class="cost-strip__label">Last Updated</span>
+      <span class="cost-strip__value" id="lastUpdated">—</span>
+    </div>
+  </section>
+
+  <!-- ─── MAIN GRID ─── -->
+  <main class="grid" id="grid"></main>
+
+  <!-- ─── EXPANDED DETAIL PANEL (overlay) ─── -->
+  <div class="overlay" id="overlay">
+    <div class="detail-panel" id="detailPanel">
+      <button class="detail-panel__close" id="detailClose">&times;</button>
+      <div class="detail-panel__header" id="detailHeader"></div>
+      <div class="detail-panel__body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ─── -->
+  <footer class="footer">
+    <span>Muvi Cinemas — UAE UAT Infrastructure Dashboard</span>
+    <span>Auto-updated after each phase · Data file: <code>js/data.js</code></span>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
