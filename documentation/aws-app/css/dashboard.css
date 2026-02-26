@@ -181,18 +181,36 @@ body {
   box-shadow: 0 0 30px rgba(245, 158, 11, .3);
   transform: scale(1.03);
 }
-/* BUSY variant (pulsing blue) */
-.master-switch__btn--busy {
-  background: rgba(59, 130, 246, .12);
-  border-color: rgba(59, 130, 246, .5);
-  color: #3b82f6;
-  box-shadow: 0 0 20px rgba(59, 130, 246, .15);
+/* PROCESSING variant (yellow/amber, unclickable) */
+.master-switch__btn--processing {
+  background: rgba(234, 179, 8, .15);
+  border-color: rgba(234, 179, 8, .6);
+  color: #eab308;
+  box-shadow: 0 0 20px rgba(234, 179, 8, .2);
   pointer-events: none;
-  animation: masterPulse 1.5s ease-in-out infinite;
+  cursor: not-allowed;
+  animation: masterProcessing 2s ease-in-out infinite;
 }
-@keyframes masterPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, .15); }
-  50% { box-shadow: 0 0 35px rgba(59, 130, 246, .35); }
+.master-switch__btn--processing .master-switch__spinner {
+  display: inline-block;
+}
+@keyframes masterProcessing {
+  0%, 100% { box-shadow: 0 0 20px rgba(234, 179, 8, .2); }
+  50% { box-shadow: 0 0 40px rgba(234, 179, 8, .45); }
+}
+/* Spinner (hidden by default, shown in processing state) */
+.master-switch__spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(234, 179, 8, .3);
+  border-top-color: #eab308;
+  border-radius: 50%;
+  animation: masterSpin .8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes masterSpin {
+  to { transform: rotate(360deg); }
 }
 .master-switch__icon {
   font-size: 1.3rem;

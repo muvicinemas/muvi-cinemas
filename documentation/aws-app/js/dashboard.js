@@ -13,6 +13,7 @@ let pollTimer = null;
 let consecutiveErrors = 0;
 let switchableMeta = null;     // switchable resource definitions from server
 let pendingConfirm = null;     // { resource, action } waiting for user confirm
+let serverActionInProgress = null;  // from server meta — tracks running action
 const SWITCHABLE_IDS = ['aurora', 'rds-proxies', 'redis', 'ecs'];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -50,6 +51,7 @@ async function fetchLiveData() {
     if (!json.data) throw new Error('No data in response — server still polling');
     currentData = json.data;
     if (json.meta?.switchable) switchableMeta = json.meta.switchable;
+    serverActionInProgress = json.meta?.actionInProgress || null;
     consecutiveErrors = 0;
     setLiveStatus(true, json.meta);
     renderAll();
@@ -429,18 +431,18 @@ async function executeAction(resource, action) {
 
   showToast(`Initiating ${action} for ${label}...`, 'info');
 
-  // Set master button to busy state while action runs
+  // Set master button to yellow processing state immediately
   if (isMaster) {
     const btn = document.getElementById('masterBtn');
     const lbl = document.getElementById('masterLabel');
     const ico = document.getElementById('masterIcon');
     const stat = document.getElementById('masterStatus');
     if (btn) {
-      btn.className = 'master-switch__btn master-switch__btn--busy';
+      btn.className = 'master-switch__btn master-switch__btn--processing';
       btn.disabled = true;
-      lbl.textContent = action === 'stop' ? 'SLEEPING…' : 'WAKING…';
-      ico.textContent = '⏳';
-      if (stat) stat.textContent = 'Action in progress…';
+      ico.style.display = 'none';
+      lbl.textContent = action === 'stop' ? 'Sleeping…' : 'Activating…';
+      if (stat) stat.textContent = 'Processing — please wait';
     }
   }
 
@@ -513,18 +515,39 @@ function updateMasterSwitch() {
   const label = document.getElementById('masterLabel');
   const cost = document.getElementById('masterCost');
   const status = document.getElementById('masterStatus');
+  const spinner = document.getElementById('masterSpinner');
   if (!btn) return;
 
   // If not in live mode, keep disabled
   if (!isLive || !switchableMeta) {
     btn.disabled = true;
+    btn.className = 'master-switch__btn master-switch__btn--stop';
+    icon.textContent = '⏻';
+    icon.style.display = '';
+    label.textContent = 'SLEEP ALL';
     status.textContent = 'Offline';
     return;
   }
 
-  btn.disabled = false;
   const state = getMasterState();
   const totalCost = SWITCHABLE_IDS.reduce((sum, id) => sum + (switchableMeta[id]?.cost || 0), 0);
+
+  // If server has an action in progress, show yellow processing state
+  if (serverActionInProgress) {
+    btn.className = 'master-switch__btn master-switch__btn--processing';
+    btn.disabled = true;
+    icon.style.display = 'none';
+    const actionLabel = serverActionInProgress.action === 'stop' ? 'Sleeping' : 'Activating';
+    label.textContent = `${actionLabel}…`;
+    cost.textContent = `${state.onCount} of ${SWITCHABLE_IDS.length} still on`;
+    status.textContent = 'Processing — please wait';
+    btn.title = 'Action in progress — please wait';
+    return;
+  }
+
+  // No action in progress — show real state
+  btn.disabled = false;
+  icon.style.display = '';
 
   if (state.allOn) {
     btn.className = 'master-switch__btn master-switch__btn--stop';
@@ -535,15 +558,15 @@ function updateMasterSwitch() {
     btn.title = 'Stop all switchable resources to save money';
   } else if (state.allOff) {
     btn.className = 'master-switch__btn master-switch__btn--start';
-    icon.textContent = '⏻';
-    label.textContent = 'WAKE ALL';
+    icon.textContent = '🚀';
+    label.textContent = 'ACTIVATE UAT PROD';
     cost.textContent = `~$${totalCost}/mo`;
-    status.textContent = `All stopped`;
+    status.textContent = 'All stopped — ready to activate';
     btn.title = 'Start all switchable resources';
   } else {
     btn.className = 'master-switch__btn master-switch__btn--mixed';
     icon.textContent = '◑';
-    label.textContent = state.onCount > state.offCount ? 'SLEEP ALL' : 'WAKE ALL';
+    label.textContent = state.onCount > state.offCount ? 'SLEEP ALL' : 'ACTIVATE UAT PROD';
     cost.textContent = `${state.onCount} on / ${state.offCount} off`;
     status.textContent = 'Mixed state';
     btn.title = 'Some resources are on, some off — click to toggle all';
@@ -584,7 +607,7 @@ function onMasterSwitch() {
   const proceedText = document.getElementById('confirmProceedText');
 
   iconEl.textContent = isStop ? '🛑' : '🟢';
-  title.textContent = isStop ? 'SLEEP ALL Resources?' : 'WAKE ALL Resources?';
+  title.textContent = isStop ? 'SLEEP ALL Resources?' : 'ACTIVATE UAT PROD?';
   desc.textContent = isStop
     ? `This will stop ALL ${SWITCHABLE_IDS.length} switchable resources: Aurora, RDS Proxies, Redis, and ECS. The entire UAT environment will go offline.`
     : `This will start ALL ${SWITCHABLE_IDS.length} switchable resources: Aurora first, then Redis, RDS Proxies, and ECS. Full boot takes ~15-20 minutes.`;
@@ -609,7 +632,7 @@ function onMasterSwitch() {
   } else {
     costEl.innerHTML = `<span class="confirm-cost__adding">📊 Total monthly cost: <strong>~$${totalCost}/mo</strong></span>`;
     proceedBtn.className = 'confirm-btn confirm-btn--start';
-    proceedText.textContent = '🟢 WAKE ALL';
+    proceedText.textContent = '� ACTIVATE UAT PROD';
   }
 
   overlay.classList.add('confirm-overlay--open');
