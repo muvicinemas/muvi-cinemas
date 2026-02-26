@@ -67,6 +67,28 @@
     </div>
   </div>
 
+  <!-- ─── CONFIRMATION MODAL ─── -->
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-modal" id="confirmModal">
+      <div class="confirm-modal__header">
+        <span class="confirm-modal__icon" id="confirmIcon">⚠️</span>
+        <h3 class="confirm-modal__title" id="confirmTitle">Confirm Action</h3>
+      </div>
+      <p class="confirm-modal__desc" id="confirmDesc"></p>
+      <div class="confirm-modal__warnings" id="confirmWarnings"></div>
+      <div class="confirm-modal__cost" id="confirmCost"></div>
+      <div class="confirm-modal__actions">
+        <button class="confirm-btn confirm-btn--cancel" id="confirmCancel">Cancel</button>
+        <button class="confirm-btn confirm-btn--danger" id="confirmProceed">
+          <span id="confirmProceedText">Proceed</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ACTION TOAST ─── -->
+  <div class="toast-container" id="toastContainer"></div>
+
   <!-- ─── FOOTER ─── -->
   <footer class="footer">
     <span>Muvi Cinemas — UAE UAT Infrastructure Dashboard</span>

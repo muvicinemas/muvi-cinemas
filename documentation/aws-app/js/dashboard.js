@@ -11,10 +11,13 @@ let isLive = false;
 let currentData = null;        // active INFRA object
 let pollTimer = null;
 let consecutiveErrors = 0;
+let switchableMeta = null;     // switchable resource definitions from server
+let pendingConfirm = null;     // { resource, action } waiting for user confirm
 
 document.addEventListener('DOMContentLoaded', () => {
   renderClock();
   bindOverlay();
+  bindConfirmModal();
 
   // Render static data IMMEDIATELY so page is never blank
   if (typeof INFRA !== 'undefined') {
@@ -45,6 +48,7 @@ async function fetchLiveData() {
     const json = await res.json();
     if (!json.data) throw new Error('No data in response — server still polling');
     currentData = json.data;
+    if (json.meta?.switchable) switchableMeta = json.meta.switchable;
     consecutiveErrors = 0;
     setLiveStatus(true, json.meta);
     renderAll();
@@ -174,6 +178,19 @@ function buildCard(c) {
 
   const liveTag = isLive ? '<span class="card__live-tag">LIVE</span>' : '';
 
+  // Toggle switch for switchable resources
+  const isSwitchable = isLive && switchableMeta && switchableMeta[c.id];
+  const isOn = c.status === 'available' || c.status === 'creating';
+  const switchHTML = isSwitchable ? `
+    <div class="card__switch" data-resource="${c.id}" data-current="${isOn ? 'on' : 'off'}" title="${isOn ? 'Click to stop' : 'Click to start'} ${switchableMeta[c.id].label}">
+      <label class="toggle-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" ${isOn ? 'checked' : ''} data-resource="${c.id}" onchange="onToggleSwitch(this)">
+        <span class="toggle-slider ${isOn ? 'toggle-slider--on' : 'toggle-slider--off'}"></span>
+      </label>
+      <span class="card__switch-label">${isOn ? 'ON' : 'OFF'}</span>
+      <span class="card__switch-cost">${isOn ? '~$' + switchableMeta[c.id].cost + '/mo' : 'Saves $' + switchableMeta[c.id].cost + '/mo'}</span>
+    </div>` : '';
+
   const stats = c.stats.map(s =>
     `<div class="card__stat">
        <span class="card__stat-value">${s.value}</span>
@@ -218,6 +235,7 @@ function buildCard(c) {
           ${statusLabel}
         </span>
       </div>
+      ${switchHTML}
       <div class="card__stats">${stats}</div>
       <div class="card__table-wrap">
         <table class="card__table">
@@ -317,4 +335,133 @@ function openDetail(card) {
 function closeOverlay() {
   document.getElementById('overlay').classList.remove('overlay--open');
   document.body.style.overflow = '';
+}
+
+/* ─── TOGGLE SWITCH HANDLER ─── */
+function onToggleSwitch(checkbox) {
+  const resource = checkbox.dataset.resource;
+  const isCurrentlyOn = checkbox.checked;
+  // Revert the checkbox — we don't apply until confirmed
+  checkbox.checked = !isCurrentlyOn;
+
+  const action = isCurrentlyOn ? 'start' : 'stop';
+  const meta = switchableMeta?.[resource];
+  if (!meta) return;
+
+  // Show confirmation modal
+  pendingConfirm = { resource, action };
+  showConfirmModal(resource, action, meta);
+}
+
+// Expose globally for inline onclick
+window.onToggleSwitch = onToggleSwitch;
+
+/* ─── CONFIRMATION MODAL ─── */
+function bindConfirmModal() {
+  const overlay = document.getElementById('confirmOverlay');
+  const cancelBtn = document.getElementById('confirmCancel');
+  const proceedBtn = document.getElementById('confirmProceed');
+
+  cancelBtn.addEventListener('click', () => closeConfirmModal());
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeConfirmModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && pendingConfirm) closeConfirmModal();
+  });
+
+  proceedBtn.addEventListener('click', () => {
+    if (!pendingConfirm) return;
+    executeAction(pendingConfirm.resource, pendingConfirm.action);
+    closeConfirmModal();
+  });
+}
+
+function showConfirmModal(resource, action, meta) {
+  const overlay = document.getElementById('confirmOverlay');
+  const icon = document.getElementById('confirmIcon');
+  const title = document.getElementById('confirmTitle');
+  const desc = document.getElementById('confirmDesc');
+  const warnings = document.getElementById('confirmWarnings');
+  const cost = document.getElementById('confirmCost');
+  const proceedBtn = document.getElementById('confirmProceed');
+  const proceedText = document.getElementById('confirmProceedText');
+
+  const isStop = action === 'stop';
+  icon.textContent = isStop ? '🛑' : '🟢';
+  title.textContent = `${isStop ? 'Stop' : 'Start'} ${meta.label}?`;
+  desc.textContent = isStop ? meta.stopDesc : meta.startDesc;
+
+  const warningList = isStop ? meta.stopWarnings : meta.startWarnings;
+  warnings.innerHTML = warningList.map(w =>
+    `<div class="confirm-warning">
+       <span class="confirm-warning__icon">${isStop ? '⚠️' : 'ℹ️'}</span>
+       <span>${w}</span>
+     </div>`
+  ).join('');
+
+  if (isStop) {
+    cost.innerHTML = `<span class="confirm-cost__saving">💰 Monthly saving: <strong>~$${meta.cost}/mo</strong></span>`;
+    proceedBtn.className = 'confirm-btn confirm-btn--danger';
+    proceedText.textContent = `Stop ${meta.label}`;
+  } else {
+    cost.innerHTML = `<span class="confirm-cost__adding">📊 Monthly cost: <strong>~$${meta.cost}/mo</strong></span>`;
+    proceedBtn.className = 'confirm-btn confirm-btn--start';
+    proceedText.textContent = `Start ${meta.label}`;
+  }
+
+  overlay.classList.add('confirm-overlay--open');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmOverlay').classList.remove('confirm-overlay--open');
+  pendingConfirm = null;
+}
+
+/* ─── EXECUTE ACTION ─── */
+async function executeAction(resource, action) {
+  showToast(`Initiating ${action} for ${switchableMeta[resource]?.label || resource}...`, 'info');
+
+  try {
+    const res = await fetch(`/api/action/${resource}/${action}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const json = await res.json();
+
+    if (res.ok) {
+      showToast(`✓ ${json.message}`, 'success');
+      // Poll faster for next 2 minutes to show state change
+      let fastPolls = 0;
+      const fastPoll = setInterval(() => {
+        fetchLiveData();
+        fastPolls++;
+        if (fastPolls >= 12) clearInterval(fastPoll); // stop after ~2 min
+      }, 10000);
+    } else {
+      showToast(`✗ ${json.error || 'Action failed'}`, 'error');
+    }
+  } catch (e) {
+    showToast(`✗ Network error: ${e.message}`, 'error');
+  }
+}
+
+/* ─── TOAST NOTIFICATIONS ─── */
+function showToast(message, type = 'info') {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast toast--${type}`;
+  toast.innerHTML = `<span>${message}</span>`;
+  container.appendChild(toast);
+
+  // Trigger animation
+  requestAnimationFrame(() => toast.classList.add('toast--visible'));
+
+  // Auto-remove after 6s
+  setTimeout(() => {
+    toast.classList.remove('toast--visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 6000);
 }

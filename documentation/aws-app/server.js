@@ -38,6 +38,92 @@ let lastPollTime = null;
 let pollError = null;
 let pollCount = 0;
 
+// ─── ACTION STATE ───
+let actionInProgress = null;  // e.g. { resource: 'aurora', action: 'stop', startedAt: ... }
+const actionLog = [];         // history of all actions
+
+// ─── SAVED CONFIGS (for recreating deleted resources) ───
+const SAVED_CONFIGS_PATH = path.join(__dirname, '.saved-configs.json');
+function loadSavedConfigs() {
+  try { return JSON.parse(fs.readFileSync(SAVED_CONFIGS_PATH, 'utf8')); } catch { return {}; }
+}
+function saveSavedConfigs(configs) {
+  fs.writeFileSync(SAVED_CONFIGS_PATH, JSON.stringify(configs, null, 2));
+}
+
+// ─── SWITCHABLE RESOURCE DEFINITIONS ───
+const SWITCHABLE = {
+  aurora: {
+    label: 'Aurora Database',
+    cost: 188,
+    canSwitch: true,
+    stopDesc: 'Stops the Aurora cluster "uatclusterdb". Both writer and reader instances will be stopped. The cluster can be stopped for up to 7 days before AWS auto-restarts it. All database connections will be severed immediately.',
+    startDesc: 'Starts the Aurora cluster "uatclusterdb". Writer and reader instances will boot up. Takes 5-10 minutes to become available. All RDS Proxy connections will resume automatically.',
+    stopWarnings: [
+      'All active database connections will be dropped',
+      'RDS Proxies will show errors until cluster restarts',
+      'Local development (docker-compose) will lose DB access',
+      'AWS auto-restarts stopped clusters after 7 days',
+    ],
+    startWarnings: [
+      'Takes 5-10 minutes to become fully available',
+      'RDS Proxies will auto-reconnect once cluster is up',
+    ],
+  },
+  'rds-proxies': {
+    label: 'RDS Proxies',
+    cost: 265,
+    canSwitch: true,
+    stopDesc: 'Deletes all 6 RDS Proxies (no pause API exists). Proxy configurations are saved locally so they can be recreated with one click. ECS services will need to connect directly to Aurora until proxies are restored.',
+    startDesc: 'Recreates all 6 RDS Proxies from saved configurations. Each proxy takes ~2 minutes to become available. ECS services will automatically use proxy endpoints once ready.',
+    stopWarnings: [
+      'Proxies will be DELETED (AWS has no pause for proxies)',
+      'Configuration is saved locally in .saved-configs.json',
+      'ECS services lose connection pooling until recreated',
+      'Recreating takes ~2 min per proxy',
+    ],
+    startWarnings: [
+      'Recreates from saved config — takes ~2 min per proxy',
+      'Requires .saved-configs.json from previous stop action',
+    ],
+  },
+  redis: {
+    label: 'Redis Clusters',
+    cost: 540,
+    canSwitch: true,
+    stopDesc: 'Creates a final snapshot of each Redis cluster, then deletes all 9 clusters. Snapshots are saved so clusters can be restored. All Bull queues, caching, and Pub/Sub will stop working.',
+    startDesc: 'Restores all 9 Redis clusters from their snapshots. Each cluster takes ~5 minutes to become available. Bull queues and caching will resume automatically.',
+    stopWarnings: [
+      'All 9 Redis clusters will be DELETED',
+      'Final snapshots are taken before deletion',
+      'Bull queues, sessions, caching all stop immediately',
+      'Restoration takes ~5 min per cluster (~45 min total)',
+    ],
+    startWarnings: [
+      'Restores from snapshots — takes ~5 min per cluster',
+      'Requires snapshots from previous stop action',
+      'Queue data from before snapshot will be available',
+    ],
+  },
+  ecs: {
+    label: 'ECS Services',
+    cost: 200,
+    canSwitch: true,
+    stopDesc: 'Scales all ECS services to 0 desired tasks. The service definitions remain — only the running containers are stopped. No API requests will be processed until services are scaled back up.',
+    startDesc: 'Scales all ECS services back to their original desired count. Containers will pull latest images and start. Takes 2-3 minutes for health checks to pass.',
+    stopWarnings: [
+      'All running Fargate tasks will be stopped',
+      'No API traffic will be processed',
+      'Service definitions are preserved (instant scale-back)',
+      'Cheapest and safest switch — recommended',
+    ],
+    startWarnings: [
+      'Scales services back to original desired count',
+      'Takes 2-3 min for containers to start and pass health checks',
+    ],
+  },
+};
+
 // ─── AWS CLI HELPER (async — does NOT block event loop) ───
 async function aws(command, region = REGION, profile = null) {
   try {
@@ -675,10 +761,203 @@ function buildCostCard(cards) {
   };
 }
 
+// ─── ACTION HANDLERS ───
+
+async function handleAuroraStop() {
+  console.log('  ⚡ ACTION: Stopping Aurora cluster...');
+  const result = await aws('rds stop-db-cluster --db-cluster-identifier uatclusterdb');
+  if (!result) throw new Error('Failed to stop Aurora cluster');
+  return { message: 'Aurora cluster stop initiated. Takes ~2 min to fully stop.', result };
+}
+
+async function handleAuroraStart() {
+  console.log('  ⚡ ACTION: Starting Aurora cluster...');
+  const result = await aws('rds start-db-cluster --db-cluster-identifier uatclusterdb');
+  if (!result) throw new Error('Failed to start Aurora cluster');
+  return { message: 'Aurora cluster start initiated. Takes 5-10 min to become available.', result };
+}
+
+async function handleProxiesStop() {
+  console.log('  ⚡ ACTION: Saving proxy configs and deleting...');
+  // First save current proxy configs
+  const proxies = await aws('rds describe-db-proxies --query "DBProxies[?starts_with(DBProxyName,\'uat-\')]"');
+  if (!proxies || proxies.length === 0) throw new Error('No proxies found to stop');
+
+  const configs = loadSavedConfigs();
+  configs.proxies = [];
+
+  for (const p of proxies) {
+    // Save full config for recreation
+    const targets = await aws(`rds describe-db-proxy-targets --db-proxy-name ${p.DBProxyName}`);
+    configs.proxies.push({
+      name: p.DBProxyName,
+      engineFamily: p.EngineFamily,
+      vpcSubnetIds: p.VpcSubnetIds,
+      vpcSecurityGroupIds: p.VpcSecurityGroupIds,
+      auth: p.Auth,
+      roleArn: p.RoleArn,
+      idleTimeout: p.IdleClientTimeout,
+      targets: targets?.Targets || [],
+    });
+  }
+  saveSavedConfigs(configs);
+  console.log(`  ✓ Saved ${configs.proxies.length} proxy configs to .saved-configs.json`);
+
+  // Delete each proxy
+  const results = [];
+  for (const p of proxies) {
+    console.log(`  ↳ Deleting proxy: ${p.DBProxyName}...`);
+    const r = await aws(`rds delete-db-proxy --db-proxy-name ${p.DBProxyName}`);
+    results.push({ proxy: p.DBProxyName, success: !!r });
+  }
+  return { message: `${results.length} proxies deletion initiated. Configs saved for recreation.`, results };
+}
+
+async function handleProxiesStart() {
+  console.log('  ⚡ ACTION: Recreating proxies from saved config...');
+  const configs = loadSavedConfigs();
+  if (!configs.proxies || configs.proxies.length === 0) throw new Error('No saved proxy configs found. Run stop first.');
+
+  const results = [];
+  for (const pc of configs.proxies) {
+    console.log(`  ↳ Creating proxy: ${pc.name}...`);
+    const authJson = JSON.stringify(pc.auth).replace(/"/g, '\\"');
+    const subnetIds = pc.vpcSubnetIds.join(' ');
+    const sgIds = pc.vpcSecurityGroupIds.join(' ');
+    const r = await aws(
+      `rds create-db-proxy --db-proxy-name ${pc.name}` +
+      ` --engine-family ${pc.engineFamily}` +
+      ` --auth "${authJson}"` +
+      ` --role-arn ${pc.roleArn}` +
+      ` --vpc-subnet-ids ${subnetIds}` +
+      ` --vpc-security-group-ids ${sgIds}` +
+      ` --idle-client-timeout ${pc.idleTimeout || 1800}`
+    );
+    results.push({ proxy: pc.name, success: !!r });
+  }
+  return { message: `${results.length} proxies creation initiated. Takes ~2 min each.`, results };
+}
+
+async function handleRedisStop() {
+  console.log('  ⚡ ACTION: Snapshotting and deleting Redis clusters...');
+  const redis = await aws('elasticache describe-replication-groups');
+  const rgs = (redis?.ReplicationGroups || []).filter(r =>
+    r.ReplicationGroupId.startsWith('muvi-uat-redis-') &&
+    r.ReplicationGroupId !== 'muvi-uat-redis-uae-classic'
+  );
+  if (rgs.length === 0) throw new Error('No Redis clusters found to stop');
+
+  const configs = loadSavedConfigs();
+  configs.redis = rgs.map(r => ({
+    id: r.ReplicationGroupId,
+    description: r.Description,
+    nodeType: r.CacheNodeType,
+    snapshotName: `${r.ReplicationGroupId}-sleep-${Date.now()}`,
+  }));
+  saveSavedConfigs(configs);
+
+  const results = [];
+  for (const rc of configs.redis) {
+    console.log(`  ↳ Deleting ${rc.id} with final snapshot ${rc.snapshotName}...`);
+    const r = await aws(
+      `elasticache delete-replication-group --replication-group-id ${rc.id}` +
+      ` --final-snapshot-identifier ${rc.snapshotName}`
+    );
+    results.push({ cluster: rc.id, snapshot: rc.snapshotName, success: !!r });
+  }
+  return { message: `${results.length} Redis clusters deletion initiated with snapshots.`, results };
+}
+
+async function handleRedisStart() {
+  console.log('  ⚡ ACTION: Restoring Redis clusters from snapshots...');
+  const configs = loadSavedConfigs();
+  if (!configs.redis || configs.redis.length === 0) throw new Error('No saved Redis configs found. Run stop first.');
+
+  // Get the Redis security group
+  const sgs = await aws('ec2 describe-security-groups --filters "Name=group-name,Values=redis-uat-sg"');
+  const redisSgId = sgs?.SecurityGroups?.[0]?.GroupId;
+
+  const results = [];
+  for (const rc of configs.redis) {
+    console.log(`  ↳ Restoring ${rc.id} from snapshot ${rc.snapshotName}...`);
+    const sgFlag = redisSgId ? ` --security-group-ids ${redisSgId}` : '';
+    const r = await aws(
+      `elasticache create-replication-group --replication-group-id ${rc.id}` +
+      ` --replication-group-description "${rc.description || rc.id}"` +
+      ` --snapshot-name ${rc.snapshotName}` +
+      sgFlag
+    );
+    results.push({ cluster: rc.id, success: !!r });
+  }
+  return { message: `${results.length} Redis clusters restoration initiated. Takes ~5 min each.`, results };
+}
+
+async function handleECSStop() {
+  console.log('  ⚡ ACTION: Scaling ECS services to 0...');
+  const ecsServices = await aws('ecs list-services --cluster Muvi-Cluster');
+  const arns = ecsServices?.serviceArns || [];
+  if (arns.length === 0) throw new Error('No ECS services found in Muvi-Cluster');
+
+  // Save current desired counts
+  const configs = loadSavedConfigs();
+  const described = await aws(`ecs describe-services --cluster Muvi-Cluster --services ${arns.join(' ')}`);
+  configs.ecs = (described?.services || []).map(s => ({
+    name: s.serviceName,
+    desiredCount: s.desiredCount,
+  }));
+  saveSavedConfigs(configs);
+
+  const results = [];
+  for (const svc of configs.ecs) {
+    console.log(`  ↳ Scaling ${svc.name} to 0...`);
+    const r = await aws(`ecs update-service --cluster Muvi-Cluster --service ${svc.name} --desired-count 0`);
+    results.push({ service: svc.name, previousCount: svc.desiredCount, success: !!r });
+  }
+  return { message: `${results.length} services scaled to 0. Configs saved.`, results };
+}
+
+async function handleECSStart() {
+  console.log('  ⚡ ACTION: Scaling ECS services back up...');
+  const configs = loadSavedConfigs();
+  if (!configs.ecs || configs.ecs.length === 0) throw new Error('No saved ECS configs found. Run stop first.');
+
+  const results = [];
+  for (const svc of configs.ecs) {
+    const count = svc.desiredCount || 1;
+    console.log(`  ↳ Scaling ${svc.name} to ${count}...`);
+    const r = await aws(`ecs update-service --cluster Muvi-Cluster --service ${svc.name} --desired-count ${count}`);
+    results.push({ service: svc.name, desiredCount: count, success: !!r });
+  }
+  return { message: `${results.length} services scaled back up.`, results };
+}
+
+const ACTION_MAP = {
+  'aurora/stop': handleAuroraStop,
+  'aurora/start': handleAuroraStart,
+  'rds-proxies/stop': handleProxiesStop,
+  'rds-proxies/start': handleProxiesStart,
+  'redis/stop': handleRedisStop,
+  'redis/start': handleRedisStart,
+  'ecs/stop': handleECSStop,
+  'ecs/start': handleECSStart,
+};
+
 // ─── HTTP SERVER ───
 const server = http.createServer((req, res) => {
-  // API endpoint
-  if (req.url === '/api/infra') {
+
+  // ── CORS preflight ──
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    });
+    res.end();
+    return;
+  }
+
+  // ── GET /api/infra ──
+  if (req.url === '/api/infra' && req.method === 'GET') {
     res.writeHead(200, {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
@@ -692,12 +971,71 @@ const server = http.createServer((req, res) => {
         pollError,
         pollIntervalMs: POLL_INTERVAL,
         nextPollIn: liveInfra ? Math.max(0, POLL_INTERVAL - (Date.now() - new Date(lastPollTime).getTime())) : 0,
+        actionInProgress,
+        switchable: Object.fromEntries(
+          Object.entries(SWITCHABLE).map(([k, v]) => [k, {
+            label: v.label, cost: v.cost, canSwitch: v.canSwitch,
+            stopDesc: v.stopDesc, startDesc: v.startDesc,
+            stopWarnings: v.stopWarnings, startWarnings: v.startWarnings,
+          }])
+        ),
       },
     }));
     return;
   }
 
-  // Static file serving
+  // ── GET /api/actions ── action log
+  if (req.url === '/api/actions' && req.method === 'GET') {
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+    });
+    res.end(JSON.stringify({ actions: actionLog.slice(-20), actionInProgress }));
+    return;
+  }
+
+  // ── POST /api/action/:resource/:action ──
+  const actionMatch = req.url.match(/^\/api\/action\/([\w-]+)\/(start|stop)$/);
+  if (actionMatch && req.method === 'POST') {
+    const resource = actionMatch[1];
+    const action = actionMatch[2];
+    const key = `${resource}/${action}`;
+    const handler = ACTION_MAP[key];
+
+    if (!handler) {
+      res.writeHead(404, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: `Unknown action: ${key}` }));
+      return;
+    }
+
+    if (actionInProgress) {
+      res.writeHead(409, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+      res.end(JSON.stringify({ error: `Action already in progress: ${actionInProgress.resource}/${actionInProgress.action}` }));
+      return;
+    }
+
+    // Execute action async — respond immediately
+    actionInProgress = { resource, action, startedAt: new Date().toISOString() };
+    console.log(`\n🎛️  ACTION REQUEST: ${key}`);
+
+    handler().then(result => {
+      actionLog.push({ resource, action, status: 'success', time: new Date().toISOString(), ...result });
+      console.log(`  ✓ Action ${key} completed: ${result.message}`);
+      // Trigger an immediate poll to refresh dashboard
+      setTimeout(() => pollAWS(), 3000);
+    }).catch(err => {
+      actionLog.push({ resource, action, status: 'error', time: new Date().toISOString(), error: err.message });
+      console.error(`  ✗ Action ${key} failed: ${err.message}`);
+    }).finally(() => {
+      actionInProgress = null;
+    });
+
+    res.writeHead(202, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ accepted: true, action: key, message: `Action ${key} initiated. Check dashboard for progress.` }));
+    return;
+  }
+
+  // ── Static file serving ──
   let filePath = req.url === '/' ? '/index.html' : req.url;
   filePath = path.join(__dirname, filePath);
 

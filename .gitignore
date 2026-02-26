@@ -32,6 +32,7 @@ documentation/*-taskdef.json
 # Sensitive files
 *.pem
 ssm-params.json
+.saved-configs.json
 terraform.tfstate
 terraform.tfstate.backup
 documentation/_ssm-migrate-*.json
