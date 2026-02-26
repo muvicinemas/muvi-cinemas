@@ -13,7 +13,9 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 const PORT = parseInt(process.argv.find((_, i, a) => a[i - 1] === '--port') || '8888');
 const REGION = 'me-central-1';
@@ -36,57 +38,49 @@ let lastPollTime = null;
 let pollError = null;
 let pollCount = 0;
 
-// ─── AWS CLI HELPER ───
-function aws(command, region = REGION, profile = null) {
+// ─── AWS CLI HELPER (async — does NOT block event loop) ───
+async function aws(command, region = REGION, profile = null) {
   try {
     const profileFlag = profile ? ` --profile ${profile}` : '';
     const cmd = `aws ${command} --region ${region}${profileFlag} --output json`;
-    const result = execSync(cmd, { encoding: 'utf8', timeout: 15000, stdio: ['pipe', 'pipe', 'pipe'] });
-    return JSON.parse(result);
+    const { stdout } = await execAsync(cmd, { encoding: 'utf8', timeout: 20000, maxBuffer: 5 * 1024 * 1024 });
+    return JSON.parse(stdout);
   } catch (e) {
     console.error(`  ✗ AWS CLI error: ${e.message.split('\n')[0]}`);
     return null;
   }
 }
 
-// ─── POLL ALL RESOURCES ───
-function pollAWS() {
+let isPolling = false;
+
+// ─── POLL ALL RESOURCES (fully async — event loop stays free) ───
+async function pollAWS() {
+  if (isPolling) { console.log('  ⏭ Skipping — previous poll still running'); return; }
+  isPolling = true;
   const start = Date.now();
   pollCount++;
   console.log(`\n⟳ Poll #${pollCount} starting at ${new Date().toLocaleTimeString()}...`);
 
   try {
-    // ── 1. Aurora ──
-    console.log('  ↳ Querying Aurora...');
-    const dbClusters = aws('rds describe-db-clusters --query "DBClusters[?DBClusterIdentifier==\'uatclusterdb\']"');
-    const dbInstances = aws('rds describe-db-instances --query "DBInstances[?DBClusterIdentifier==\'uatclusterdb\']"');
+    // ── Run independent queries in parallel batches ──
+    console.log('  ↳ Batch 1: Aurora, RDS Proxies, Redis...');
+    const [dbClusters, dbInstances, proxies, redis, redisClusters] = await Promise.all([
+      aws('rds describe-db-clusters --query "DBClusters[?DBClusterIdentifier==\'uatclusterdb\']"'),
+      aws('rds describe-db-instances --query "DBInstances[?DBClusterIdentifier==\'uatclusterdb\']"'),
+      aws('rds describe-db-proxies --query "DBProxies[?starts_with(DBProxyName,\'uat-\')]"'),
+      aws('elasticache describe-replication-groups'),
+      aws('elasticache describe-cache-clusters --show-cache-node-info'),
+    ]);
 
-    // ── 2. RDS Proxies ──
-    console.log('  ↳ Querying RDS Proxies...');
-    const proxies = aws('rds describe-db-proxies --query "DBProxies[?starts_with(DBProxyName,\'uat-\')]"');
-
-    // ── 3. Redis ──
-    console.log('  ↳ Querying Redis...');
-    const redis = aws('elasticache describe-replication-groups');
-    const redisClusters = aws('elasticache describe-cache-clusters --show-cache-node-info');
-
-    // ── 4. ALBs ──
-    console.log('  ↳ Querying ALBs...');
-    const albs = aws('elbv2 describe-load-balancers');
-    const targetGroups = aws('elbv2 describe-target-groups');
-
-    // ── 5. ECS ──
-    console.log('  ↳ Querying ECS...');
-    const ecsClusters = aws('ecs describe-clusters --clusters Muvi-Cluster --include STATISTICS');
-    const ecsServices = aws('ecs list-services --cluster Muvi-Cluster');
-
-    // ── 6. Security Groups (Main VPC) ──
-    console.log('  ↳ Querying Security Groups...');
-    const sgs = aws('ec2 describe-security-groups --filters "Name=vpc-id,Values=vpc-0ab936370488229bd"');
-
-    // ── 7. VPC Peering ──
-    console.log('  ↳ Querying VPC Peering...');
-    const peering = aws('ec2 describe-vpc-peering-connections --filters "Name=status-code,Values=active"');
+    console.log('  ↳ Batch 2: ALBs, ECS, SGs, VPC Peering...');
+    const [albs, targetGroups, ecsClusters, ecsServices, sgs, peering] = await Promise.all([
+      aws('elbv2 describe-load-balancers'),
+      aws('elbv2 describe-target-groups'),
+      aws('ecs describe-clusters --clusters Muvi-Cluster --include STATISTICS'),
+      aws('ecs list-services --cluster Muvi-Cluster'),
+      aws('ec2 describe-security-groups --filters "Name=vpc-id,Values=vpc-0ab936370488229bd"'),
+      aws('ec2 describe-vpc-peering-connections --filters "Name=status-code,Values=active"'),
+    ]);
 
     // ── Build INFRA object ──
     liveInfra = buildInfraObject({
@@ -101,6 +95,8 @@ function pollAWS() {
   } catch (e) {
     pollError = e.message;
     console.error(`  ✗ Poll #${pollCount} failed: ${e.message}`);
+  } finally {
+    isPolling = false;
   }
 }
 
@@ -729,10 +725,10 @@ console.log(`║  Region:  ${REGION}                    ║`);
 console.log(`║  Poll:    Every ${POLL_INTERVAL / 1000}s                       ║`);
 console.log('╚════════════════════════════════════════════╝');
 
-// Initial poll
+// Initial poll (async — server starts immediately, poll runs in background)
 pollAWS();
 // Repeat every 30s
-setInterval(pollAWS, POLL_INTERVAL);
+setInterval(() => pollAWS(), POLL_INTERVAL);
 
 server.listen(PORT, () => {
   console.log(`\n✓ Server listening on http://localhost:${PORT}`);

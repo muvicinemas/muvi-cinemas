@@ -15,13 +15,19 @@ let consecutiveErrors = 0;
 document.addEventListener('DOMContentLoaded', () => {
   renderClock();
   bindOverlay();
-  // Try live mode first; fall back to static data.js
+
+  // Render static data IMMEDIATELY so page is never blank
+  if (typeof INFRA !== 'undefined') {
+    currentData = INFRA;
+    renderAll();
+    setLiveStatus(false);
+    console.log('[Dashboard] Rendered static data.js — attempting live connection...');
+  }
+
+  // Then try live mode (will overlay real data when server responds)
   fetchLiveData().then(ok => {
     if (!ok) {
-      console.log('[Dashboard] Live server not available — using static data.js');
-      currentData = typeof INFRA !== 'undefined' ? INFRA : null;
-      if (currentData) renderAll();
-      setLiveStatus(false);
+      console.log('[Dashboard] Live server not reachable — staying in static mode');
     }
     // Start polling regardless — it will pick up when server starts
     pollTimer = setInterval(() => fetchLiveData(), POLL_INTERVAL);
@@ -31,10 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ─── LIVE POLLING ─── */
 async function fetchLiveData() {
   try {
-    const res = await fetch('/api/infra', { cache: 'no-store' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch('/api/infra', { cache: 'no-store', signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
-    if (!json.data) throw new Error('No data in response');
+    if (!json.data) throw new Error('No data in response — server still polling');
     currentData = json.data;
     consecutiveErrors = 0;
     setLiveStatus(true, json.meta);
