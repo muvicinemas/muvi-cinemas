@@ -1,8 +1,9 @@
 # Muvi Cinemas — UAE UAT Build Execution Runbook
 
-> **Status:** IN PROGRESS — Phase 4 (Redis Clusters)  
+> **Status:** IN PROGRESS — Phase 4 complete, Phase 5 next  
 > **Author:** GitHub Copilot (AI Assistant)  
 > **Created:** February 23, 2026  
+> **Last Updated:** February 26, 2026  
 > **Last Updated:** February 26, 2026  
 > **Target:** Account 1 (`739991759290`) — `me-central-1` (UAE)  
 > **Source of Truth:** Account 2 (`011566070219`) — `eu-central-1` (Production) — **READ-ONLY, NEVER WRITE**  
@@ -36,7 +37,7 @@
 | 8 | Aurora public access fix? | ✅→↩️ Set PubliclyAccessible=False in Phase 2B, reverted to True on Feb 26 (UAT convenience) | Feb 24→26 |
 | 9 | Bastion for developer DB access? | ❌ REMOVED — bastion EC2 + key pair + SG destroyed after reverting to public access | Feb 26 |
 | 10 | Infrastructure-as-Code (IaC) blueprint? | ✅ YES — After Phase 11, codify entire UAE ecosystem into Terraform. One-command deploy/destroy of full environment. | Feb 26 |
-| 11 | HTML Control Panel for CTO/CIO? | ✅ YES — Phase 13. Static HTML dashboard with per-service on/off switches via API Gateway + Lambda. | Feb 26 |
+| 11 | HTML Control Panel for CTO/CIO? | ✅ BUILT — Live dashboard at `documentation/aws-app/`. Node.js server polls AWS CLI, serves at localhost:8888. Per-resource toggle switches + master SLEEP/WAKE ALL button. No Lambda/Cognito needed for now. | Feb 26 |
 | 12 | Redis strategy — 1 shared or 9 per-service? | ✅ 9 per-service (mirror prod 1:1) — needed for accurate load testing. All cache.t3.medium. | Feb 26 |
 
 ---
@@ -58,7 +59,7 @@
 | 10 | Verification & Load Testing | ⬜ NOT STARTED | — | — |
 | 11 | Decommission Frankfurt | ⬜ NOT STARTED | — | Save ~$650-800/mo |
 | 12 | Terraform Blueprint (IaC) | ⬜ NOT STARTED | — | One-command deploy/destroy |
-| 13 | HTML Environment Control Panel | ⬜ NOT STARTED | — | CTO/CIO dashboard |
+| 13 | AWS Ecosystem Dashboard & Control Panel | ✅ COMPLETE | `documentation/aws-app/` | CTO/CIO dashboard with live polling + ON/OFF switches |
 
 ---
 
@@ -984,100 +985,100 @@ variable "enable_albs" { default = true }
 
 ---
 
-## 14. Phase 13: HTML Environment Control Panel
+## 14. Phase 13: AWS Ecosystem Dashboard & Control Panel
 
-> **Status:** ⬜ NOT STARTED  
-> **Prerequisite:** Phase 12 complete (Terraform provides the infrastructure knowledge)  
-> **Estimated Effort:** ~2 days  
+> **Status:** ✅ COMPLETE  
+> **Completed:** February 26, 2026  
+> **Location:** `documentation/aws-app/`  
+> **Run:** `cd documentation/aws-app && node server.js` → http://localhost:8888  
 
-### Vision
+### What Was Built
 
-A simple, secure web dashboard that lets CTO/CIO control the UAE environment without touching AWS Console or CLI.
+A live-polling Node.js dashboard (no Lambda/Cognito needed) that:
+- Polls AWS CLI every 30s for real-time infrastructure status
+- Shows 11 resource cards with live data (Aurora, RDS Proxies, Redis, ECS, ALBs, SGs, VPC Peering, S3, SSM, etc.)
+- Per-resource ON/OFF toggle switches for 4 switchable resources
+- **Master SLEEP ALL / WAKE ALL button** in top bar to toggle everything at once
+- Confirmation modals with cost info and warnings before any action
+- Dark terminal theme, responsive layout
 
-### Architecture
-
-```
-┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────┐
-│  Static HTML │────▶│ API Gateway  │────▶│   Lambda     │────▶│  AWS SDK │
-│  (S3/CF)     │     │ (REST API)   │     │  (Node.js)   │     │  (ECS,   │
-│              │     │ + Cognito    │     │              │     │   RDS,   │
-│  Toggle UI   │◀────│  Auth        │◀────│  Returns     │◀────│   Redis) │
-└──────────────┘     └──────────────┘     └──────────────┘     └──────────┘
-```
-
-### UI Mockup
+### Architecture (Actual — Simpler Than Original Plan)
 
 ```
-┌─────────────────────────────────────────────────┐
-│  🎬 Muvi UAE Environment Control Panel          │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│  MASTER SWITCH       [████ ON ████]  💰$1,200/mo│
-│                                                 │
-│  ─── Microservices ──────────────────────────── │
-│  Gateway             [████ ON ████]  $45/mo     │
-│  Identity            [████ ON ████]  $45/mo     │
-│  Main                [████ ON ████]  $45/mo     │
-│  Payment             [████ ON ████]  $45/mo     │
-│  F&B                 [░░░ OFF ░░░]   $0/mo      │
-│  Notification        [░░░ OFF ░░░]   $0/mo      │
-│  Offer (Go)          [████ ON ████]  $45/mo     │
-│                                                 │
-│  ─── Infrastructure ────────────────────────── │
-│  Aurora Database      [████ ON ████]  $350/mo   │
-│  Redis Clusters (9)   [████ ON ████]  $540/mo   │
-│  Load Balancers (3)   [████ ON ████]  $85/mo    │
-│                                                 │
-│  ─── Quick Presets ─────────────────────────── │
-│  [🚀 Full Load Test Mode]  ← all services ON   │
-│  [💤 Sleep Mode]           ← everything OFF     │
-│  [🔧 Dev Mode]             ← core 4 only       │
-│  [🎫 Booking Test]         ← GW+Main+Pay+ID    │
-│                                                 │
-│  Monthly Estimate: $575/mo (current config)     │
-│  Last Action: Rehan turned on Payment (2m ago)  │
-└─────────────────────────────────────────────────┘
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  Browser     │────▶│  Node.js     │────▶│  AWS CLI     │
+│  (HTML/JS)   │     │  server.js   │     │  (async exec)│
+│              │◀────│  port 8888   │◀────│              │
+│  Dashboard   │     │  REST API    │     │  me-central-1│
+└──────────────┘     └──────────────┘     └──────────────┘
+     Polls /api/infra       Polls every 30s
+     every 30s              2 parallel batches
+                            ~12s per poll cycle
 ```
 
-### Lambda Actions Mapped
+### Files
 
-| UI Action | Lambda Call | AWS SDK Method |
-|-----------|------------|----------------|
-| Toggle service ON | Set desiredCount=1 | `ecs.updateService()` |
-| Toggle service OFF | Set desiredCount=0 | `ecs.updateService()` |
-| Aurora ON | Start cluster | `rds.startDBCluster()` |
-| Aurora OFF | Stop cluster (7-day auto-restart) | `rds.stopDBCluster()` |
-| Redis ON | Create from snapshot | `elasticache.createReplicationGroup()` |
-| Redis OFF | Snapshot + delete | `elasticache.deleteReplicationGroup()` |
-| ALB ON | Recreate from Terraform | Trigger CodeBuild/Terraform |
-| ALB OFF | Delete (can't pause) | `elbv2.deleteLoadBalancer()` |
-| Sleep Mode | All of the above OFF | Sequential Lambda calls |
-| Full Mode | All of the above ON | Sequential Lambda calls |
+| File | Purpose |
+|------|--------|
+| `server.js` | HTTP server, AWS CLI polling (async), action handlers, REST API |
+| `index.html` | Page layout — top bar, master switch, card grid, modals |
+| `css/dashboard.css` | Dark theme, toggle switches, master switch variants, responsive |
+| `js/dashboard.js` | Live polling, card rendering, toggle handlers, master switch logic |
+| `js/data.js` | Static fallback data (renders instantly while server boots) |
+| `.saved-configs.json` | Auto-saved resource configs for recreation (gitignored) |
 
-### Security
+### Switchable Resources (~$1,193/mo)
 
-| Layer | Implementation |
-|-------|---------------|
-| Authentication | AWS Cognito User Pool (CTO/CIO accounts only) |
-| Authorization | IAM role with least-privilege (only ECS, RDS, ElastiCache actions) |
-| API Protection | API Gateway with Cognito authorizer |
-| Audit Trail | CloudWatch Logs + CloudTrail for every action |
-| Rate Limiting | API Gateway throttling (prevent accidental rapid toggles) |
+| Resource | Cost | Stop Method | Start Method |
+|----------|------|-------------|-------------|
+| Aurora | $188/mo | `stop-db-cluster` | `start-db-cluster` |
+| RDS Proxies | $265/mo | Save config → delete ×6 | Recreate from saved configs |
+| Redis | $540/mo | Snapshot → delete ×9 | Restore from snapshots |
+| ECS | $200/mo | Scale to 0 | Scale back to saved counts |
 
-### Integration with Existing Dev Portal
+### Master Switch (Top Bar)
 
-The control panel can be added as a new page in the existing `dev-portal/` directory, extending the current developer tools with infrastructure management.
+| State | Button | Color | Action Order |
+|-------|--------|-------|------|
+| All ON | SLEEP ALL | Red | ECS → Proxies → Redis → Aurora |
+| All OFF | WAKE ALL | Green | Aurora → Redis → Proxies → ECS |
+| Mixed | SLEEP/WAKE | Amber | Based on majority |
+| Busy | SLEEPING…/WAKING… | Blue pulse | Animated, disabled |
 
-### Deliverables
+### API Endpoints
 
-| # | Deliverable | Description |
-|---|------------|-------------|
-| 1 | Static HTML/JS/CSS | Control panel UI (in `dev-portal/` or standalone) |
-| 2 | Lambda function | Node.js handler for all toggle actions |
-| 3 | API Gateway | REST API with Cognito auth |
-| 4 | Cognito User Pool | CTO/CIO user accounts |
-| 5 | IAM role for Lambda | Least-privilege ECS/RDS/ElastiCache permissions |
-| 6 | CloudWatch dashboard | Cost + status monitoring embedded in UI |
+| Method | Path | Purpose |
+|--------|------|--------|
+| GET | `/api/infra` | Live infrastructure data + switchable metadata |
+| GET | `/api/actions` | Recent action log |
+| POST | `/api/action/:resource/:action` | Toggle a single resource (start/stop) |
+| POST | `/api/action/all/stop` | Master SLEEP ALL |
+| POST | `/api/action/all/start` | Master WAKE ALL |
+
+### ⚠️ CRITICAL: Update Dashboard When Completing New Phases
+
+Whenever a new phase is completed, the dashboard **MUST** be updated to reflect new resources:
+
+```
+For each new phase completed:
+  □ js/data.js    — Update phases[].status → 'complete', add date
+  □ js/data.js    — Update cards[] stats, table rows, detail sections
+  □ js/data.js    — Update summary totals (cost, active, pending)
+  □ server.js     — Add new AWS CLI queries to pollAWS()
+  □ server.js     — Update buildCards() with new card data
+  □ server.js     — Add to SWITCHABLE + ACTION_MAP if resource is switchable
+  □ dashboard.js  — Add to SWITCHABLE_IDS if resource is switchable
+  □ Test: node server.js → verify card appears with live data
+  □ Test: toggle switch works (if switchable)
+  □ Test: master switch count + total cost still correct
+```
+
+### Future Enhancements (Optional)
+
+The original plan included Lambda + API Gateway + Cognito for remote access. This can be added later if the dashboard needs to be accessible outside the local machine:
+- Deploy `server.js` as an ECS service or Lambda
+- Add Cognito authentication
+- Put behind CloudFront for HTTPS
 
 ---
 
