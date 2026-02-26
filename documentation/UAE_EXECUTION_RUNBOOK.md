@@ -35,6 +35,9 @@
 | 7 | DB Ecosystem — RDS Proxies? | ✅ YES — 6 proxies + 6 read-only endpoints + VPC peering | Feb 24 |
 | 8 | Aurora public access fix? | ✅→↩️ Set PubliclyAccessible=False in Phase 2B, reverted to True on Feb 26 (UAT convenience) | Feb 24→26 |
 | 9 | Bastion for developer DB access? | ❌ REMOVED — bastion EC2 + key pair + SG destroyed after reverting to public access | Feb 26 |
+| 10 | Infrastructure-as-Code (IaC) blueprint? | ✅ YES — After Phase 11, codify entire UAE ecosystem into Terraform. One-command deploy/destroy of full environment. | Feb 26 |
+| 11 | HTML Control Panel for CTO/CIO? | ✅ YES — Phase 13. Static HTML dashboard with per-service on/off switches via API Gateway + Lambda. | Feb 26 |
+| 12 | Redis strategy — 1 shared or 9 per-service? | ✅ 9 per-service (mirror prod 1:1) — needed for accurate load testing. All cache.t3.medium. | Feb 26 |
 
 ---
 
@@ -46,7 +49,7 @@
 | 2 | Databases (migrate data to UAE Aurora) | ✅ COMPLETE | `UAE_PHASE2_EXECUTION_LOG.md` | ~$0.02 |
 | 2B | DB Ecosystem (RDS Proxies, VPC Peering, Security) | ✅ COMPLETE | `UAE_PHASE2B_EXECUTION_LOG.md` | ~$265/mo |
 | 3 | Networking (ALBs, SGs, TGs) | ✅ COMPLETE | `UAE_PHASE3_EXECUTION_LOG.md` | ~$54/mo |
-| 4 | Redis Clusters | ⬜ NOT STARTED | — | ~$50/mo |
+| 4 | Redis Clusters | ✅ COMPLETE | `UAE_PHASE4_EXECUTION_LOG.md` | ~$540/mo |
 | 5 | ECS + ECR (task defs, services, images) | ⬜ NOT STARTED | — | ~$200/mo |
 | 6 | S3, CloudFront, WAF | ⬜ NOT STARTED | — | ~$10/mo |
 | 7 | SSM Parameters + Secrets Manager | ⬜ NOT STARTED | — | ~$3/mo |
@@ -54,6 +57,8 @@
 | 9 | Third-Party Sandbox Accounts | ⬜ NOT STARTED | — | — |
 | 10 | Verification & Load Testing | ⬜ NOT STARTED | — | — |
 | 11 | Decommission Frankfurt | ⬜ NOT STARTED | — | Save ~$650-800/mo |
+| 12 | Terraform Blueprint (IaC) | ⬜ NOT STARTED | — | One-command deploy/destroy |
+| 13 | HTML Environment Control Panel | ⬜ NOT STARTED | — | CTO/CIO dashboard |
 
 ---
 
@@ -72,8 +77,10 @@
 10. [Phase 9: Third-Party Sandbox Accounts](#10-phase-9-third-party-sandbox-accounts)
 11. [Phase 10: Verification & Load Testing](#11-phase-10-verification--load-testing)
 12. [Phase 11: Decommission Frankfurt](#12-phase-11-decommission-frankfurt)
-13. [Cost Summary](#13-cost-summary)
-14. [Risk Register](#14-risk-register)
+13. [Phase 12: Terraform Blueprint (IaC)](#13-phase-12-terraform-blueprint-iac)
+14. [Phase 13: HTML Environment Control Panel](#14-phase-13-html-environment-control-panel)
+15. [Cost Summary](#15-cost-summary)
+16. [Risk Register](#16-risk-register)
 
 ---
 
@@ -339,27 +346,70 @@ Step 3.6: Record all ARNs + DNS names for later use
 
 ## 5. Phase 4: Redis Clusters
 
-**Duration:** 30 min | **Cost:** ~$50/month
+**Duration:** ~15 min create + ~10 min wait | **Cost:** ~$540/month (9 × cache.t3.medium)
 
 ### Redis Strategy
 
-Production has 9 dedicated Redis clusters. For UAT cost savings, we consolidate to 4:
+Production has 9 dedicated Redis clusters (1 per service + shared + bulk-refund). For load testing accuracy, we mirror prod 1:1 — each service gets its own Redis to avoid cross-service interference that would produce misleading load test results.
 
-| UAT Cluster | Type | Maps to Prod | Services Using It |
-|-------------|------|-------------|-------------------|
-| `muvi-uat-gateway` | cache.t3.small | foms-redis-prod-getway | Gateway |
-| `muvi-uat-main` | cache.t3.small | foms-redis-prod-main + notification + shared | Main, Notification |
-| `muvi-uat-fb` | cache.t3.small | foms-redis-prod-fb | F&B |
-| `muvi-uat-shared` | cache.t3.small | foms-redis-prod-identity + offer + paymnet | Identity, Payment, Offer |
+### Prod → UAE Mapping
 
-### My Execution Steps
+| # | Prod Cluster | UAE Cluster | Node Type | Engine |
+|---|-------------|------------|-----------|--------|
+| 1 | foms-redis-prod-getway | muvi-uat-redis-gateway | cache.t3.medium | 7.0.7 |
+| 2 | foms-redis-prod-identity | muvi-uat-redis-identity | cache.t3.medium | 7.0.7 |
+| 3 | foms-redis-prod-main | muvi-uat-redis-main | cache.t3.medium | 7.0.7 |
+| 4 | foms-redis-prod-paymnet | muvi-uat-redis-payment | cache.t3.medium | 7.0.7 |
+| 5 | foms-redis-prod-fb | muvi-uat-redis-fb | cache.t3.medium | 7.0.7 |
+| 6 | foms-redis-prod-notification | muvi-uat-redis-notification | cache.t3.medium | 7.0.7 |
+| 7 | foms-redis-prod-offer | muvi-uat-redis-offer | cache.t3.medium | 7.0.7 |
+| 8 | foms-redis-prod-shared | muvi-uat-redis-shared | cache.t3.medium | 7.0.7 |
+| 9 | foms-redis-prod-bulk-refund-booking | muvi-uat-redis-bulk-refund | cache.t3.medium | 7.0.7 |
+
+**Note:** Prod uses `cache.r5.large` for main and notification. We use `cache.t3.medium` for all UAT clusters (sufficient for load testing, saves ~$250/mo vs r5.large).
+
+### Endpoints
+
+| Service | Endpoint |
+|---------|----------|
+| Gateway | `muvi-uat-redis-gateway.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Identity | `muvi-uat-redis-identity.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Main | `muvi-uat-redis-main.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Payment | `muvi-uat-redis-payment.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| F&B | `muvi-uat-redis-fb.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Notification | `muvi-uat-redis-notification.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Offer | `muvi-uat-redis-offer.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Shared | `muvi-uat-redis-shared.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+| Bulk Refund | `muvi-uat-redis-bulk-refund.c6kxj3.ng.0001.mec1.cache.amazonaws.com:6379` |
+
+### Security Group
+
+- **Redis SG**: `sg-0731967bbd5ef6e51` (`redis-uat-sg`)
+- **Inbound**: Port 6379 from all 7 ECS service SGs (gateway, identity, main, payment, fb, notification, offer)
+- **Old stale rule removed**: `sample-film-session-ecs-sg` was the only allowed source — replaced with proper ECS SGs
+
+### Execution Steps Completed
 
 ```
-Step 4.1: Create Redis subnet group (private subnets)
-Step 4.2: Create 4 Redis clusters (cache.t3.small, Redis 7.0)
-Step 4.3: Wait for clusters to become available (~5-10 min)
-Step 4.4: Record all endpoints for SSM configuration
+Step 4.1: ✅ Audited prod Redis — 9 replication groups, all single-node, no cluster mode
+Step 4.2: ✅ Audited UAE Redis — 1 existing generic cluster (muvi-uat-redis-uae-classic, t3.small)
+Step 4.3: ✅ Created 9 new per-service replication groups (cache.t3.medium, Redis 7.0.7)
+Step 4.4: ✅ Waited for all 9 to become 'available' (~10 min)
+Step 4.5: ✅ Deleted old generic cluster (muvi-uat-redis-uae-classic)
+Step 4.6: ✅ Fixed Redis SG — added all 7 ECS service SGs, removed old stale rule
+Step 4.7: ✅ Verified all endpoints, SGs, and cluster status
 ```
+
+### Configuration Details
+
+| Setting | Value |
+|---------|-------|
+| Subnet Group | `muvi-uat-uae` (VPC `vpc-0ab936370488229bd`, 2 subnets) |
+| Parameter Group | `default.redis7` |
+| Auto-Failover | Disabled (matching prod) |
+| Multi-AZ | Disabled (matching prod) |
+| Cluster Mode | Disabled (matching prod) |
+| Nodes per cluster | 1 (matching prod) |
 
 ---
 
@@ -836,22 +886,218 @@ Step 11.11: Final audit — confirm no remaining resources billing
 
 ---
 
-## 13. Cost Summary
+## 13. Phase 12: Terraform Blueprint (IaC)
+
+> **Status:** ⬜ NOT STARTED  
+> **Prerequisite:** All phases 1-11 complete (need to know every resource before codifying)  
+> **Estimated Effort:** ~3-4 days  
+
+### Why This Phase Exists
+
+Phases 1-11 are **manual discovery and build** — we learn exactly what prod looks like and replicate it by hand. Phase 12 takes everything we built and codifies it into **Terraform** so the entire environment can be:
+
+- **Created from zero** in ~30 minutes with `terraform apply`
+- **Destroyed completely** with `terraform destroy` (back to $0/mo)
+- **Cloned to any region** by changing one variable
+- **Version controlled** — every infra change is a git commit
+
+### Terraform Module Structure
+
+```
+terraform/
+  environments/
+    uae-uat/
+      main.tf              # Module composition
+      variables.tf          # Environment-specific values
+      terraform.tfvars      # Actual values (gitignored)
+      backend.tf            # S3 state storage
+  modules/
+    networking/
+      vpc.tf                # VPCs, subnets, peering
+      security-groups.tf    # All 12+ SGs with rules
+      alb.tf                # 3 ALBs, 9 TGs, listeners
+      acm.tf                # Certificates
+    database/
+      aurora.tf             # Cluster, instances
+      rds-proxy.tf          # 6 proxies + IAM roles
+      secrets.tf            # DB credentials in Secrets Manager
+    redis/
+      elasticache.tf        # 9 replication groups
+      subnet-groups.tf      # Redis subnet group
+    compute/
+      ecs-cluster.tf        # Cluster definition
+      ecs-services.tf       # 7 services with desired_count variable
+      task-definitions.tf   # 7 task defs with container configs
+      ecr.tf                # 7 repositories
+      iam.tf                # Task execution + task roles
+    storage/
+      s3.tf                 # Buckets
+      cloudfront.tf         # Distributions
+    config/
+      ssm.tf                # SSM parameters
+      secrets.tf            # Secrets Manager entries
+    cicd/
+      codepipeline.tf       # Pipelines per service
+      codebuild.tf          # Build projects
+```
+
+### Key Variables (Switchable)
+
+```hcl
+variable "environment" { default = "uat" }       # uat, staging, prod
+variable "region" { default = "me-central-1" }    # Any AWS region
+variable "ecs_desired_count" {
+  type = map(number)
+  default = {
+    gateway      = 1
+    identity     = 1
+    main         = 1
+    payment      = 1
+    fb           = 1
+    notification = 1
+    offer        = 1
+  }
+}
+variable "redis_node_type" { default = "cache.t3.medium" }
+variable "aurora_instance_class" { default = "db.r5.large" }
+variable "enable_aurora" { default = true }
+variable "enable_redis" { default = true }
+variable "enable_albs" { default = true }
+```
+
+### Deliverables
+
+| # | Deliverable | Description |
+|---|------------|-------------|
+| 1 | Terraform modules | Reusable modules for each infrastructure layer |
+| 2 | S3 backend + DynamoDB lock | Remote state management |
+| 3 | `terraform plan` output | Verified against actual UAE resources |
+| 4 | Import existing resources | `terraform import` for resources already created manually |
+| 5 | README.md | How to use, prerequisites, variable reference |
+
+### Important Notes
+
+- We will **import** all manually-created resources (Phases 1-11) into Terraform state, NOT recreate them
+- Terraform state stored in S3 with DynamoDB locking (prevents concurrent modifications)
+- Sensitive values (passwords, API keys) stored in `terraform.tfvars` which is `.gitignore`d
+- All modules are **environment-agnostic** — same code works for UAT, staging, or a second prod
+
+---
+
+## 14. Phase 13: HTML Environment Control Panel
+
+> **Status:** ⬜ NOT STARTED  
+> **Prerequisite:** Phase 12 complete (Terraform provides the infrastructure knowledge)  
+> **Estimated Effort:** ~2 days  
+
+### Vision
+
+A simple, secure web dashboard that lets CTO/CIO control the UAE environment without touching AWS Console or CLI.
+
+### Architecture
+
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────┐
+│  Static HTML │────▶│ API Gateway  │────▶│   Lambda     │────▶│  AWS SDK │
+│  (S3/CF)     │     │ (REST API)   │     │  (Node.js)   │     │  (ECS,   │
+│              │     │ + Cognito    │     │              │     │   RDS,   │
+│  Toggle UI   │◀────│  Auth        │◀────│  Returns     │◀────│   Redis) │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────┘
+```
+
+### UI Mockup
+
+```
+┌─────────────────────────────────────────────────┐
+│  🎬 Muvi UAE Environment Control Panel          │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│  MASTER SWITCH       [████ ON ████]  💰$1,200/mo│
+│                                                 │
+│  ─── Microservices ──────────────────────────── │
+│  Gateway             [████ ON ████]  $45/mo     │
+│  Identity            [████ ON ████]  $45/mo     │
+│  Main                [████ ON ████]  $45/mo     │
+│  Payment             [████ ON ████]  $45/mo     │
+│  F&B                 [░░░ OFF ░░░]   $0/mo      │
+│  Notification        [░░░ OFF ░░░]   $0/mo      │
+│  Offer (Go)          [████ ON ████]  $45/mo     │
+│                                                 │
+│  ─── Infrastructure ────────────────────────── │
+│  Aurora Database      [████ ON ████]  $350/mo   │
+│  Redis Clusters (9)   [████ ON ████]  $540/mo   │
+│  Load Balancers (3)   [████ ON ████]  $85/mo    │
+│                                                 │
+│  ─── Quick Presets ─────────────────────────── │
+│  [🚀 Full Load Test Mode]  ← all services ON   │
+│  [💤 Sleep Mode]           ← everything OFF     │
+│  [🔧 Dev Mode]             ← core 4 only       │
+│  [🎫 Booking Test]         ← GW+Main+Pay+ID    │
+│                                                 │
+│  Monthly Estimate: $575/mo (current config)     │
+│  Last Action: Rehan turned on Payment (2m ago)  │
+└─────────────────────────────────────────────────┘
+```
+
+### Lambda Actions Mapped
+
+| UI Action | Lambda Call | AWS SDK Method |
+|-----------|------------|----------------|
+| Toggle service ON | Set desiredCount=1 | `ecs.updateService()` |
+| Toggle service OFF | Set desiredCount=0 | `ecs.updateService()` |
+| Aurora ON | Start cluster | `rds.startDBCluster()` |
+| Aurora OFF | Stop cluster (7-day auto-restart) | `rds.stopDBCluster()` |
+| Redis ON | Create from snapshot | `elasticache.createReplicationGroup()` |
+| Redis OFF | Snapshot + delete | `elasticache.deleteReplicationGroup()` |
+| ALB ON | Recreate from Terraform | Trigger CodeBuild/Terraform |
+| ALB OFF | Delete (can't pause) | `elbv2.deleteLoadBalancer()` |
+| Sleep Mode | All of the above OFF | Sequential Lambda calls |
+| Full Mode | All of the above ON | Sequential Lambda calls |
+
+### Security
+
+| Layer | Implementation |
+|-------|---------------|
+| Authentication | AWS Cognito User Pool (CTO/CIO accounts only) |
+| Authorization | IAM role with least-privilege (only ECS, RDS, ElastiCache actions) |
+| API Protection | API Gateway with Cognito authorizer |
+| Audit Trail | CloudWatch Logs + CloudTrail for every action |
+| Rate Limiting | API Gateway throttling (prevent accidental rapid toggles) |
+
+### Integration with Existing Dev Portal
+
+The control panel can be added as a new page in the existing `dev-portal/` directory, extending the current developer tools with infrastructure management.
+
+### Deliverables
+
+| # | Deliverable | Description |
+|---|------------|-------------|
+| 1 | Static HTML/JS/CSS | Control panel UI (in `dev-portal/` or standalone) |
+| 2 | Lambda function | Node.js handler for all toggle actions |
+| 3 | API Gateway | REST API with Cognito auth |
+| 4 | Cognito User Pool | CTO/CIO user accounts |
+| 5 | IAM role for Lambda | Least-privilege ECS/RDS/ElastiCache permissions |
+| 6 | CloudWatch dashboard | Cost + status monitoring embedded in UI |
+
+---
+
+## 15. Cost Summary
 
 ### Monthly Cost After Full Migration
 
 | Resource | Count | Unit Cost | Monthly |
 |----------|-------|-----------|---------|
 | ECS Fargate (9 services × 1 task) | 9 | Variable | ~$200 |
-| RDS PostgreSQL (6 × db.t3.medium/small) | 6 | ~$30 | ~$188 |
-| Redis (4 × cache.t3.small) | 4 | ~$13 | ~$50 |
+| RDS PostgreSQL (Aurora 2-instance cluster) | 2 | ~$94 | ~$188 |
+| RDS Proxies (6) | 6 | ~$44 | ~$265 |
+| Redis (9 × cache.t3.medium) | 9 | ~$60 | ~$540 |
 | ALBs (3) | 3 | ~$18 | ~$54 |
 | NAT Gateway (1) | 1 | ~$33 | ~$33 |
 | S3 + CloudFront | — | — | ~$10 |
 | WAF | 1 | $6 | ~$6 |
 | CloudWatch Logs | — | — | ~$5 |
 | Secrets Manager | 6 | $0.40 | ~$3 |
-| **SUBTOTAL** | | | **~$549/mo** |
+| **SUBTOTAL** | | | **~$1,304/mo** |
 | **After Frankfurt decommission** | | | **Save $650-800/mo** |
 | **NET vs current spend** | | | **Save ~$850/mo ($10,200/yr)** |
 
@@ -866,7 +1112,7 @@ Step 11.11: Final audit — confirm no remaining resources billing
 
 ---
 
-## 14. Risk Register
+## 16. Risk Register
 
 | # | Risk | Impact | Mitigation |
 |---|------|--------|-----------|
@@ -880,6 +1126,8 @@ Step 11.11: Final audit — confirm no remaining resources billing
 | 8 | 2TB temp-muvi-uat-main can't be shrunk | $160/mo wasted | pg_dump → fresh 50GB instance, delete 2TB |
 | 9 | VPC peering route deletion breaks something unknown | Connectivity issue | Check all route tables before deleting |
 | 10 | Rate limiting too aggressive for load tests | Tests fail | Increase WAF rate limit before load tests |
+| 11 | Terraform state corruption | Can't manage infra | Use S3 backend with DynamoDB lock table |
+| 12 | Lambda control panel unauthorized access | Anyone can toggle services | Cognito auth + IAM least privilege |
 
 ---
 
@@ -898,6 +1146,13 @@ Step 11.11: Final audit — confirm no remaining resources billing
 9. We verify everything (Phase 10) — ~1 day
 10. After 48h stable → Frankfurt decommission (Phase 11)
 
-**Total: ~3-4 working days to full production mirror in UAE.**
+**Phases 1-11 Total: ~3-4 working days to full production mirror in UAE.**
+
+11. After environment stable → Codify into Terraform (Phase 12) — ~3-4 days
+12. Build HTML Control Panel (Phase 13) — ~2 days
+
+**Phases 12-13 Total: ~5-6 additional days for IaC blueprint + control panel.**
+
+**Grand Total: ~8-10 working days from zero to fully automated, switchable UAE environment.**
 
 Say "approved" and I begin.
